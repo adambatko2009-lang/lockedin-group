@@ -112,6 +112,7 @@
   .PARTIAL { background: var(--warn); color: var(--on-warn); }
   .MISSING { background: var(--crit); color: var(--on-crit); }
   .WAITING, .UNLOGGED { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--muted); }
+  .EXCUSED { background: var(--surface-2); color: var(--text-2); box-shadow: inset 0 0 0 1.5px var(--line); }
 
   .member { padding: 14px 0; border-top: 1px solid var(--line); }
   .member:first-child { border-top: 0; padding-top: 0; }
@@ -169,6 +170,13 @@
   .addpic svg { width: 26px; height: 26px; }
   .addpic:active { transform: scale(0.98); }
   .panel .done { width: 100%; margin-top: 20px; justify-content: center; }
+  .switchrow { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); cursor: pointer; }
+  .switchrow b { display: block; font-size: 16px; font-weight: 600; }
+  .switchrow small { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .switchrow input { appearance: none; -webkit-appearance: none; flex: none; width: 51px; height: 31px; border-radius: 16px; background: var(--line); position: relative; cursor: pointer; transition: background-color .2s; }
+  .switchrow input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.25); transition: transform .2s; }
+  .switchrow input:checked { background: var(--good); }
+  .switchrow input:checked::after { transform: translateX(20px); }
   @media (prefers-reduced-motion: no-preference) {
     .panel { animation: sheet-up .28s cubic-bezier(.2, .9, .3, 1); }
     @keyframes sheet-up { from { transform: translateY(100%); } }
@@ -324,10 +332,10 @@ const REQUIRED = RULES.filter(r => r[2] === "req").map(r => r[0]);
 const POINTS = { COMPLETE: 2, PARTIAL: 1, MISSING: 0, bonus: 1 };
 const CUTOFF_HOUR = 9;  // New York time; must match current_trading_day() in supabase/setup.sql
 
-const ICON = { COMPLETE: "✓", PARTIAL: "◐", MISSING: "✕", WAITING: "", UNLOGGED: "?" };
-const LABEL = { COMPLETE: "Complete", PARTIAL: "Partial", MISSING: "Missing", WAITING: "Waiting", UNLOGGED: "Not logged" };
-const STATUS_ORDER = ["COMPLETE", "PARTIAL", "MISSING", "WAITING", "UNLOGGED"];
-const STATUS_COLOR = { COMPLETE: "var(--good)", PARTIAL: "var(--warn)", MISSING: "var(--crit)", WAITING: "var(--line)", UNLOGGED: "var(--line)" };
+const ICON = { COMPLETE: "✓", PARTIAL: "◐", MISSING: "✕", WAITING: "", UNLOGGED: "?", EXCUSED: "E" };
+const LABEL = { COMPLETE: "Complete", PARTIAL: "Partial", MISSING: "Missing", WAITING: "Waiting", UNLOGGED: "Not logged", EXCUSED: "Excused" };
+const STATUS_ORDER = ["COMPLETE", "PARTIAL", "MISSING", "WAITING", "UNLOGGED", "EXCUSED"];
+const STATUS_COLOR = { COMPLETE: "var(--good)", PARTIAL: "var(--warn)", MISSING: "var(--crit)", WAITING: "var(--line)", UNLOGGED: "var(--line)", EXCUSED: "var(--muted)" };
 const SVG = {
   note: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>`,
   day: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>`,
@@ -392,11 +400,12 @@ let error = "", saving = 0, loaded = false, channel = null;
 const myKey = () => (profile && profile.status === "approved" ? profile.member_key : null);
 const activeMembers = () => members.filter(m => m.active).sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name));
 const tickOf = (k, key) => ticks[k + "|" + key] || null;
-const dayHasAny = k => Object.keys(ticks).some(id => id.startsWith(k + "|"));
+const dayHasAny = k => Object.entries(ticks).some(([id, r]) => id.startsWith(k + "|") && !r.excused);
 const canEdit = (k, key) => isAdmin || (key === myKey() && k === today && !isFinal(k));
 
 function statusOf(k, key) {
   const rec = tickOf(k, key);
+  if (rec && rec.excused) return "EXCUSED";   // set by the admin: sick, travelling...
   const req = rec ? REQUIRED.filter(r => rec[r]).length : 0;
   if (req === REQUIRED.length) return "COMPLETE";
   if (req > 0) return "PARTIAL";
@@ -470,7 +479,7 @@ function editTick(k, key, mutate, quiet) {
 }
 async function saveTick(id) {
   const row = ticks[id];
-  const body = { day: row.day, member_key: row.member_key, chart: !!row.chart, journal: !!row.journal, review: !!row.review, social: !!row.social, note: row.note || "", images: row.images || [] };
+  const body = { day: row.day, member_key: row.member_key, chart: !!row.chart, journal: !!row.journal, review: !!row.review, social: !!row.social, note: row.note || "", images: row.images || [], excused: !!row.excused };
   saving++; renderTop();
   const { error: e } = await sb.from("ticks").upsert(body, { onConflict: "day,member_key" });
   saving--;
@@ -575,6 +584,9 @@ function openPanel(day, key) {
     <div class="count-hint" id="panel-count">${(rec.note || "").length}/140</div>
     <h3>Pictures <span id="panel-pics-count"></span></h3>
     <div class="pics" id="panel-pics"></div>
+    ${isAdmin ? `<h3>Admin</h3>
+    <label class="switchrow"><span><b>Excused</b><small>Sick, travelling… Doesn't count as missed, doesn't break the streak.</small></span>
+      <input type="checkbox" id="panel-excused" role="switch" ${rec.excused ? "checked" : ""}></label>` : ""}
     <button class="btn primary done" id="panel-done">Done</button>`;
   document.getElementById("scrim").hidden = false;
   panel.hidden = false;
@@ -717,7 +729,7 @@ function renderDay() {
 
   const summary = `<div class="card">
     <div class="track" title="Homework window"><div class="fill" style="width:${frac * 100}%"></div>${isFinal(k) ? "" : `<div class="now" style="left:${frac * 100}%"></div>`}</div>
-    <div class="meta"><div class="count">${counts.COMPLETE || 0}<span>/${list.length} done</span></div><div class="time">${time}</div></div>
+    <div class="meta"><div class="count">${counts.COMPLETE || 0}<span>/${list.length - (counts.EXCUSED || 0)} done</span></div><div class="time">${time}</div></div>
     <div class="stack" aria-hidden="true">${stack}</div>
   </div>`;
   const err = error && !isWide() && error.length > 48 ? `<div class="card"><p class="msg err">${esc(error)}</p></div>` : "";
@@ -746,6 +758,7 @@ function stats(key) {
     if (last && nextTrading(last) !== k) run = 0;   // an unlogged trading day in between breaks a streak
     last = k;
     const rec = tickOf(k, key) || {}, st = statusOf(k, key);
+    if (st === "EXCUSED") continue;   // no points, no streak change, not counted in %
     points += (POINTS[st] || 0) + POINTS.bonus * (rec.social ? 1 : 0);
     if (st === "COMPLETE") { run++; best = Math.max(best, run); }
     else if (isFinal(k)) run = 0;
@@ -773,7 +786,7 @@ function renderBoard() {
     <ol class="lb">${items}</ol>
     <details>
       <summary>Scoring</summary>
-      <p>Complete (chart, journal, HTF) 2 pts · Partial 1 · Social +1. Streak = Complete days in a row. You can tick your own boxes until 09:00 New York time on the next trading day.</p>
+      <p>Complete (chart, journal, HTF) 2 pts · Partial 1 · Social +1. Streak = Complete days in a row. Excused (E) days don't count. You can tick your own boxes until 09:00 New York time on the next trading day.</p>
     </details>
     <div class="account"><span>${esc(me ? me.name : profile ? profile.discord_name : "")}${isAdmin ? " · admin" : ""}</span><button class="linkbtn" id="signout">Sign out</button></div>
   </div>`;
@@ -917,6 +930,7 @@ document.addEventListener("click", async e => {
   }
 });
 document.addEventListener("input", e => {
+  if (e.target.id === "panel-excused" && editing) { const on = e.target.checked; return editTick(editing.day, editing.key, row => { row.excused = on; }); }
   if (e.target.id !== "panel-note" || !editing) return;
   const v = e.target.value;
   document.getElementById("panel-count").textContent = `${v.length}/140`;
