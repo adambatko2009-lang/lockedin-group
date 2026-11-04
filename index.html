@@ -236,6 +236,51 @@
   .btn.small { min-height: 38px; padding: 0 14px; font-size: 14px; border-radius: 10px; }
   .btn.danger { background: transparent; color: var(--crit); box-shadow: inset 0 0 0 1.5px var(--line); }
 
+  /* ---------- profile + achievements ---------- */
+  .namebtn { border: 0; background: none; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; max-width: 100%;
+             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .namebtn:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .avatar-l { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font-size: 28px; font-weight: 700; color: #fff; flex: none; }
+  .phead { display: flex; align-items: center; gap: 14px; }
+  .phead h1 { font-size: 24px; letter-spacing: -0.02em; margin: 0; }
+  .phead p { margin: 2px 0 0; font-size: 14px; color: var(--muted); }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+  .tile { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; }
+  .tile b { display: block; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .tile span { font-size: 12px; color: var(--muted); }
+  .badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 14px 10px; }
+  .badge { text-align: center; min-width: 0; }
+  .medal { width: 56px; height: 56px; margin: 0 auto 6px; border-radius: 50%; display: grid; place-items: center; font-size: 26px;
+           background: color-mix(in srgb, var(--tier) 22%, var(--surface)); box-shadow: inset 0 0 0 2.5px var(--tier); }
+  .badge.locked .medal { background: var(--surface-2); box-shadow: inset 0 0 0 1.5px var(--line); }
+  .badge.locked .medal span { filter: grayscale(1); opacity: 0.35; }
+  .badge b { display: block; font-size: 13px; font-weight: 600; line-height: 1.2; }
+  .badge small { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; text-transform: capitalize; }
+  .badge .bar { height: 4px; border-radius: 2px; background: var(--surface-2); margin: 6px 8px 0; overflow: hidden; }
+  .badge .bar i { display: block; height: 100%; background: var(--accent-text); border-radius: 2px; }
+  .tier-bronze { --tier: #c27c48; } .tier-silver { --tier: #9fb0bb; } .tier-gold { --tier: #e3b341; }
+  .tier-diamond { --tier: #5cc8f0; } .tier-legend { --tier: #b37df0; }
+  .mini-badge { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-size: 12px; margin-left: 6px; vertical-align: -4px;
+                background: color-mix(in srgb, var(--tier) 22%, var(--surface)); box-shadow: inset 0 0 0 1.5px var(--tier); }
+  .heat-wrap { overflow-x: auto; }
+  table.heat { border-collapse: separate; border-spacing: 3px; }
+  .heat th { font: 600 11px var(--font-ui); color: var(--muted); text-align: left; padding-right: 4px; }
+  .heat td i { display: block; width: 16px; height: 16px; border-radius: 4px; background: var(--surface-2); }
+  .heat td i.none { background: transparent; }
+  .heat td i.COMPLETE { background: var(--good); }
+  .heat td i.PARTIAL { background: var(--warn); }
+  .heat td i.MISSING { background: var(--crit); }
+  .heat td i.WAITING, .heat td i.UNLOGGED, .heat td i.EXCUSED { background: var(--surface-2); box-shadow: none; }
+  .jentry { padding: 12px 0; border-top: 1px solid var(--line); }
+  .jentry:first-of-type { border-top: 0; padding-top: 0; }
+  .jentry .jd { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); }
+  .jentry p { margin: 6px 0 0; font-size: 15px; color: var(--text); overflow-wrap: anywhere; }
+  .toast { position: fixed; z-index: 30; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 70px); transform: translateX(-50%);
+           display: flex; align-items: center; gap: 12px; padding: 10px 18px 10px 10px; border-radius: 999px; max-width: calc(100% - 32px); }
+  .toast .medal { width: 42px; height: 42px; font-size: 20px; margin: 0; }
+  .toast b { display: block; font-size: 15px; } .toast span { font-size: 13px; color: var(--text-2); }
+  @media (prefers-reduced-motion: no-preference) { .toast { animation: toast-in .45s cubic-bezier(.3, 1.4, .5, 1); } @keyframes toast-in { from { transform: translate(-50%, -30px); opacity: 0; } } }
+
   /* ---------- admin ---------- */
   .cardhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -6px -6px 10px 0; }
   .cardhead h2 { margin: 0; font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
@@ -317,6 +362,7 @@
 </main>
 <nav class="tabbar glass" id="tabbar" role="tablist" aria-label="View" hidden></nav>
 <input type="file" id="shotinput" accept="image/*" hidden>
+<div class="toast glass" id="toast" role="status" aria-live="polite" hidden></div>
 <div class="scrim" id="scrim" hidden></div>
 <aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title" hidden></aside>
 <dialog id="viewer" aria-label="Screenshot">
@@ -394,6 +440,7 @@ let people = [];                 // admin only: all profiles
 let today = currentTradingDay();
 let selected = today, weekStart = mondayOf(today), editing = null;   // editing = {day, key} while the edit panel is open
 let tab = "day";
+let profileKey = null;   // whose profile page is open
 try { const t = localStorage.getItem("tab"); if (t) tab = t; } catch (e) {}
 let error = "", saving = 0, loaded = false, channel = null;
 
@@ -654,6 +701,13 @@ function renderTop() {
   const top = document.getElementById("topbar");
   top.hidden = screen !== "app";
   if (screen !== "app") return;
+  if (profileKey && tab !== "admin") {
+    const m = members.find(x => x.key === profileKey);
+    top.innerHTML = isWide()
+      ? `<span class="brand">MNQ Homework</span><div class="center"><b>Profile</b></div><div class="end"><button id="profile-back">‹ Back</button></div>`
+      : `<button class="round" id="profile-back" aria-label="Back">‹</button><div class="mid"><b>${esc(m ? m.name : "")}</b></div><span></span>`;
+    return;
+  }
   if (isWide()) {
     const status = error ? `<span class="err">${esc(error)}</span>` : saving || Object.keys(pending).length ? "Saving…" : "";
     top.innerHTML = `<span class="brand">MNQ Homework</span>
@@ -719,7 +773,7 @@ function renderDay() {
         style="${shotUrls[p] ? `background-image:url('${shotUrls[p]}')` : ""}"></button>`).join("")
       + Array.from({ length: uploading[m.key] || 0 }, () => `<span class="shot busy">Uploading…</span>`).join("");
     return `<div class="member ${editable ? "" : "locked"}">
-      <div class="mrow"><span class="name">${esc(m.name)}${m.key === myKey() ? `<span class="you">YOU</span>` : ""}</span>${editBtn}${dot(st, m.name)}</div>
+      <div class="mrow"><span class="name"><button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === myKey() ? `<span class="you">YOU</span>` : ""}</span>${editBtn}${dot(st, m.name)}</div>
       <div class="toggles">${toggles}</div>
       ${note ? `<div class="note">${note}</div>` : ""}
       ${shots ? `<div class="shots">${shots}</div>` : ""}
@@ -739,7 +793,7 @@ function renderDay() {
 function renderWeek() {
   const days = [0, 1, 2, 3, 4].map(i => addDays(weekStart, i));
   const head = days.map(k => `<th>${fmtDay(k, { day: undefined, month: undefined })}<br>${parse(k).getUTCDate()}</th>`).join("");
-  const body = activeMembers().map(m => `<tr><td class="who">${esc(m.name)}</td>${days.map(k => {
+  const body = activeMembers().map(m => `<tr><td class="who"><button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button></td>${days.map(k => {
     if (!isTradingDay(k) || k > today) return `<td><div class="cell none">·</div></td>`;
     const st = statusOf(k, m.key), tip = `${m.name}, ${fmtDay(k)}: ${LABEL[st]}`;
     return `<td><button class="cell ${st} ${k === today ? "today" : ""}" data-day="${k}" title="${esc(tip)}" aria-label="${esc(tip)}">${ICON[st]}</button></td>`;
@@ -754,18 +808,137 @@ function renderWeek() {
 function stats(key) {
   const days = [...new Set(Object.keys(ticks).map(id => id.split("|")[0]))].filter(isTradingDay).sort();
   let points = 0, run = 0, best = 0, closed = 0, complete = 0, last = null;
+  let completeDays = 0, social = 0, notes = 0, pics = 0, comebacks = 0, prevSt = null, since = null;
+  const weeks = {};   // monday -> {n: closed days counted, ex: excused days, ok: all Complete, open: has an open day}
   for (const k of days) {
     if (last && nextTrading(last) !== k) run = 0;   // an unlogged trading day in between breaks a streak
     last = k;
-    const rec = tickOf(k, key) || {}, st = statusOf(k, key);
-    if (st === "EXCUSED") continue;   // no points, no streak change, not counted in %
+    const raw = tickOf(k, key), rec = raw || {}, st = statusOf(k, key);
+    const w = weeks[mondayOf(k)] = weeks[mondayOf(k)] || { n: 0, ex: 0, ok: true, open: false };
+    if (rec.note) notes++;
+    pics += (rec.images || []).length;
+    if (st === "EXCUSED") { w.ex++; continue; }   // no points, no streak change, not counted in %
+    if (raw && !since) since = k;
+    if (rec.social) social++;
     points += (POINTS[st] || 0) + POINTS.bonus * (rec.social ? 1 : 0);
-    if (st === "COMPLETE") { run++; best = Math.max(best, run); }
+    if (st === "COMPLETE") { run++; best = Math.max(best, run); completeDays++; if (prevSt === "MISSING") comebacks++; }
     else if (isFinal(k)) run = 0;
-    if (isFinal(k)) { closed++; if (st === "COMPLETE") complete++; }
+    if (isFinal(k)) { closed++; if (st === "COMPLETE") complete++; prevSt = st; w.n++; if (st !== "COMPLETE") w.ok = false; }
+    else w.open = true;
   }
   if (last && last !== today && nextTrading(last) < today) run = 0;
-  return { points, run, best, rate: closed ? Math.round(100 * complete / closed) : null };
+  // A perfect week: every trading day Mon-Fri closed and Complete (excused days are skipped).
+  const perfectWeeks = Object.entries(weeks).filter(([mon, w]) =>
+    w.ok && !w.open && w.n > 0 && w.n + w.ex === [0, 1, 2, 3, 4].filter(i => isTradingDay(addDays(mon, i))).length).length;
+  return { points, run, best, rate: closed ? Math.round(100 * complete / closed) : null,
+           completeDays, social, notes, pics, comebacks, perfectWeeks, since };
+}
+
+// ---------------------------------------------------------------- achievements
+const TIERS = ["bronze", "silver", "gold", "diamond", "legend"];
+const ACHIEVEMENTS = [
+  { id: "streak",   icon: "🔥", unit: "day streak",        metric: s => s.best,         goals: [5, 10, 20, 50, 100] },
+  { id: "complete", icon: "✅", unit: "complete days",     metric: s => s.completeDays, goals: [10, 25, 50, 100, 250] },
+  { id: "week",     icon: "📅", unit: "perfect weeks",     metric: s => s.perfectWeeks, goals: [1, 4, 12], one: "Perfect week" },
+  { id: "shots",    icon: "📸", unit: "screenshots",       metric: s => s.pics,         goals: [1, 25, 100], one: "First screenshot" },
+  { id: "notes",    icon: "✍️", unit: "journal notes",     metric: s => s.notes,        goals: [10, 50, 150] },
+  { id: "social",   icon: "📣", unit: "social posts",      metric: s => s.social,       goals: [5, 25, 100] },
+  { id: "points",   icon: "💎", unit: "points",            metric: s => s.points,       goals: [100, 500, 1000] },
+  { id: "comeback", icon: "🔁", unit: "comebacks",         metric: s => s.comebacks,    goals: [1, 5], one: "Back on track" },
+  { id: "first",    icon: "🎯", unit: "complete day",      metric: s => s.completeDays, goals: [1], one: "First complete" },
+];
+function badgesFor(s) {
+  return ACHIEVEMENTS.flatMap(a => a.goals.map((goal, i) => {
+    const have = a.metric(s);
+    return { id: a.id + goal, icon: a.icon, tier: TIERS[i], goal, have: Math.min(have, goal), earned: have >= goal,
+             title: goal === 1 && a.one ? a.one : `${goal} ${a.unit}` };
+  }));
+}
+const topStreakBadge = s => badgesFor(s).filter(b => b.id.startsWith("streak") && b.earned).pop();
+const avatarColor = key => `hsl(${[...key].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7)} 45% 42%)`;
+
+function rankOf(key) {
+  const rows = activeMembers().map(m => ({ key: m.key, name: m.name, ...stats(m.key) }))
+    .sort((a, b) => b.points - a.points || b.run - a.run || a.name.localeCompare(b.name));
+  let rank = 0, prev = null;
+  for (let i = 0; i < rows.length; i++) {
+    if (!prev || rows[i].points !== prev.points || rows[i].run !== prev.run) rank = i + 1;
+    prev = rows[i];
+    if (rows[i].key === key) return rank;
+  }
+  return null;
+}
+
+function renderProfile(key) {
+  const m = members.find(x => x.key === key);
+  if (!m) return `<div class="card"><p class="msg">Member not found.</p></div>`;
+  const s = stats(key), badges = badgesFor(s), earned = badges.filter(b => b.earned).length;
+  const since = s.since ? parse(s.since).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) : "–";
+
+  const head = `<div class="card">
+    <div class="phead"><div class="avatar-l" style="background:${avatarColor(key)}" aria-hidden="true">${esc(m.name.trim()[0] || "?").toUpperCase()}</div>
+      <div><h1>${esc(m.name)}${key === myKey() ? `<span class="you">YOU</span>` : ""}</h1><p>Rank #${rankOf(key) || "–"} · since ${since}</p></div></div>
+    <div class="tiles">
+      <div class="tile"><b>${s.run}</b><span>Streak</span></div>
+      <div class="tile"><b>${s.best}</b><span>Best streak</span></div>
+      <div class="tile"><b>${s.rate === null ? "–" : s.rate + "%"}</b><span>Complete</span></div>
+      <div class="tile"><b>${s.points}</b><span>Points</span></div>
+      <div class="tile"><b>${s.completeDays}</b><span>Days done</span></div>
+      <div class="tile"><b>${earned}</b><span>Badges</span></div>
+    </div></div>`;
+
+  const order = [...badges.filter(b => b.earned), ...badges.filter(b => !b.earned)];
+  const ach = `<div class="card"><div class="cardhead"><h2>Achievements · ${earned}/${badges.length}</h2></div><div class="badges">
+    ${order.map(b => `<div class="badge tier-${b.tier} ${b.earned ? "" : "locked"}" title="${esc(b.title)}">
+      <div class="medal"><span>${b.icon}</span></div><b>${esc(b.title)}</b>
+      ${b.earned ? `<small>${b.tier}</small>` : `<div class="bar" aria-label="${b.have} of ${b.goal}"><i style="width:${Math.round(100 * b.have / b.goal)}%"></i></div><small>${b.have}/${b.goal}</small>`}
+    </div>`).join("")}</div></div>`;
+
+  // Last 12 weeks, one column per week, Mon-Fri rows.
+  const firstMon = addDays(mondayOf(today), -77);
+  const weeksCols = Array.from({ length: 12 }, (_, i) => addDays(firstMon, i * 7));
+  const heatRows = [0, 1, 2, 3, 4].map(d => `<tr><th>${["Mon", "", "Wed", "", "Fri"][d]}</th>${weeksCols.map(mon => {
+    const k = addDays(mon, d);
+    if (!isTradingDay(k) || k > today) return `<td><i class="none"></i></td>`;
+    const st = statusOf(k, key);
+    return `<td><i class="${st}" title="${fmtDay(k)}: ${LABEL[st]}"></i></td>`;
+  }).join("")}</tr>`).join("");
+  const heat = `<div class="card"><div class="cardhead"><h2>Last 12 weeks</h2></div><div class="heat-wrap"><table class="heat">${heatRows}</table></div></div>`;
+
+  const entries = Object.values(ticks).filter(r => r.member_key === key && (r.note || (r.images || []).length))
+    .sort((a, b) => b.day.localeCompare(a.day)).slice(0, 10);
+  const paths = entries.flatMap(r => r.images || []);
+  ensureShotUrls(paths);
+  const journal = `<div class="card"><div class="cardhead"><h2>Recent journal</h2></div>${entries.length ? entries.map(r => `<div class="jentry">
+      <div class="jd"><span>${fmtDay(r.day)}</span>${dot(statusOf(r.day, key))}</div>
+      ${r.note ? `<p>${esc(r.note)}</p>` : ""}
+      ${(r.images || []).length ? `<div class="shots">${r.images.map((p, i) => `<button class="shot" data-view-shot="${key}|${esc(p)}" aria-label="Picture ${i + 1}, ${fmtDay(r.day)}"
+        style="${shotUrls[p] ? `background-image:url('${shotUrls[p]}')` : ""}"></button>`).join("")}</div>` : ""}
+    </div>`).join("") : `<p class="empty">No notes or pictures yet.</p>`}</div>`;
+
+  return isWide()
+    ? `<div class="desk"><div class="maincol">${head}${ach}</div><div class="side">${heat}${journal}</div></div>`
+    : head + ach + heat + journal;
+}
+
+// Pop up "Achievement unlocked" when you earn a new badge (remembered per browser).
+let toastTimer = null;
+function checkUnlocks() {
+  if (!myKey() || !loaded || !session) return;
+  const earned = badgesFor(stats(myKey())).filter(b => b.earned);
+  const storeKey = "badges:" + session.user.id;
+  let seen = null;
+  try { seen = JSON.parse(localStorage.getItem(storeKey) || "null"); } catch (e) { return; }
+  const ids = earned.map(b => b.id);
+  try { localStorage.setItem(storeKey, JSON.stringify(ids)); } catch (e) {}
+  if (!seen) return;   // first visit: just remember what you already have
+  const fresh = earned.filter(b => !seen.includes(b.id));
+  if (!fresh.length) return;
+  const b = fresh[fresh.length - 1], t = document.getElementById("toast");
+  t.innerHTML = `<div class="medal tier-${b.tier}"><span>${b.icon}</span></div><div><b>Achievement unlocked!</b><span>${esc(b.title)}${fresh.length > 1 ? ` · +${fresh.length - 1} more` : ""}</span></div>`;
+  t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.hidden = true; }, 4500);
 }
 
 function renderBoard() {
@@ -777,7 +950,7 @@ function renderBoard() {
     prev = r;
     const detail = [r.run ? `${r.run}-day streak` : null, r.rate === null ? null : `${r.rate}%`].filter(Boolean).join(" · ") || "–";
     return `<li class="${rank === 1 && r.points ? "top" : ""}"><span class="rk">${rank}</span>
-      <div class="who2"><b>${esc(r.name)}${r.key === myKey() ? `<span class="you">YOU</span>` : ""}</b><span>${detail}</span></div>
+      <div class="who2"><b><button class="namebtn" data-profile="${r.key}">${esc(r.name)}</button>${(b => b ? `<span class="mini-badge tier-${b.tier}" title="${esc(b.title)}">${b.icon}</span>` : "")(topStreakBadge(r))}${r.key === myKey() ? `<span class="you">YOU</span>` : ""}</b><span>${detail}</span></div>
       <span class="pts" aria-label="${r.points} points">${r.points}</span></li>`;
   }).join("");
   const me = members.find(m => m.key === myKey());
@@ -788,7 +961,8 @@ function renderBoard() {
       <summary>Scoring</summary>
       <p>Complete (chart, journal, HTF) 2 pts · Partial 1 · Social +1. Streak = Complete days in a row. Excused (E) days don't count. You can tick your own boxes until 09:00 New York time on the next trading day.</p>
     </details>
-    <div class="account"><span>${esc(me ? me.name : profile ? profile.discord_name : "")}${isAdmin ? " · admin" : ""}</span><button class="linkbtn" id="signout">Sign out</button></div>
+    <div class="account"><span>${esc(me ? me.name : profile ? profile.discord_name : "")}${isAdmin ? " · admin" : ""}</span>
+      <span>${me ? `<button class="linkbtn" data-profile="${me.key}">My profile</button>` : ""}<button class="linkbtn" id="signout">Sign out</button></span></div>
   </div>`;
 }
 
@@ -857,6 +1031,7 @@ function render() {
   const app = document.getElementById("app");
   if (screen !== "app") { app.innerHTML = renderGate(); return; }
   if (tab === "admin" && isAdmin) app.innerHTML = renderAdmin();
+  else if (profileKey) app.innerHTML = renderProfile(profileKey);
   else if (isWide()) {
     const d = renderDay();
     app.innerHTML = `<div class="desk"><div class="maincol">${d.summary}${d.list}</div><div class="side">${renderWeek()}${renderBoard()}</div></div>`;
@@ -864,9 +1039,10 @@ function render() {
   else if (tab === "board") app.innerHTML = renderBoard();
   else { const d = renderDay(); app.innerHTML = d.summary + d.list; }
   renderPanelPics();
+  checkUnlocks();
 }
 
-function setTab(t) { tab = t; flash = ""; try { localStorage.setItem("tab", t); } catch (e) {} render(); window.scrollTo(0, 0); }
+function setTab(t) { tab = t; profileKey = null; flash = ""; try { localStorage.setItem("tab", t); } catch (e) {} render(); window.scrollTo(0, 0); }
 
 // ---------------------------------------------------------------- events
 document.addEventListener("click", async e => {
@@ -874,6 +1050,8 @@ document.addEventListener("click", async e => {
   if (!t) return;
   const d = t.dataset;
   if (d.tab) return setTab(d.tab);
+  if (d.profile) { profileKey = d.profile; if (tab === "admin") tab = "day"; render(); return window.scrollTo(0, 0); }
+  if (t.id === "profile-back") { profileKey = null; render(); return window.scrollTo(0, 0); }
   if (d.tick) { const [key, r] = d.tick.split(":"); return editTick(selected, key, row => { row[r] = !row[r]; }); }
   if (d.edit) return openPanel(selected, d.edit);
   if (t.id === "panel-close" || t.id === "panel-done") return closePanel();
@@ -882,7 +1060,7 @@ document.addEventListener("click", async e => {
     return removeShot(editing.day, editing.key, d.removeShot);
   }
   if (d.addShot) { shotTarget = { day: selected, key: d.addShot }; const inp = document.getElementById("shotinput"); inp.value = ""; inp.click(); return; }
-  if (d.viewShot) { const i = d.viewShot.indexOf("|"); return openViewer(selected, d.viewShot.slice(0, i), d.viewShot.slice(i + 1)); }
+  if (d.viewShot) { const i = d.viewShot.indexOf("|"), path = d.viewShot.slice(i + 1); return openViewer(path.split("/")[0], d.viewShot.slice(0, i), path); }
   if (t.id === "viewer-close") return document.getElementById("viewer").close();
   if (t.id === "viewer-delete") {
     if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Sure? Tap again"; return; }
