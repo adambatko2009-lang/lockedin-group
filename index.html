@@ -143,6 +143,47 @@
   .shot.busy { cursor: default; display: grid; place-items: center; font-size: 11px; color: var(--muted); }
   .shot:active { transform: scale(0.96); }
 
+  /* edit panel: a sheet from the bottom on phones, a drawer from the right on monitors */
+  .scrim { position: fixed; inset: 0; z-index: 20; background: rgba(0, 0, 0, 0.45); }
+  .panel { position: fixed; z-index: 21; left: 0; right: 0; bottom: 0; max-height: 88vh; overflow-y: auto;
+           background: var(--surface); border-top: 1px solid var(--line); border-radius: 22px 22px 0 0;
+           box-shadow: 0 -12px 40px var(--glass-shade);
+           padding: 8px max(18px, env(safe-area-inset-left, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-right, 0px)); }
+  .panel .grab { width: 38px; height: 5px; border-radius: 3px; background: var(--line); margin: 4px auto 10px; }
+  .panel header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
+  .panel header b { display: block; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+  .panel header span { font-size: 14px; color: var(--muted); }
+  .panel h3 { font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; margin: 18px 0 8px; }
+  .panel textarea { width: 100%; min-height: 96px; resize: vertical; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px;
+                    color: var(--text); font: 16px/1.4 var(--font-ui); padding: 10px 12px; }
+  .panel textarea::placeholder { color: var(--muted); }
+  .panel .count-hint { font-size: 12px; color: var(--muted); text-align: right; margin-top: 4px; }
+  .pics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .pic { position: relative; aspect-ratio: 4 / 3; max-width: 100%; border-radius: 12px; overflow: hidden; background: var(--surface-2); border: 1px solid var(--line); }
+  .pic > button.open { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; padding: 0; background: center / cover no-repeat; cursor: zoom-in; }
+  .pic > button.remove { position: absolute; top: 6px; right: 6px; min-width: 32px; height: 32px; padding: 0 10px; border-radius: 16px; border: 0;
+                         background: rgba(0, 0, 0, 0.6); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .pic.busy { display: grid; place-items: center; font-size: 13px; color: var(--muted); }
+  .addpic { aspect-ratio: 4 / 3; border-radius: 12px; border: 1.5px dashed var(--muted); background: transparent; color: var(--accent-text);
+            font-size: 15px; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+  .addpic svg { width: 26px; height: 26px; }
+  .addpic:active { transform: scale(0.98); }
+  .panel .done { width: 100%; margin-top: 20px; justify-content: center; }
+  @media (prefers-reduced-motion: no-preference) {
+    .panel { animation: sheet-up .28s cubic-bezier(.2, .9, .3, 1); }
+    @keyframes sheet-up { from { transform: translateY(100%); } }
+  }
+  @media (min-width: 960px) {
+    .panel { left: auto; top: 12px; bottom: 12px; right: 12px; width: 440px; max-height: none; border-radius: 20px; border: 1px solid var(--line);
+             box-shadow: 0 20px 60px var(--glass-shade); padding: 20px 22px; }
+    .panel .grab { display: none; }
+    .pics { grid-template-columns: repeat(2, 1fr); }
+    @media (prefers-reduced-motion: no-preference) {
+      .panel { animation: drawer-in .28s cubic-bezier(.2, .9, .3, 1); }
+      @keyframes drawer-in { from { transform: translateX(calc(100% + 24px)); } }
+    }
+  }
+
   /* full-size screenshot viewer */
   dialog#viewer { border: 0; padding: 0; background: transparent; max-width: 100vw; max-height: 100vh; overflow: visible; }
   dialog#viewer::backdrop { background: rgba(0, 0, 0, 0.88); }
@@ -232,10 +273,9 @@
     .desk { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(340px, 1fr); gap: 16px; align-items: start; }
     .desk .maincol, .desk .side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
     .card { padding: 18px 20px; }
-    .member { display: grid; grid-template-columns: 150px minmax(0, 1fr) 36px 36px 28px;
-              grid-template-areas: "name tg cam nb st" ". note note note note" ". shots shots shots shots";
-              align-items: center; column-gap: 10px; padding: 10px 0; }
-    .member .cam, .member .cam-space { grid-area: cam; }
+    .member { display: grid; grid-template-columns: 150px minmax(0, 1fr) 36px 28px;
+              grid-template-areas: "name tg nb st" ". note note note" ". shots shots shots";
+              align-items: center; column-gap: 12px; padding: 10px 0; }
     .member .shots { grid-area: shots; margin-top: 6px; }
     .shot { width: 56px; height: 56px; }
     .member:first-child { padding-top: 0; }
@@ -269,6 +309,8 @@
 </main>
 <nav class="tabbar glass" id="tabbar" role="tablist" aria-label="View" hidden></nav>
 <input type="file" id="shotinput" accept="image/*" hidden>
+<div class="scrim" id="scrim" hidden></div>
+<aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title" hidden></aside>
 <dialog id="viewer" aria-label="Screenshot">
   <img id="viewer-img" alt="">
   <div class="vcap" id="viewer-cap"></div>
@@ -342,7 +384,7 @@ let members = [];                // [{key, name, sort, active}]
 let ticks = {};                  // "day|member" -> row
 let people = [];                 // admin only: all profiles
 let today = currentTradingDay();
-let selected = today, weekStart = mondayOf(today), noteOpen = null;
+let selected = today, weekStart = mondayOf(today), editing = null;   // editing = {day, key} while the edit panel is open
 let tab = "day";
 try { const t = localStorage.getItem("tab"); if (t) tab = t; } catch (e) {}
 let error = "", saving = 0, loaded = false, channel = null;
@@ -408,7 +450,7 @@ function subscribe() {
       const id = row.day + "|" + row.member_key;
       if (payload.eventType === "DELETE") delete ticks[id];
       else if (!pending[id]) ticks[id] = payload.new;   // don't overwrite a tick you're still saving
-      if (!noteOpen) render();
+      render();
     })
     .subscribe();
 }
@@ -440,7 +482,7 @@ async function saveTick(id) {
     const { data } = await sb.from("ticks").select("*").eq("day", row.day).eq("member_key", row.member_key).maybeSingle();
     if (data) ticks[id] = data; else delete ticks[id];
   } else error = "";
-  if (noteOpen) renderTop(); else render();
+  render();
 }
 
 // ---------------------------------------------------------------- screenshots
@@ -455,11 +497,11 @@ function ensureShotUrls(paths) {
   missing.forEach(p => shotRequested.add(p));
   sb.storage.from("screenshots").createSignedUrls(missing, 3600).then(({ data }) => {
     (data || []).forEach(d => { if (d.signedUrl) shotUrls[d.path] = d.signedUrl; });
-    if (!noteOpen) render();
+    render();
   });
 }
 // Signed links last an hour; refresh them before they run out.
-setInterval(() => { Object.keys(shotUrls).forEach(p => delete shotUrls[p]); shotRequested.clear(); if (screen === "app" && !noteOpen) render(); }, 50 * 60000);
+setInterval(() => { Object.keys(shotUrls).forEach(p => delete shotUrls[p]); shotRequested.clear(); if (screen === "app") render(); }, 50 * 60000);
 
 // Shrink to max 1600px and JPEG, so a screenshot is ~200-300 KB instead of several MB.
 async function shrink(file) {
@@ -512,13 +554,56 @@ function openViewer(day, key, path) {
   document.getElementById("viewer").showModal();
 }
 
-async function deleteShot() {
-  const v = viewing;
-  if (!v || !canEdit(v.day, v.key)) return;
-  const { error: e } = await sb.storage.from("screenshots").remove([v.path]);
-  document.getElementById("viewer").close();
+async function removeShot(day, key, path) {
+  if (!canEdit(day, key)) return;
+  const { error: e } = await sb.storage.from("screenshots").remove([path]);
   if (e) { error = "Couldn't delete: " + e.message; return render(); }
-  editTick(v.day, v.key, row => { row.images = row.images.filter(p => p !== v.path); });
+  editTick(day, key, row => { row.images = row.images.filter(p => p !== path); });
+}
+
+// ---------------------------------------------------------------- edit panel (note + pictures for one row)
+function openPanel(day, key) {
+  if (!canEdit(day, key)) return;
+  editing = { day, key };
+  const m = members.find(x => x.key === key), rec = tickOf(day, key) || {};
+  const panel = document.getElementById("panel");
+  panel.innerHTML = `<div class="grab" aria-hidden="true"></div>
+    <header><div><b id="panel-title">${esc(m ? m.name : key)}</b><span>${fmtDay(day, { weekday: "long", month: "long" })}</span></div>
+      <button class="round" id="panel-close" aria-label="Close">✕</button></header>
+    <h3>Note</h3>
+    <textarea id="panel-note" maxlength="140" placeholder="What did you trade, what did you learn?">${esc(rec.note)}</textarea>
+    <div class="count-hint" id="panel-count">${(rec.note || "").length}/140</div>
+    <h3>Pictures <span id="panel-pics-count"></span></h3>
+    <div class="pics" id="panel-pics"></div>
+    <button class="btn primary done" id="panel-done">Done</button>`;
+  document.getElementById("scrim").hidden = false;
+  panel.hidden = false;
+  document.body.style.overflow = "hidden";
+  renderPanelPics();
+}
+
+function closePanel() {
+  if (!editing) return;
+  editing = null;
+  document.getElementById("panel").hidden = true;
+  document.getElementById("scrim").hidden = true;
+  document.body.style.overflow = "";
+  render();
+}
+
+function renderPanelPics() {
+  if (!editing) return;
+  const { day, key } = editing;
+  if (!canEdit(day, key)) return closePanel();   // the day closed while the panel was open
+  const images = (tickOf(day, key) || {}).images || [], busy = uploading[key] || 0;
+  ensureShotUrls(images);
+  const tiles = images.map((p, i) => `<div class="pic">
+      <button class="open" data-view-shot="${key}|${esc(p)}" aria-label="Open picture ${i + 1}" style="${shotUrls[p] ? `background-image:url('${shotUrls[p]}')` : ""}"></button>
+      <button class="remove" data-remove-shot="${esc(p)}" aria-label="Delete picture ${i + 1}">✕</button></div>`).join("")
+    + Array.from({ length: busy }, () => `<div class="pic busy">Uploading…</div>`).join("")
+    + (images.length + busy < MAX_SHOTS ? `<button class="addpic" data-add-shot="${key}">${SVG.camera}Add picture</button>` : "");
+  document.getElementById("panel-pics").innerHTML = tiles;
+  document.getElementById("panel-pics-count").textContent = `· ${images.length}/${MAX_SHOTS}`;
 }
 
 // ---------------------------------------------------------------- admin actions
@@ -614,19 +699,15 @@ function renderDay() {
     const toggles = RULES.map(([r, label, kind]) =>
       `<button class="t ${kind}" data-tick="${m.key}:${r}" aria-pressed="${!!rec[r]}" ${editable ? "" : "disabled"}
         aria-label="${esc(m.name)}: ${label}${kind === "bonus" ? " (bonus)" : ""}">${label}</button>`).join("");
-    let note = "";
-    if (noteOpen === m.key && editable) note = `<input id="note-${m.key}" data-note="${m.key}" maxlength="140" placeholder="Note" value="${esc(rec.note)}" aria-label="Note for ${esc(m.name)}">`;
-    else if (rec.note) note = `<p>${esc(rec.note)}</p>`;
-    const noteBtn = editable ? `<button class="icon ${rec.note ? "has" : ""}" data-open-note="${m.key}" aria-label="${rec.note ? "Edit" : "Add"} note for ${esc(m.name)}">${SVG.note}</button>` : `<span class="nb-space"></span>`;
+    const note = rec.note ? `<p>${esc(rec.note)}</p>` : "";
     const images = rec.images || [];
     allShots.push(...images);
-    const camBtn = editable && images.length + (uploading[m.key] || 0) < MAX_SHOTS
-      ? `<button class="icon cam" data-add-shot="${m.key}" aria-label="Add screenshot for ${esc(m.name)}">${SVG.camera}</button>` : `<span class="cam-space"></span>`;
+    const editBtn = editable ? `<button class="icon ${rec.note || images.length ? "has" : ""}" data-edit="${m.key}" aria-label="Note and pictures for ${esc(m.name)}">${SVG.note}</button>` : `<span class="nb-space"></span>`;
     const shots = images.map((p, i) => `<button class="shot" data-view-shot="${m.key}|${esc(p)}" aria-label="Screenshot ${i + 1} from ${esc(m.name)}"
         style="${shotUrls[p] ? `background-image:url('${shotUrls[p]}')` : ""}"></button>`).join("")
       + Array.from({ length: uploading[m.key] || 0 }, () => `<span class="shot busy">Uploading…</span>`).join("");
     return `<div class="member ${editable ? "" : "locked"}">
-      <div class="mrow"><span class="name">${esc(m.name)}${m.key === myKey() ? `<span class="you">YOU</span>` : ""}</span>${camBtn}${noteBtn}${dot(st, m.name)}</div>
+      <div class="mrow"><span class="name">${esc(m.name)}${m.key === myKey() ? `<span class="you">YOU</span>` : ""}</span>${editBtn}${dot(st, m.name)}</div>
       <div class="toggles">${toggles}</div>
       ${note ? `<div class="note">${note}</div>` : ""}
       ${shots ? `<div class="shots">${shots}</div>` : ""}
@@ -769,10 +850,10 @@ function render() {
   } else if (tab === "week") app.innerHTML = renderWeek();
   else if (tab === "board") app.innerHTML = renderBoard();
   else { const d = renderDay(); app.innerHTML = d.summary + d.list; }
-  if (noteOpen) { const el = document.getElementById("note-" + noteOpen); if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }
+  renderPanelPics();
 }
 
-function setTab(t) { tab = t; noteOpen = null; flash = ""; try { localStorage.setItem("tab", t); } catch (e) {} render(); window.scrollTo(0, 0); }
+function setTab(t) { tab = t; flash = ""; try { localStorage.setItem("tab", t); } catch (e) {} render(); window.scrollTo(0, 0); }
 
 // ---------------------------------------------------------------- events
 document.addEventListener("click", async e => {
@@ -781,13 +862,19 @@ document.addEventListener("click", async e => {
   const d = t.dataset;
   if (d.tab) return setTab(d.tab);
   if (d.tick) { const [key, r] = d.tick.split(":"); return editTick(selected, key, row => { row[r] = !row[r]; }); }
-  if (d.openNote) { noteOpen = noteOpen === d.openNote ? null : d.openNote; return render(); }
+  if (d.edit) return openPanel(selected, d.edit);
+  if (t.id === "panel-close" || t.id === "panel-done") return closePanel();
+  if (d.removeShot) {
+    if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Delete?"; return; }
+    return removeShot(editing.day, editing.key, d.removeShot);
+  }
   if (d.addShot) { shotTarget = { day: selected, key: d.addShot }; const inp = document.getElementById("shotinput"); inp.value = ""; inp.click(); return; }
   if (d.viewShot) { const i = d.viewShot.indexOf("|"); return openViewer(selected, d.viewShot.slice(0, i), d.viewShot.slice(i + 1)); }
   if (t.id === "viewer-close") return document.getElementById("viewer").close();
   if (t.id === "viewer-delete") {
     if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Sure? Tap again"; return; }
-    return deleteShot();
+    document.getElementById("viewer").close();
+    return viewing && removeShot(viewing.day, viewing.key, viewing.path);
   }
   if (d.day) { selected = d.day; if (isWide()) { if (tab === "admin") tab = "day"; render(); } else setTab("day"); return; }
   if (d.approve) {
@@ -822,26 +909,24 @@ document.addEventListener("click", async e => {
       return adminDo(sb.from("members").insert({ key: slug(name), name, sort }), `Added ${name}.`);
     }
     case "toggleadmin": return setTab(tab === "admin" ? "day" : "admin");
-    case "prev": selected = prevTrading(selected); weekStart = mondayOf(selected); noteOpen = null; return render();
-    case "next": selected = nextTrading(selected); weekStart = mondayOf(selected); noteOpen = null; return render();
-    case "gotoday": selected = today; weekStart = mondayOf(today); noteOpen = null; return render();
+    case "prev": selected = prevTrading(selected); weekStart = mondayOf(selected); return render();
+    case "next": selected = nextTrading(selected); weekStart = mondayOf(selected); return render();
+    case "gotoday": selected = today; weekStart = mondayOf(today); return render();
     case "pw": weekStart = addDays(weekStart, -7); return render();
     case "nw": weekStart = addDays(weekStart, 7); return render();
   }
 });
 document.addEventListener("input", e => {
-  const key = e.target.dataset && e.target.dataset.note;
-  if (key) { const v = e.target.value; editTick(selected, key, row => { row.note = v; }, true); }
+  if (e.target.id !== "panel-note" || !editing) return;
+  const v = e.target.value;
+  document.getElementById("panel-count").textContent = `${v.length}/140`;
+  editTick(editing.day, editing.key, row => { row.note = v; }, true);
 });
 document.addEventListener("keydown", e => {
-  if (e.key === "Enter" && e.target.dataset && e.target.dataset.note) { noteOpen = null; render(); }
+  if (e.key === "Escape" && editing && !document.getElementById("viewer").open) closePanel();
   if (e.key === "Enter" && e.target.id === "newmember") document.getElementById("addmember").click();
 });
-document.addEventListener("focusout", e => {
-  if (e.target.dataset && e.target.dataset.note && !(e.relatedTarget && e.relatedTarget.dataset && e.relatedTarget.dataset.openNote)) {
-    setTimeout(() => { if (noteOpen === e.target.dataset.note) { noteOpen = null; render(); } }, 0);
-  }
-});
+document.getElementById("scrim").addEventListener("click", closePanel);
 wideQuery.addEventListener("change", () => render());
 document.getElementById("shotinput").addEventListener("change", e => {
   const file = e.target.files && e.target.files[0];
@@ -855,7 +940,7 @@ document.getElementById("viewer").addEventListener("click", e => { if (e.target.
 setInterval(() => {
   const t = currentTradingDay();
   if (t !== today) { if (selected === today) selected = t; today = t; weekStart = mondayOf(selected); }
-  if (screen === "app" && !noteOpen && tab !== "admin") render();
+  if (screen === "app" && tab !== "admin") render();
 }, 60000);
 // While waiting for approval, check every 20 seconds so the page opens as soon as you're approved.
 setInterval(() => { if (screen === "waiting" && session) loadAll(); }, 20000);
