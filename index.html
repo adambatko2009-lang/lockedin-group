@@ -138,6 +138,17 @@
   .note input { width: 100%; min-height: 42px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px;
                 color: var(--text); font: 15px var(--font-ui); padding: 8px 12px; }
   .note input::placeholder { color: var(--muted); }
+  .shots { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .shot { width: 64px; height: 64px; padding: 0; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2) center / cover no-repeat; cursor: zoom-in; }
+  .shot.busy { cursor: default; display: grid; place-items: center; font-size: 11px; color: var(--muted); }
+  .shot:active { transform: scale(0.96); }
+
+  /* full-size screenshot viewer */
+  dialog#viewer { border: 0; padding: 0; background: transparent; max-width: 100vw; max-height: 100vh; overflow: visible; }
+  dialog#viewer::backdrop { background: rgba(0, 0, 0, 0.88); }
+  dialog#viewer img { display: block; max-width: min(1200px, 94vw); max-height: 78vh; border-radius: 12px; margin: 0 auto; background: #111; }
+  dialog#viewer .vbar { display: flex; justify-content: center; gap: 10px; margin-top: 14px; }
+  dialog#viewer .vcap { text-align: center; color: #c9d1d6; font-size: 14px; margin-top: 10px; }
 
   .grid-wrap { overflow-x: auto; }
   table.grid { width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; min-width: 300px; }
@@ -214,12 +225,19 @@
     .topbar .end { justify-self: end; display: flex; align-items: center; gap: 10px; padding-right: 8px; font-size: 13px; color: var(--muted); }
     .topbar .end button { border: 0; background: var(--glass-pill); color: var(--accent-text); font-size: 13px; font-weight: 600; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
     .topbar .end button.on { background: var(--accent); color: var(--on-accent); }
+    .topbar .end button { display: inline-flex; align-items: center; gap: 6px; }
+    .topbar .end .count { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--crit); color: #fff;
+                          font-size: 11px; font-weight: 700; display: inline-grid; place-items: center; }
     .round:hover:not(:disabled) { background: var(--glass-pill); }
     .desk { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(340px, 1fr); gap: 16px; align-items: start; }
     .desk .maincol, .desk .side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
     .card { padding: 18px 20px; }
-    .member { display: grid; grid-template-columns: 150px minmax(0, 1fr) 36px 28px; grid-template-areas: "name tg nb st" ". note note note";
-              align-items: center; column-gap: 12px; padding: 10px 0; }
+    .member { display: grid; grid-template-columns: 150px minmax(0, 1fr) 36px 36px 28px;
+              grid-template-areas: "name tg cam nb st" ". note note note note" ". shots shots shots shots";
+              align-items: center; column-gap: 10px; padding: 10px 0; }
+    .member .cam, .member .cam-space { grid-area: cam; }
+    .member .shots { grid-area: shots; margin-top: 6px; }
+    .shot { width: 56px; height: 56px; }
     .member:first-child { padding-top: 0; }
     .member .mrow { display: contents; }
     .member .name { grid-area: name; font-size: 16px; }
@@ -250,6 +268,12 @@
   <div id="app"><div class="card"><p class="msg">Loading…</p></div></div>
 </main>
 <nav class="tabbar glass" id="tabbar" role="tablist" aria-label="View" hidden></nav>
+<input type="file" id="shotinput" accept="image/*" hidden>
+<dialog id="viewer" aria-label="Screenshot">
+  <img id="viewer-img" alt="">
+  <div class="vcap" id="viewer-cap"></div>
+  <div class="vbar"><button class="btn plain small" id="viewer-close">Close</button><button class="btn danger small" id="viewer-delete">Delete</button></div>
+</dialog>
 
 <script>
 // ---------------------------------------------------------------- rules (change these here, on GitHub)
@@ -268,6 +292,7 @@ const SVG = {
   week: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>`,
   board: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 20V11M12 20V5M18 20v-6"/></svg>`,
   admin: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M17 11l2 2 4-4"/></svg>`,
+  camera: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>`,
   discord: `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M20.3 4.4A19.6 19.6 0 0 0 15.4 3l-.6 1.3a18 18 0 0 0-5.5 0L8.7 3a19.6 19.6 0 0 0-4.9 1.5C.7 9.1-.2 13.6.3 18a19.8 19.8 0 0 0 6 3l1.3-2.1a12.8 12.8 0 0 1-2-1l.5-.4a14 14 0 0 0 12 0l.5.4-2 1 1.3 2.1a19.7 19.7 0 0 0 6-3c.6-5.1-.8-9.6-3.6-13.6ZM8.1 15.3c-1.2 0-2.1-1.1-2.1-2.4s.9-2.4 2.1-2.4 2.2 1.1 2.1 2.4c0 1.3-.9 2.4-2.1 2.4Zm7.8 0c-1.2 0-2.1-1.1-2.1-2.4s.9-2.4 2.1-2.4 2.2 1.1 2.1 2.4c0 1.3-.9 2.4-2.1 2.4Z"/></svg>`,
 };
 
@@ -393,7 +418,8 @@ const pending = {}, timers = {};
 function editTick(k, key, mutate, quiet) {
   if (!canEdit(k, key)) return;
   const id = k + "|" + key;
-  const row = Object.assign({ day: k, member_key: key, chart: false, journal: false, review: false, social: false, note: "" }, tickOf(k, key));
+  const row = Object.assign({ day: k, member_key: key, chart: false, journal: false, review: false, social: false, note: "", images: [] }, tickOf(k, key));
+  row.images = [...(row.images || [])];
   mutate(row);
   ticks[id] = row; pending[id] = true;
   if (quiet) renderTop(); else render();
@@ -402,7 +428,7 @@ function editTick(k, key, mutate, quiet) {
 }
 async function saveTick(id) {
   const row = ticks[id];
-  const body = { day: row.day, member_key: row.member_key, chart: !!row.chart, journal: !!row.journal, review: !!row.review, social: !!row.social, note: row.note || "" };
+  const body = { day: row.day, member_key: row.member_key, chart: !!row.chart, journal: !!row.journal, review: !!row.review, social: !!row.social, note: row.note || "", images: row.images || [] };
   saving++; renderTop();
   const { error: e } = await sb.from("ticks").upsert(body, { onConflict: "day,member_key" });
   saving--;
@@ -415,6 +441,84 @@ async function saveTick(id) {
     if (data) ticks[id] = data; else delete ticks[id];
   } else error = "";
   if (noteOpen) renderTop(); else render();
+}
+
+// ---------------------------------------------------------------- screenshots
+// Stored privately in Supabase Storage as <day>/<member>/<time>.jpg; shown through short-lived signed links.
+const MAX_SHOTS = 4;
+const shotUrls = {}, shotRequested = new Set(), uploading = {};
+let shotTarget = null, viewing = null;
+
+function ensureShotUrls(paths) {
+  const missing = paths.filter(p => !shotUrls[p] && !shotRequested.has(p));
+  if (!missing.length) return;
+  missing.forEach(p => shotRequested.add(p));
+  sb.storage.from("screenshots").createSignedUrls(missing, 3600).then(({ data }) => {
+    (data || []).forEach(d => { if (d.signedUrl) shotUrls[d.path] = d.signedUrl; });
+    if (!noteOpen) render();
+  });
+}
+// Signed links last an hour; refresh them before they run out.
+setInterval(() => { Object.keys(shotUrls).forEach(p => delete shotUrls[p]); shotRequested.clear(); if (screen === "app" && !noteOpen) render(); }, 50 * 60000);
+
+// Shrink to max 1600px and JPEG, so a screenshot is ~200-300 KB instead of several MB.
+async function shrink(file) {
+  const src = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = () => reject(new Error("couldn't read this image (try a PNG or JPG)"));
+      img.src = src;
+    });
+    const scale = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(img.naturalWidth * scale);
+    canvas.height = Math.round(img.naturalHeight * scale);
+    canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise(res => canvas.toBlob(res, "image/jpeg", 0.82));
+    if (!blob) throw new Error("couldn't read this image");
+    return blob;
+  } finally { URL.revokeObjectURL(src); }
+}
+
+async function uploadShot(day, key, file) {
+  if (!canEdit(day, key) || !file) return;
+  if (((tickOf(day, key) || {}).images || []).length >= MAX_SHOTS) { error = `Max ${MAX_SHOTS} screenshots per day.`; return render(); }
+  uploading[key] = (uploading[key] || 0) + 1; render();
+  try {
+    const blob = await shrink(file);
+    const path = `${day}/${key}/${Date.now()}.jpg`;
+    const { error: e } = await sb.storage.from("screenshots").upload(path, blob, { contentType: "image/jpeg", upsert: false });
+    if (e) throw e;
+    shotUrls[path] = URL.createObjectURL(blob);
+    error = "";
+    editTick(day, key, row => { row.images = [...row.images, path]; });
+  } catch (e) {
+    error = "Screenshot not saved: " + (/row-level security|unauthorized|403/i.test(e.message || "") ? "this day is closed or the row isn't yours." : (e.message || e));
+  } finally {
+    uploading[key]--; render();
+  }
+}
+
+function openViewer(day, key, path) {
+  viewing = { day, key, path };
+  const m = members.find(x => x.key === key);
+  document.getElementById("viewer-img").src = shotUrls[path] || "";
+  document.getElementById("viewer-cap").textContent = `${m ? m.name : key} · ${fmtDay(day)}`;
+  document.getElementById("viewer-delete").hidden = !canEdit(day, key);
+  document.getElementById("viewer-delete").textContent = "Delete";
+  document.getElementById("viewer-delete").dataset.confirm = "";
+  document.getElementById("viewer").showModal();
+}
+
+async function deleteShot() {
+  const v = viewing;
+  if (!v || !canEdit(v.day, v.key)) return;
+  const { error: e } = await sb.storage.from("screenshots").remove([v.path]);
+  document.getElementById("viewer").close();
+  if (e) { error = "Couldn't delete: " + e.message; return render(); }
+  editTick(v.day, v.key, row => { row.images = row.images.filter(p => p !== v.path); });
 }
 
 // ---------------------------------------------------------------- admin actions
@@ -462,7 +566,7 @@ function renderTop() {
         <button class="round" id="next" aria-label="Next trading day" ${selected >= today || tab === "admin" ? "disabled" : ""}>›</button>
       </div>
       <div class="end"><span>${status}</span>${selected !== today && tab !== "admin" ? `<button id="gotoday">Today</button>` : ""}
-        ${isAdmin ? `<button id="toggleadmin" class="${tab === "admin" ? "on" : ""}">Admin${pendingCount() ? ` (${pendingCount()})` : ""}</button>` : ""}</div>`;
+        ${isAdmin ? `<button id="toggleadmin" class="${tab === "admin" ? "on" : ""}">Admin${pendingCount() ? `<span class="count" aria-label="${pendingCount()} waiting">${pendingCount()}</span>` : ""}</button>` : ""}</div>`;
     return;
   }
   let prev = `<span></span>`, next = `<span></span>`, mid;
@@ -504,6 +608,7 @@ function renderDay() {
 
   // Your own row first, so you don't have to look for it.
   const ordered = myKey() ? [...list.filter(m => m.key === myKey()), ...list.filter(m => m.key !== myKey())] : list;
+  const allShots = [];
   const rows = ordered.map(m => {
     const st = statusOf(k, m.key), rec = tickOf(k, m.key) || {}, editable = canEdit(k, m.key);
     const toggles = RULES.map(([r, label, kind]) =>
@@ -513,12 +618,21 @@ function renderDay() {
     if (noteOpen === m.key && editable) note = `<input id="note-${m.key}" data-note="${m.key}" maxlength="140" placeholder="Note" value="${esc(rec.note)}" aria-label="Note for ${esc(m.name)}">`;
     else if (rec.note) note = `<p>${esc(rec.note)}</p>`;
     const noteBtn = editable ? `<button class="icon ${rec.note ? "has" : ""}" data-open-note="${m.key}" aria-label="${rec.note ? "Edit" : "Add"} note for ${esc(m.name)}">${SVG.note}</button>` : `<span class="nb-space"></span>`;
+    const images = rec.images || [];
+    allShots.push(...images);
+    const camBtn = editable && images.length + (uploading[m.key] || 0) < MAX_SHOTS
+      ? `<button class="icon cam" data-add-shot="${m.key}" aria-label="Add screenshot for ${esc(m.name)}">${SVG.camera}</button>` : `<span class="cam-space"></span>`;
+    const shots = images.map((p, i) => `<button class="shot" data-view-shot="${m.key}|${esc(p)}" aria-label="Screenshot ${i + 1} from ${esc(m.name)}"
+        style="${shotUrls[p] ? `background-image:url('${shotUrls[p]}')` : ""}"></button>`).join("")
+      + Array.from({ length: uploading[m.key] || 0 }, () => `<span class="shot busy">Uploading…</span>`).join("");
     return `<div class="member ${editable ? "" : "locked"}">
-      <div class="mrow"><span class="name">${esc(m.name)}${m.key === myKey() ? `<span class="you">YOU</span>` : ""}</span>${noteBtn}${dot(st, m.name)}</div>
+      <div class="mrow"><span class="name">${esc(m.name)}${m.key === myKey() ? `<span class="you">YOU</span>` : ""}</span>${camBtn}${noteBtn}${dot(st, m.name)}</div>
       <div class="toggles">${toggles}</div>
       ${note ? `<div class="note">${note}</div>` : ""}
+      ${shots ? `<div class="shots">${shots}</div>` : ""}
     </div>`;
   }).join("");
+  ensureShotUrls(allShots);
 
   const summary = `<div class="card">
     <div class="track" title="Homework window"><div class="fill" style="width:${frac * 100}%"></div>${isFinal(k) ? "" : `<div class="now" style="left:${frac * 100}%"></div>`}</div>
@@ -668,6 +782,13 @@ document.addEventListener("click", async e => {
   if (d.tab) return setTab(d.tab);
   if (d.tick) { const [key, r] = d.tick.split(":"); return editTick(selected, key, row => { row[r] = !row[r]; }); }
   if (d.openNote) { noteOpen = noteOpen === d.openNote ? null : d.openNote; return render(); }
+  if (d.addShot) { shotTarget = { day: selected, key: d.addShot }; const inp = document.getElementById("shotinput"); inp.value = ""; inp.click(); return; }
+  if (d.viewShot) { const i = d.viewShot.indexOf("|"); return openViewer(selected, d.viewShot.slice(0, i), d.viewShot.slice(i + 1)); }
+  if (t.id === "viewer-close") return document.getElementById("viewer").close();
+  if (t.id === "viewer-delete") {
+    if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Sure? Tap again"; return; }
+    return deleteShot();
+  }
   if (d.day) { selected = d.day; if (isWide()) { if (tab === "admin") tab = "day"; render(); } else setTab("day"); return; }
   if (d.approve) {
     const key = document.getElementById("pick-" + d.approve).value;
@@ -722,6 +843,13 @@ document.addEventListener("focusout", e => {
   }
 });
 wideQuery.addEventListener("change", () => render());
+document.getElementById("shotinput").addEventListener("change", e => {
+  const file = e.target.files && e.target.files[0];
+  if (file && shotTarget) uploadShot(shotTarget.day, shotTarget.key, file);
+  shotTarget = null;
+});
+// Tapping the dark area around a screenshot closes it.
+document.getElementById("viewer").addEventListener("click", e => { if (e.target.id === "viewer") e.target.close(); });
 
 // Keep the time-left bar current, and roll over to the next trading day by itself.
 setInterval(() => {

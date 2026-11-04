@@ -10,6 +10,7 @@ Batko approves new people and is the only admin.
 | `supabase/setup.sql` | Creates the database and all security rules (step 2) |
 | `supabase/import-old-ticks.sql` | Copies your ticks from the old claude.ai page (step 2) |
 | `supabase/make-me-admin.sql` | Makes you the admin (step 8) |
+| `supabase/update-2-screenshots.sql` | Adds journal screenshots (run once, after setup.sql) |
 
 **Who can do what** (enforced by the database itself, so it can't be bypassed from the website):
 
