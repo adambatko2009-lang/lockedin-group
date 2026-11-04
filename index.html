@@ -118,7 +118,7 @@
   .member:first-child { border-top: 0; padding-top: 0; }
   .member:last-child { padding-bottom: 0; }
   .mrow { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
-  .name { flex: 1; font-size: 17px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .name { flex: 1; font-size: 17px; font-weight: 600; min-width: 0; overflow: hidden; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
   .you { font-size: 11px; font-weight: 700; color: var(--accent-text); border: 1px solid currentColor; border-radius: 6px; padding: 0 5px; margin-left: 6px; vertical-align: 2px; }
   .icon { width: 44px; height: 44px; margin: -8px 0; border: 0; background: transparent; border-radius: 50%; color: var(--muted); cursor: pointer; display: grid; place-items: center; }
   .icon svg { width: 19px; height: 19px; }
@@ -210,7 +210,7 @@
   .cell.today { outline: 2px solid var(--text); outline-offset: 1px; }
 
   .lb { list-style: none; margin: 0; padding: 0; }
-  .lb li { display: grid; grid-template-columns: 24px 1fr auto; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .lb li { display: grid; grid-template-columns: 24px 32px 1fr auto; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
   .lb li:first-child { border-top: 0; padding-top: 0; }
   .rk { font: 700 15px var(--font-data); color: var(--muted); text-align: center; }
   .lb li.top .rk { color: var(--text); }
@@ -240,7 +240,8 @@
   .namebtn { border: 0; background: none; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; max-width: 100%;
              overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .namebtn:hover { text-decoration: underline; text-underline-offset: 3px; }
-  .avatar-l { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font-size: 28px; font-weight: 700; color: #fff; flex: none; }
+  .av { position: relative; flex: none; display: inline-grid; place-items: center; border-radius: 50%; overflow: hidden; color: #fff; font-weight: 700; line-height: 1; }
+  .av img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .phead { display: flex; align-items: center; gap: 14px; }
   .phead h1 { font-size: 24px; letter-spacing: -0.02em; margin: 0; }
   .phead p { margin: 2px 0 0; font-size: 14px; color: var(--muted); }
@@ -773,7 +774,7 @@ function renderDay() {
         style="${shotUrls[p] ? `background-image:url('${shotUrls[p]}')` : ""}"></button>`).join("")
       + Array.from({ length: uploading[m.key] || 0 }, () => `<span class="shot busy">Uploading…</span>`).join("");
     return `<div class="member ${editable ? "" : "locked"}">
-      <div class="mrow"><span class="name"><button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === myKey() ? `<span class="you">YOU</span>` : ""}</span>${editBtn}${dot(st, m.name)}</div>
+      <div class="mrow"><span class="name">${avatarHtml(m, 26)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === myKey() ? `<span class="you">YOU</span>` : ""}</span>${editBtn}${dot(st, m.name)}</div>
       <div class="toggles">${toggles}</div>
       ${note ? `<div class="note">${note}</div>` : ""}
       ${shots ? `<div class="shots">${shots}</div>` : ""}
@@ -855,6 +856,12 @@ function badgesFor(s) {
   }));
 }
 const topStreakBadge = s => badgesFor(s).filter(b => b.id.startsWith("streak") && b.earned).pop();
+// Discord picture when we have one; otherwise (or if it fails to load) a colored circle with the initial.
+function avatarHtml(m, px) {
+  const url = m.avatar_url ? m.avatar_url + (m.avatar_url.includes("?") ? "&" : "?") + "size=" + (px > 40 ? 128 : 64) : "";
+  return `<span class="av" style="width:${px}px;height:${px}px;font-size:${Math.round(px * 0.44)}px;background:${avatarColor(m.key)}" aria-hidden="true">${esc((m.name.trim()[0] || "?").toUpperCase())}${url
+    ? `<img src="${esc(url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}</span>`;
+}
 const avatarColor = key => `hsl(${[...key].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7)} 45% 42%)`;
 
 function rankOf(key) {
@@ -876,7 +883,7 @@ function renderProfile(key) {
   const since = s.since ? parse(s.since).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) : "–";
 
   const head = `<div class="card">
-    <div class="phead"><div class="avatar-l" style="background:${avatarColor(key)}" aria-hidden="true">${esc(m.name.trim()[0] || "?").toUpperCase()}</div>
+    <div class="phead">${avatarHtml(m, 64)}
       <div><h1>${esc(m.name)}${key === myKey() ? `<span class="you">YOU</span>` : ""}</h1><p>Rank #${rankOf(key) || "–"} · since ${since}</p></div></div>
     <div class="tiles">
       <div class="tile"><b>${s.run}</b><span>Streak</span></div>
@@ -942,14 +949,14 @@ function checkUnlocks() {
 }
 
 function renderBoard() {
-  const rows = activeMembers().map(m => ({ name: m.name, key: m.key, ...stats(m.key) }))
+  const rows = activeMembers().map(m => ({ name: m.name, key: m.key, m, ...stats(m.key) }))
     .sort((a, b) => b.points - a.points || b.run - a.run || a.name.localeCompare(b.name));
   let rank = 0, prev = null;
   const items = rows.map((r, i) => {
     if (!prev || r.points !== prev.points || r.run !== prev.run) rank = i + 1;
     prev = r;
     const detail = [r.run ? `${r.run}-day streak` : null, r.rate === null ? null : `${r.rate}%`].filter(Boolean).join(" · ") || "–";
-    return `<li class="${rank === 1 && r.points ? "top" : ""}"><span class="rk">${rank}</span>
+    return `<li class="${rank === 1 && r.points ? "top" : ""}"><span class="rk">${rank}</span>${avatarHtml(r.m, 32)}
       <div class="who2"><b><button class="namebtn" data-profile="${r.key}">${esc(r.name)}</button>${(b => b ? `<span class="mini-badge tier-${b.tier}" title="${esc(b.title)}">${b.icon}</span>` : "")(topStreakBadge(r))}${r.key === myKey() ? `<span class="you">YOU</span>` : ""}</b><span>${detail}</span></div>
       <span class="pts" aria-label="${r.points} points">${r.points}</span></li>`;
   }).join("");
