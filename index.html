@@ -136,7 +136,8 @@
   .member:first-child { border-top: 0; padding-top: 0; }
   .member:last-child { padding-bottom: 0; }
   .mrow { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
-  .name { flex: 1; font-size: 17px; font-weight: 600; min-width: 0; overflow: hidden; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+  .name { flex: 1; font-size: 17px; font-weight: 600; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+  .name .namebtn { flex: 0 1 auto; min-width: 4ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .you { font-size: 11px; font-weight: 700; color: var(--accent-text); border: 1px solid currentColor; border-radius: 6px; padding: 0 5px; margin-left: 6px; vertical-align: 2px; }
   .icon { width: 44px; height: 44px; margin: -8px 0; border: 0; background: transparent; border-radius: 50%; color: var(--muted); cursor: pointer; display: grid; place-items: center; }
   .icon svg { width: 19px; height: 19px; }
@@ -387,7 +388,7 @@
     .desk { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(340px, 1fr); gap: 16px; align-items: start; }
     .desk .maincol, .desk .side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
     .card { padding: 18px 20px; }
-    .member { display: grid; grid-template-columns: 150px minmax(0, 1fr) 36px 28px;
+    .member { display: grid; grid-template-columns: 180px minmax(0, 1fr) 36px 28px;
               grid-template-areas: "name tg nb st" ". breaks breaks breaks" ". note note note" ". shots shots shots";
               align-items: center; column-gap: 12px; padding: 10px 0; }
     .member .shots { grid-area: shots; margin-top: 6px; }
