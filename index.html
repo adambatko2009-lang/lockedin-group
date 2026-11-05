@@ -4,46 +4,52 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>MNQ Homework Tracker</title>
-<meta name="theme-color" content="#120c1f" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#faf5ff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;600&family=Fira+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500;600&display=swap">
 <style>
   /* Layout: content cards scroll under floating glass bars (date bar on top, tab bar at the bottom on phones).
      Glass is only on those bars, never on content. Monitors get a two-column dashboard and no tab bar.
-     Style: minimal, calm lavender ("Meditation & Mindfulness" palette). Violet for actions, color otherwise only for status.
-     Every text color meets 4.5:1 on its background in both themes. */
+     Style: monochrome "graphite" (black, cool grays, chrome numbers) with traffic-light status colors.
+     Dark is the default look; light is its mirror. Every text color meets 4.5:1 on its background in both themes. */
   :root {
-    --bg: #faf5ff; --surface: #ffffff; --surface-2: #f3ecfd; --line: #efe7fc; --line-strong: #ddd0f7;
-    --text: #1e1633; --text-2: #3b3156; --muted: #5b5175;
-    --accent: #7c3aed; --accent-text: #6d28d9; --on-accent: #ffffff;
-    --good: #047857; --warn: #f59e0b; --crit: #dc2626; --on-good: #ffffff; --on-warn: #1e1633; --on-crit: #ffffff;
+    --bg: #f5f5f7; --surface: #ffffff; --surface-2: #ececf1; --line: rgba(10, 10, 11, 0.08); --line-strong: rgba(10, 10, 11, 0.16);
+    --card: #ffffff; --card-hi: rgba(255, 255, 255, 0);
+    --chrome: linear-gradient(180deg, #2a2a31 0%, #0a0a0b 45%, #55555f 72%, #1c1c21 100%);
+    --text: #0a0a0b; --text-2: #3a3a42; --muted: #62626d;
+    --accent: #0a0a0b; --accent-text: #0a0a0b; --on-accent: #ffffff;
+    --good: #28c840; --warn: #febc2e; --crit: #ff5f57; --on-good: #0a0a0b; --on-warn: #0a0a0b; --on-crit: #0a0a0b;
     --discord: #5865f2;
-    --glass: rgba(255, 255, 255, 0.72); --glass-edge: rgba(124, 58, 237, 0.10); --glass-shade: rgba(76, 29, 149, 0.08);
-    --glass-pill: rgba(124, 58, 237, 0.10);
-    --font-ui: "Fira Sans", -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, sans-serif;
-    --font-data: "Fira Code", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --glass: rgba(255, 255, 255, 0.72); --glass-edge: rgba(10, 10, 11, 0.08); --glass-shade: rgba(0, 0, 0, 0.06);
+    --glass-pill: rgba(10, 10, 11, 0.07);
+    --font-ui: "Geist", -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, sans-serif;
+    --font-data: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   }
   /* Dark colors: when the device is dark (unless you picked Light in Settings), or when you picked Dark. */
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #120c1f; --surface: #1b1430; --surface-2: #251c3f; --line: #2e2550; --line-strong: #3d3268;
-      --text: #f5f0ff; --text-2: #d9cff5; --muted: #a99ccb;
-      --accent: #a78bfa; --accent-text: #c4b5fd; --on-accent: #1b1030;
-      --good: #34d399; --warn: #fbbf24; --crit: #f87171; --on-good: #1b1030; --on-warn: #1b1030; --on-crit: #1b1030;
-      --glass: rgba(27, 20, 48, 0.72); --glass-edge: rgba(196, 181, 253, 0.12); --glass-shade: rgba(0, 0, 0, 0.4);
-      --glass-pill: rgba(196, 181, 253, 0.12);
+      --bg: #000000; --surface: #141418; --surface-2: #1c1c21; --line: rgba(255, 255, 255, 0.08); --line-strong: rgba(255, 255, 255, 0.16);
+      --card: linear-gradient(180deg, #1c1c21 0%, #0b0b0e 100%); --card-hi: rgba(255, 255, 255, 0.06);
+      --chrome: linear-gradient(180deg, #ffffff 0%, #ececf1 34%, #9d9da8 58%, #e6e6ec 82%, #c4c4cc 100%);
+      --text: #f5f5f7; --text-2: #c9c9d1; --muted: #8e8e99;
+      --accent: #f5f5f7; --accent-text: #f5f5f7; --on-accent: #0a0a0b;
+      --good: #28c840; --warn: #febc2e; --crit: #ff5f57; --on-good: #0a0a0b; --on-warn: #0a0a0b; --on-crit: #0a0a0b;
+      --glass: rgba(12, 12, 14, 0.72); --glass-edge: rgba(255, 255, 255, 0.08); --glass-shade: rgba(0, 0, 0, 0.5);
+      --glass-pill: rgba(255, 255, 255, 0.10);
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-      --bg: #120c1f; --surface: #1b1430; --surface-2: #251c3f; --line: #2e2550; --line-strong: #3d3268;
-      --text: #f5f0ff; --text-2: #d9cff5; --muted: #a99ccb;
-      --accent: #a78bfa; --accent-text: #c4b5fd; --on-accent: #1b1030;
-      --good: #34d399; --warn: #fbbf24; --crit: #f87171; --on-good: #1b1030; --on-warn: #1b1030; --on-crit: #1b1030;
-      --glass: rgba(27, 20, 48, 0.72); --glass-edge: rgba(196, 181, 253, 0.12); --glass-shade: rgba(0, 0, 0, 0.4);
-      --glass-pill: rgba(196, 181, 253, 0.12);
+      --bg: #000000; --surface: #141418; --surface-2: #1c1c21; --line: rgba(255, 255, 255, 0.08); --line-strong: rgba(255, 255, 255, 0.16);
+      --card: linear-gradient(180deg, #1c1c21 0%, #0b0b0e 100%); --card-hi: rgba(255, 255, 255, 0.06);
+      --chrome: linear-gradient(180deg, #ffffff 0%, #ececf1 34%, #9d9da8 58%, #e6e6ec 82%, #c4c4cc 100%);
+      --text: #f5f5f7; --text-2: #c9c9d1; --muted: #8e8e99;
+      --accent: #f5f5f7; --accent-text: #f5f5f7; --on-accent: #0a0a0b;
+      --good: #28c840; --warn: #febc2e; --crit: #ff5f57; --on-good: #0a0a0b; --on-warn: #0a0a0b; --on-crit: #0a0a0b;
+      --glass: rgba(12, 12, 14, 0.72); --glass-edge: rgba(255, 255, 255, 0.08); --glass-shade: rgba(0, 0, 0, 0.5);
+      --glass-pill: rgba(255, 255, 255, 0.10);
       color-scheme: dark;
   }
   * { box-sizing: border-box; }
@@ -103,7 +109,7 @@
                    background: var(--crit); color: #fff; font-size: 10px; font-weight: 700; display: grid; place-items: center; }
 
   /* ---------- content (solid, no glass) ---------- */
-  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-width: 0; }
+  .card { background: var(--card); border: 1px solid var(--line); box-shadow: inset 0 1px 0 var(--card-hi); border-radius: 16px; padding: 16px; min-width: 0; }
   .msg { font-size: 14px; color: var(--text-2); margin: 0; }
   .msg.err { color: var(--crit); }
 
@@ -111,7 +117,9 @@
   .track .fill { position: absolute; inset: 0 auto 0 0; border-radius: 3px; background: var(--muted); opacity: 0.6; }
   .track .now { position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: var(--text); box-shadow: 0 0 0 3px var(--surface); }
   .meta { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; gap: 10px; }
-  .meta .count { font: 600 28px var(--font-data); letter-spacing: -0.02em; }
+  .meta .count { font: 600 30px var(--font-data); letter-spacing: -0.03em; }
+  .meta .count, .pts, .tile b { background: var(--chrome); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .meta .count span { -webkit-text-fill-color: var(--muted); }
   .meta .count span { font-size: 17px; color: var(--muted); font-weight: 500; }
   .meta .time { font: 600 14px var(--font-data); color: var(--text-2); text-align: right; }
   .stack { display: flex; gap: 2px; height: 6px; margin-top: 12px; }
@@ -164,7 +172,7 @@
   .panel header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
   .panel header b { display: block; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
   .panel header span { font-size: 14px; color: var(--muted); }
-  .panel h3 { font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; margin: 18px 0 8px; }
+  .panel h3 { font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin: 18px 0 8px; }
   .panel textarea { width: 100%; min-height: 96px; resize: vertical; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px;
                     color: var(--text); font: 16px/1.4 var(--font-ui); padding: 10px 12px; }
   .panel textarea::placeholder { color: var(--muted); }
@@ -238,12 +246,12 @@
   .gate h1 { font-size: 26px; letter-spacing: -0.02em; margin: 0 0 6px; }
   .gate p { color: var(--text-2); margin: 0 0 22px; }
   .gate .avatar { width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 12px; display: block; background: var(--surface-2); }
-  .btn { min-height: 48px; padding: 0 22px; border-radius: 14px; border: 0; font-size: 16px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; }
+  .btn { min-height: 48px; padding: 0 22px; border-radius: 999px; border: 0; font-size: 16px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; }
   .btn:active { transform: scale(0.97); }
   .btn.discord { background: var(--discord); color: #fff; }
   .btn.primary { background: var(--accent); color: var(--on-accent); }
   .btn.plain { background: var(--surface-2); color: var(--text); }
-  .btn.small { min-height: 38px; padding: 0 14px; font-size: 14px; border-radius: 10px; }
+  .btn.small { min-height: 38px; padding: 0 16px; font-size: 14px; border-radius: 999px; }
   .btn.danger { background: transparent; color: var(--crit); box-shadow: inset 0 0 0 1.5px var(--line); }
 
   /* ---------- profile + achievements ---------- */
@@ -336,7 +344,7 @@
 
   /* ---------- admin ---------- */
   .cardhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -6px -6px 10px 0; }
-  .cardhead h2 { margin: 0; font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+  .cardhead h2 { margin: 0; font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; }
   .cardhead .nav { display: flex; align-items: center; gap: 2px; font-size: 14px; font-weight: 600; color: var(--text-2); }
   .cardhead .round { width: 36px; height: 36px; font-size: 18px; }
   .person { display: grid; grid-template-columns: 36px 1fr; gap: 4px 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
@@ -702,7 +710,7 @@ function celebrate() {
 
 // ---------------------------------------------------------------- personal settings
 // Saved to your account (user_settings table) and cached in this browser so the right colors show instantly.
-const DEFAULT_SETTINGS = { theme: "system", confetti: true, customBreaks: [], hiddenBreaks: [] };
+const DEFAULT_SETTINGS = { theme: "dark", confetti: true, customBreaks: [], hiddenBreaks: [] };
 const MAX_CUSTOM_BREAKS = 12;
 let settings = { ...DEFAULT_SETTINGS }, settingsOpen = false;
 try { settings = { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem("mnq-settings") || "{}") }; } catch (e) {}
@@ -711,7 +719,7 @@ function applyTheme() {
   if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
   else delete document.documentElement.dataset.theme;
   const dark = t === "dark" || (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
-  document.querySelectorAll('meta[name="theme-color"]').forEach(m => { m.removeAttribute("media"); m.content = dark ? "#120c1f" : "#faf5ff"; });
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => { m.removeAttribute("media"); m.content = dark ? "#000000" : "#f5f5f7"; });
 }
 applyTheme();
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
@@ -746,7 +754,7 @@ function openSettings() {
       <button class="round" id="panel-close" aria-label="Close">✕</button></header>
     <h3>Appearance</h3>
     <div class="segset" role="group" aria-label="Appearance">${opt("system", "System")}${opt("light", "Light")}${opt("dark", "Dark")}</div>
-    <p class="sub-hint" style="margin-top:8px">System follows your phone or computer.</p>
+    <p class="sub-hint" style="margin-top:8px">Dark is the default. System follows your phone or computer.</p>
     <h3>My rule breaks</h3>
     <div id="settings-breaks">${customBreaksListHtml()}</div>
     <h3>Celebrations</h3>
