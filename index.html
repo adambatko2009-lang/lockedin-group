@@ -1253,6 +1253,21 @@ setInterval(() => {
 // While waiting for approval, check every 20 seconds so the page opens as soon as you're approved.
 setInterval(() => { if (screen === "waiting" && session) loadAll(); }, 20000);
 
+// ---------------------------------------------------------------- errors
+// If something breaks, show what went wrong (and a reload button) instead of an endless "Loading…".
+function showCrash(err) {
+  const msg = (err && (err.stack || err.message)) || String(err);
+  console.error(err);
+  const app = document.getElementById("app");
+  if (!app || app.dataset.crashed) return;
+  app.dataset.crashed = "1";
+  app.innerHTML = `<div class="card"><p class="msg err"><b>Something went wrong.</b> Send Batko a screenshot of this box.</p>
+    <pre style="white-space:pre-wrap;font:12px/1.4 var(--font-data);color:var(--text-2);margin:10px 0">${esc(msg).slice(0, 1200)}</pre>
+    <button class="btn plain small" onclick="location.reload()">Reload</button></div>`;
+}
+window.addEventListener("error", e => showCrash(e.error || e.message));
+window.addEventListener("unhandledrejection", e => showCrash(e.reason));
+
 // ---------------------------------------------------------------- start
 (async () => {
   if (!sb) { screen = "setup"; return render(); }
