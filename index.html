@@ -4,46 +4,46 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>MNQ Homework Tracker</title>
-<meta name="theme-color" content="#020617" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#120c1f" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#faf5ff" media="(prefers-color-scheme: light)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;600&family=Fira+Sans:wght@400;500;600;700&display=swap">
 <style>
   /* Layout: content cards scroll under floating glass bars (date bar on top, tab bar at the bottom on phones).
      Glass is only on those bars, never on content. Monitors get a two-column dashboard and no tab bar.
-     Style: minimal Swiss. Slate neutrals, one monochrome "ink" for actions, color only for status.
+     Style: minimal, calm lavender ("Meditation & Mindfulness" palette). Violet for actions, color otherwise only for status.
      Every text color meets 4.5:1 on its background in both themes. */
   :root {
-    --bg: #f8fafc; --surface: #ffffff; --surface-2: #f1f5f9; --line: #e2e8f0; --line-strong: #cbd5e1;
-    --text: #0f172a; --text-2: #1e293b; --muted: #475569;
-    --accent: #0f172a; --accent-text: #0f172a; --on-accent: #ffffff;
-    --good: #15803d; --warn: #f59e0b; --crit: #dc2626; --on-good: #ffffff; --on-warn: #0f172a; --on-crit: #ffffff;
+    --bg: #faf5ff; --surface: #ffffff; --surface-2: #f3ecfd; --line: #efe7fc; --line-strong: #ddd0f7;
+    --text: #1e1633; --text-2: #3b3156; --muted: #5b5175;
+    --accent: #7c3aed; --accent-text: #6d28d9; --on-accent: #ffffff;
+    --good: #047857; --warn: #f59e0b; --crit: #dc2626; --on-good: #ffffff; --on-warn: #1e1633; --on-crit: #ffffff;
     --discord: #5865f2;
-    --glass: rgba(255, 255, 255, 0.74); --glass-edge: rgba(15, 23, 42, 0.08); --glass-shade: rgba(15, 23, 42, 0.06);
-    --glass-pill: rgba(15, 23, 42, 0.06);
+    --glass: rgba(255, 255, 255, 0.72); --glass-edge: rgba(124, 58, 237, 0.10); --glass-shade: rgba(76, 29, 149, 0.08);
+    --glass-pill: rgba(124, 58, 237, 0.10);
     --font-ui: "Fira Sans", -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, sans-serif;
     --font-data: "Fira Code", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   }
   /* Dark colors: when the device is dark (unless you picked Light in Settings), or when you picked Dark. */
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #020617; --surface: #0e1223; --surface-2: #1a1e2f; --line: #1e293b; --line-strong: #334155;
-      --text: #f8fafc; --text-2: #cbd5e1; --muted: #94a3b8;
-      --accent: #f8fafc; --accent-text: #f8fafc; --on-accent: #0f172a;
-      --good: #22c55e; --warn: #f59e0b; --crit: #dc2626; --on-good: #0f172a; --on-warn: #0f172a; --on-crit: #ffffff;
-      --glass: rgba(14, 18, 35, 0.72); --glass-edge: rgba(248, 250, 252, 0.08); --glass-shade: rgba(0, 0, 0, 0.4);
-      --glass-pill: rgba(248, 250, 252, 0.08);
+      --bg: #120c1f; --surface: #1b1430; --surface-2: #251c3f; --line: #2e2550; --line-strong: #3d3268;
+      --text: #f5f0ff; --text-2: #d9cff5; --muted: #a99ccb;
+      --accent: #a78bfa; --accent-text: #c4b5fd; --on-accent: #1b1030;
+      --good: #34d399; --warn: #fbbf24; --crit: #f87171; --on-good: #1b1030; --on-warn: #1b1030; --on-crit: #1b1030;
+      --glass: rgba(27, 20, 48, 0.72); --glass-edge: rgba(196, 181, 253, 0.12); --glass-shade: rgba(0, 0, 0, 0.4);
+      --glass-pill: rgba(196, 181, 253, 0.12);
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-      --bg: #020617; --surface: #0e1223; --surface-2: #1a1e2f; --line: #1e293b; --line-strong: #334155;
-      --text: #f8fafc; --text-2: #cbd5e1; --muted: #94a3b8;
-      --accent: #f8fafc; --accent-text: #f8fafc; --on-accent: #0f172a;
-      --good: #22c55e; --warn: #f59e0b; --crit: #dc2626; --on-good: #0f172a; --on-warn: #0f172a; --on-crit: #ffffff;
-      --glass: rgba(14, 18, 35, 0.72); --glass-edge: rgba(248, 250, 252, 0.08); --glass-shade: rgba(0, 0, 0, 0.4);
-      --glass-pill: rgba(248, 250, 252, 0.08);
+      --bg: #120c1f; --surface: #1b1430; --surface-2: #251c3f; --line: #2e2550; --line-strong: #3d3268;
+      --text: #f5f0ff; --text-2: #d9cff5; --muted: #a99ccb;
+      --accent: #a78bfa; --accent-text: #c4b5fd; --on-accent: #1b1030;
+      --good: #34d399; --warn: #fbbf24; --crit: #f87171; --on-good: #1b1030; --on-warn: #1b1030; --on-crit: #1b1030;
+      --glass: rgba(27, 20, 48, 0.72); --glass-edge: rgba(196, 181, 253, 0.12); --glass-shade: rgba(0, 0, 0, 0.4);
+      --glass-pill: rgba(196, 181, 253, 0.12);
       color-scheme: dark;
   }
   * { box-sizing: border-box; }
@@ -711,7 +711,7 @@ function applyTheme() {
   if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
   else delete document.documentElement.dataset.theme;
   const dark = t === "dark" || (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
-  document.querySelectorAll('meta[name="theme-color"]').forEach(m => { m.removeAttribute("media"); m.content = dark ? "#020617" : "#f8fafc"; });
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => { m.removeAttribute("media"); m.content = dark ? "#120c1f" : "#faf5ff"; });
 }
 applyTheme();
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
