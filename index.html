@@ -166,7 +166,9 @@
   .t:disabled { cursor: default; }
   .member.locked .t:not([aria-pressed="true"]) { opacity: 0.5; }
   .note { margin-top: 8px; }
-  .note p { margin: 0; font-size: 14px; color: var(--text-2); overflow-wrap: anywhere; }
+  .note p { margin: 0; font-size: 14px; color: var(--text-2); overflow-wrap: anywhere; white-space: pre-wrap;
+            display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; overflow: hidden; cursor: pointer; }
+  .note p.open { display: block; -webkit-line-clamp: unset; line-clamp: none; cursor: default; }
   .note input { width: 100%; min-height: 42px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px;
                 color: var(--text); font: 15px var(--font-ui); padding: 8px 12px; }
   .note input::placeholder { color: var(--muted); }
@@ -186,7 +188,7 @@
   .panel header b { display: block; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
   .panel header span { font-size: 14px; color: var(--muted); }
   .panel h3 { font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin: 18px 0 8px; }
-  .panel textarea { width: 100%; min-height: 96px; resize: vertical; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px;
+  .panel textarea { width: 100%; min-height: 140px; resize: vertical; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px;
                     color: var(--text); font: 16px/1.4 var(--font-ui); padding: 10px 12px; }
   .panel textarea::placeholder { color: var(--muted); }
   .panel .count-hint { font-size: 12px; color: var(--muted); text-align: right; margin-top: 4px; }
@@ -307,7 +309,7 @@
   .jentry { padding: 12px 0; border-top: 1px solid var(--line); }
   .jentry:first-of-type { border-top: 0; padding-top: 0; }
   .jentry .jd { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); }
-  .jentry p { margin: 6px 0 0; font-size: 15px; color: var(--text); overflow-wrap: anywhere; }
+  .jentry p { margin: 6px 0 0; font-size: 15px; color: var(--text); overflow-wrap: anywhere; white-space: pre-wrap; }
   .toast { position: fixed; z-index: 30; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 70px); transform: translateX(-50%);
            display: flex; align-items: center; gap: 12px; padding: 10px 18px 10px 10px; border-radius: 999px; max-width: calc(100% - 32px); }
   .toast .medal { width: 42px; height: 42px; margin: 0; }
@@ -910,8 +912,7 @@ function openPanel(day, key) {
     <label class="switchrow"><span><b>No trade today</b><small>Shows the group you sat out on purpose. Chart with executions, journal and HTF are still required.</small></span>
       <input type="checkbox" id="panel-notrade" role="switch" ${rec.no_trade ? "checked" : ""}></label>
     <h3>Note</h3>
-    <textarea id="panel-note" maxlength="140" placeholder="What did you trade, what did you learn?">${esc(rec.note)}</textarea>
-    <div class="count-hint" id="panel-count">${(rec.note || "").length}/140</div>
+    <textarea id="panel-note" maxlength="10000" placeholder="What did you trade, what did you learn?">${esc(rec.note)}</textarea>
     <h3>Pictures <span id="panel-pics-count"></span></h3>
     <div class="pics" id="panel-pics"></div>
     <h3>Rule breaks today</h3>
@@ -1380,6 +1381,9 @@ function setTab(t) { tab = t; profileKey = null; flash = ""; try { localStorage.
 
 // ---------------------------------------------------------------- events
 document.addEventListener("click", async e => {
+  // Tap a long note (not a link inside it) to show all of it.
+  const longNote = e.target.closest(".note p");
+  if (longNote && !e.target.closest("a")) { longNote.classList.add("open"); return; }
   const t = e.target.closest("button");
   if (!t) return;
   const d = t.dataset;
@@ -1480,7 +1484,6 @@ document.addEventListener("input", e => {
   if (e.target.id === "panel-excused" && editing) { const on = e.target.checked; return editTick(editing.day, editing.key, row => { row.excused = on; }); }
   if (e.target.id !== "panel-note" || !editing) return;
   const v = e.target.value;
-  document.getElementById("panel-count").textContent = `${v.length}/140`;
   editTick(editing.day, editing.key, row => { row.note = v; }, true);
 });
 document.addEventListener("keydown", e => {
