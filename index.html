@@ -12,14 +12,14 @@
 <style>
   /* Layout: content cards scroll under floating glass bars (date bar on top, tab bar at the bottom on phones).
      Glass is only on those bars, never on content. Monitors get a two-column dashboard and no tab bar.
-     Style: monochrome "graphite" (black, cool grays, chrome numbers) with traffic-light status colors.
+     Style: "graphite" (black, cool grays, chrome numbers), blue for actions, traffic-light status colors.
      Dark is the default look; light is its mirror. Every text color meets 4.5:1 on its background in both themes. */
   :root {
     --bg: #f5f5f7; --surface: #ffffff; --surface-2: #ececf1; --line: rgba(10, 10, 11, 0.08); --line-strong: rgba(10, 10, 11, 0.16);
     --card: #ffffff; --card-hi: rgba(255, 255, 255, 0);
     --chrome: linear-gradient(180deg, #2a2a31 0%, #0a0a0b 45%, #55555f 72%, #1c1c21 100%);
     --text: #0a0a0b; --text-2: #3a3a42; --muted: #62626d;
-    --accent: #0a0a0b; --accent-text: #0a0a0b; --on-accent: #ffffff;
+    --accent: #2563eb; --accent-text: #1d4ed8; --on-accent: #ffffff;
     --good: #28c840; --warn: #febc2e; --crit: #ff5f57; --on-good: #0a0a0b; --on-warn: #0a0a0b; --on-crit: #0a0a0b;
     --discord: #5865f2;
     --glass: rgba(255, 255, 255, 0.72); --glass-edge: rgba(10, 10, 11, 0.08); --glass-shade: rgba(0, 0, 0, 0.06);
@@ -34,7 +34,7 @@
       --card: linear-gradient(180deg, #1c1c21 0%, #0b0b0e 100%); --card-hi: rgba(255, 255, 255, 0.06);
       --chrome: linear-gradient(180deg, #ffffff 0%, #ececf1 34%, #9d9da8 58%, #e6e6ec 82%, #c4c4cc 100%);
       --text: #f5f5f7; --text-2: #c9c9d1; --muted: #8e8e99;
-      --accent: #f5f5f7; --accent-text: #f5f5f7; --on-accent: #0a0a0b;
+      --accent: #2563eb; --accent-text: #60a5fa; --on-accent: #ffffff;
       --good: #28c840; --warn: #febc2e; --crit: #ff5f57; --on-good: #0a0a0b; --on-warn: #0a0a0b; --on-crit: #0a0a0b;
       --glass: rgba(12, 12, 14, 0.72); --glass-edge: rgba(255, 255, 255, 0.08); --glass-shade: rgba(0, 0, 0, 0.5);
       --glass-pill: rgba(255, 255, 255, 0.10);
@@ -46,7 +46,7 @@
       --card: linear-gradient(180deg, #1c1c21 0%, #0b0b0e 100%); --card-hi: rgba(255, 255, 255, 0.06);
       --chrome: linear-gradient(180deg, #ffffff 0%, #ececf1 34%, #9d9da8 58%, #e6e6ec 82%, #c4c4cc 100%);
       --text: #f5f5f7; --text-2: #c9c9d1; --muted: #8e8e99;
-      --accent: #f5f5f7; --accent-text: #f5f5f7; --on-accent: #0a0a0b;
+      --accent: #2563eb; --accent-text: #60a5fa; --on-accent: #ffffff;
       --good: #28c840; --warn: #febc2e; --crit: #ff5f57; --on-good: #0a0a0b; --on-warn: #0a0a0b; --on-crit: #0a0a0b;
       --glass: rgba(12, 12, 14, 0.72); --glass-edge: rgba(255, 255, 255, 0.08); --glass-shade: rgba(0, 0, 0, 0.5);
       --glass-pill: rgba(255, 255, 255, 0.10);
