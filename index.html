@@ -282,6 +282,29 @@
   .toast b { display: block; font-size: 15px; } .toast span { font-size: 13px; color: var(--text-2); }
   @media (prefers-reduced-motion: no-preference) { .toast { animation: toast-in .45s cubic-bezier(.3, 1.4, .5, 1); } @keyframes toast-in { from { transform: translate(-50%, -30px); opacity: 0; } } }
 
+  /* ---------- no-trade, countdown, reflection ---------- */
+  .t.notrade { background: var(--surface-2); color: var(--text); border-style: solid; border-color: var(--line); }
+  .time.urgent { color: var(--crit); }
+  @media (prefers-reduced-motion: no-preference) {
+    .time.urgent { animation: pulse 1.6s ease-in-out infinite; }
+    @keyframes pulse { 50% { opacity: 0.4; } }
+  }
+  .urgent-banner { margin-top: 12px; padding: 10px 12px; border-radius: 12px; font-size: 14px; font-weight: 600;
+                   background: color-mix(in srgb, var(--crit) 16%, var(--surface)); color: var(--text); }
+  .reflect-nudge { margin-top: 12px; width: 100%; min-height: 44px; border-radius: 12px; border: 1.5px dashed var(--accent-text);
+                   background: transparent; color: var(--accent-text); font-size: 15px; font-weight: 600; cursor: pointer; }
+  .reflect label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin: 4px 0 6px; }
+  .reflect textarea { width: 100%; min-height: 76px; resize: vertical; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px;
+                      color: var(--text); font: 16px/1.4 var(--font-ui); padding: 10px 12px; margin-bottom: 10px; }
+  .reflect textarea::placeholder { color: var(--muted); }
+  .reflect .hint { font-size: 12px; color: var(--muted); margin: -4px 0 4px; }
+  .rentry { padding: 12px 0; border-top: 1px solid var(--line); }
+  .reflect form + .rentry, .rentry:first-of-type { border-top: 0; }
+  .rentry .who { display: flex; align-items: center; gap: 8px; font-weight: 600; margin-bottom: 6px; }
+  .rentry .who small { font-weight: 400; color: var(--muted); }
+  .rentry h4 { margin: 6px 0 2px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .rentry p { margin: 0; font-size: 15px; overflow-wrap: anywhere; white-space: pre-wrap; }
+
   /* ---------- admin ---------- */
   .cardhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -6px -6px 10px 0; }
   .cardhead h2 { margin: 0; font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
@@ -444,6 +467,7 @@ let tab = "day";
 let profileKey = null;   // whose profile page is open
 try { const t = localStorage.getItem("tab"); if (t) tab = t; } catch (e) {}
 let error = "", saving = 0, loaded = false, channel = null;
+let reflections = {};           // "monday|member" -> {week_start, member_key, went_well, to_fix}
 
 const myKey = () => (profile && profile.status === "approved" ? profile.member_key : null);
 const activeMembers = () => members.filter(m => m.active).sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name));
@@ -454,8 +478,10 @@ const canEdit = (k, key) => isAdmin || (key === myKey() && k === today && !isFin
 function statusOf(k, key) {
   const rec = tickOf(k, key);
   if (rec && rec.excused) return "EXCUSED";   // set by the admin: sick, travelling...
-  const req = rec ? REQUIRED.filter(r => rec[r]).length : 0;
-  if (req === REQUIRED.length) return "COMPLETE";
+  // On a no-trade day (sat out, no setup) the chart isn't required; journal + HTF still are.
+  const need = rec && rec.no_trade ? REQUIRED.filter(r => r !== "chart") : REQUIRED;
+  const req = rec ? need.filter(r => rec[r]).length : 0;
+  if (req === need.length) return "COMPLETE";
   if (req > 0) return "PARTIAL";
   if (!isFinal(k)) return "WAITING";       // the day is still open, nothing yet isn't a fail
   if (!dayHasAny(k)) return "UNLOGGED";      // nobody logged anything that day: don't count it
@@ -486,6 +512,10 @@ async function loadAll() {
   today = currentTradingDay();
   if (selected > today || !isTradingDay(selected)) selected = today;
   weekStart = mondayOf(selected);
+  // Weekly reflections (update 5). If that update isn't installed yet, the rest still works.
+  const rf = await sb.from("reflections").select("*").order("week_start", { ascending: false }).limit(3000);
+  reflections = {};
+  if (!rf.error) (rf.data || []).forEach(r => { reflections[r.week_start + "|" + r.member_key] = r; });
   if (isAdmin) await loadPeople();
   if (!isAdmin && tab === "admin") tab = "day";
   loaded = true; screen = "app";
@@ -509,6 +539,14 @@ function subscribe() {
       else if (!pending[id]) ticks[id] = payload.new;   // don't overwrite a tick you're still saving
       render();
     })
+    .on("postgres_changes", { event: "*", schema: "public", table: "reflections" }, payload => {
+      const row = payload.new && payload.new.week_start ? payload.new : payload.old;
+      if (!row || !row.week_start) return;
+      const id = row.week_start + "|" + row.member_key;
+      if (payload.eventType === "DELETE") delete reflections[id];
+      else if (!pendingRefl[id]) reflections[id] = payload.new;
+      render();
+    })
     .subscribe();
 }
 
@@ -517,7 +555,7 @@ const pending = {}, timers = {};
 function editTick(k, key, mutate, quiet) {
   if (!canEdit(k, key)) return;
   const id = k + "|" + key;
-  const row = Object.assign({ day: k, member_key: key, chart: false, journal: false, review: false, social: false, note: "", images: [] }, tickOf(k, key));
+  const row = Object.assign({ day: k, member_key: key, chart: false, journal: false, review: false, social: false, note: "", images: [], no_trade: false }, tickOf(k, key));
   row.images = [...(row.images || [])];
   mutate(row);
   ticks[id] = row; pending[id] = true;
@@ -527,7 +565,7 @@ function editTick(k, key, mutate, quiet) {
 }
 async function saveTick(id) {
   const row = ticks[id];
-  const body = { day: row.day, member_key: row.member_key, chart: !!row.chart, journal: !!row.journal, review: !!row.review, social: !!row.social, note: row.note || "", images: row.images || [], excused: !!row.excused };
+  const body = { day: row.day, member_key: row.member_key, chart: !!row.chart, journal: !!row.journal, review: !!row.review, social: !!row.social, note: row.note || "", images: row.images || [], excused: !!row.excused, no_trade: !!row.no_trade };
   saving++; renderTop();
   const { error: e } = await sb.from("ticks").upsert(body, { onConflict: "day,member_key" });
   saving--;
@@ -540,6 +578,50 @@ async function saveTick(id) {
     if (data) ticks[id] = data; else delete ticks[id];
   } else error = "";
   render();
+}
+
+// ---------------------------------------------------------------- weekly reflection
+// Each member writes their own for the current week (Friday's day stays open until Monday 09:00 New York).
+const pendingRefl = {}, reflTimers = {};
+const canEditReflection = (week, key) => !!key && (isAdmin || (key === myKey() && week === mondayOf(today)));
+function editReflection(week, key, field, value) {
+  if (!canEditReflection(week, key)) return;
+  const id = week + "|" + key;
+  reflections[id] = Object.assign({ week_start: week, member_key: key, went_well: "", to_fix: "" }, reflections[id], { [field]: value });
+  pendingRefl[id] = true;
+  renderTop();
+  clearTimeout(reflTimers[id]);
+  reflTimers[id] = setTimeout(() => saveReflection(id), 700);
+}
+async function saveReflection(id) {
+  const r = reflections[id];
+  saving++; renderTop();
+  const { error: e } = await sb.from("reflections").upsert(
+    { week_start: r.week_start, member_key: r.member_key, went_well: r.went_well || "", to_fix: r.to_fix || "" }, { onConflict: "week_start,member_key" });
+  saving--;
+  delete pendingRefl[id];
+  error = e ? "Reflection not saved: " + (/row-level security|42501/.test(e.message + e.code) ? "this week is closed." : e.message) : "";
+  renderTop();
+}
+
+function renderReflections() {
+  const week = weekStart, me = myKey(), editable = canEditReflection(week, me);
+  const label = `${fmtDay(week, { weekday: undefined })} – ${fmtDay(addDays(week, 4), { weekday: undefined })}`;
+  const mineRow = reflections[week + "|" + me] || {};
+  const form = editable ? `<form onsubmit="return false">
+      <label for="refl-well">What went well</label>
+      <textarea id="refl-well" data-refl="went_well" data-week="${week}" maxlength="600" placeholder="Patience on entries, followed the plan…">${esc(mineRow.went_well)}</textarea>
+      <label for="refl-fix">What to fix next week</label>
+      <textarea id="refl-fix" data-refl="to_fix" data-week="${week}" maxlength="600" placeholder="Stop moving my stop, size down after a loss…">${esc(mineRow.to_fix)}</textarea>
+      <p class="hint">Saves automatically · the whole group can read it</p></form>` : "";
+  const entries = activeMembers().filter(m => !(editable && m.key === me)).map(m => {
+    const r = reflections[week + "|" + m.key];
+    if (!r || !(r.went_well || r.to_fix)) return "";
+    return `<div class="rentry"><div class="who">${avatarHtml(m, 24)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button></div>
+      ${r.went_well ? `<h4>Went well</h4><p>${esc(r.went_well)}</p>` : ""}${r.to_fix ? `<h4>To fix</h4><p>${esc(r.to_fix)}</p>` : ""}</div>`;
+  }).join("");
+  return `<div class="card reflect" id="reflect"><div class="cardhead"><h2>Weekly reflection · ${label}</h2></div>
+    ${form}${entries || (form ? "" : `<p class="empty">No reflections for this week.</p>`)}</div>`;
 }
 
 // ---------------------------------------------------------------- screenshots
@@ -627,6 +709,8 @@ function openPanel(day, key) {
   panel.innerHTML = `<div class="grab" aria-hidden="true"></div>
     <header><div><b id="panel-title">${esc(m ? m.name : key)}</b><span>${fmtDay(day, { weekday: "long", month: "long" })}</span></div>
       <button class="round" id="panel-close" aria-label="Close">✕</button></header>
+    <label class="switchrow"><span><b>No trade today</b><small>No setup, sat out. Chart not needed; journal + HTF still are.</small></span>
+      <input type="checkbox" id="panel-notrade" role="switch" ${rec.no_trade ? "checked" : ""}></label>
     <h3>Note</h3>
     <textarea id="panel-note" maxlength="140" placeholder="What did you trade, what did you learn?">${esc(rec.note)}</textarea>
     <div class="count-hint" id="panel-count">${(rec.note || "").length}/140</div>
@@ -750,9 +834,17 @@ function renderDay() {
   const k = selected, now = Date.now(), list = activeMembers();
   const open = opensAt(k), close = closesAt(k);
   const frac = Math.min(1, Math.max(0, (now - open) / (close - open)));
-  let time;
+  let time, mins = null;
   if (isFinal(k)) time = dayHasAny(k) ? "Closed" : "Not logged";
-  else { const mins = Math.max(0, Math.round((close - now) / 60000)); time = `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, "0")}m left`; }
+  else { mins = Math.max(0, Math.round((close - now) / 60000)); time = `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, "0")}m left`; }
+  const urgent = mins !== null && mins <= 60;   // last hour: the timer turns red
+  const mine = myKey() && list.some(m => m.key === myKey()) ? statusOf(k, myKey()) : null;
+  const banner = urgent && mine && mine !== "COMPLETE" && mine !== "EXCUSED"
+    ? `<div class="urgent-banner" role="alert">⏰ ${mins} min left to finish your homework</div>` : "";
+  // Fridays: a reminder to write the weekly reflection, until you've written one.
+  const ownRefl = myKey() ? reflections[mondayOf(today) + "|" + myKey()] : null;
+  const nudge = k === today && parse(today).getUTCDay() === 5 && myKey() && !(ownRefl && (ownRefl.went_well || ownRefl.to_fix))
+    ? `<button class="reflect-nudge" id="goto-reflect">📝 Write your weekly reflection</button>` : "";
 
   const counts = {};
   list.forEach(m => { const s = statusOf(k, m.key); counts[s] = (counts[s] || 0) + 1; });
@@ -763,8 +855,9 @@ function renderDay() {
   const allShots = [];
   const rows = ordered.map(m => {
     const st = statusOf(k, m.key), rec = tickOf(k, m.key) || {}, editable = canEdit(k, m.key);
-    const toggles = RULES.map(([r, label, kind]) =>
-      `<button class="t ${kind}" data-tick="${m.key}:${r}" aria-pressed="${!!rec[r]}" ${editable ? "" : "disabled"}
+    const toggles = RULES.map(([r, label, kind]) => r === "chart" && rec.no_trade
+      ? `<button class="t notrade" data-edit="${m.key}" ${editable ? "" : "disabled"} aria-label="${esc(m.name)}: no trade today">🧘 No trade</button>`
+      : `<button class="t ${kind}" data-tick="${m.key}:${r}" aria-pressed="${!!rec[r]}" ${editable ? "" : "disabled"}
         aria-label="${esc(m.name)}: ${label}${kind === "bonus" ? " (bonus)" : ""}">${label}</button>`).join("");
     const note = rec.note ? `<p>${esc(rec.note)}</p>` : "";
     const images = rec.images || [];
@@ -784,8 +877,9 @@ function renderDay() {
 
   const summary = `<div class="card">
     <div class="track" title="Homework window"><div class="fill" style="width:${frac * 100}%"></div>${isFinal(k) ? "" : `<div class="now" style="left:${frac * 100}%"></div>`}</div>
-    <div class="meta"><div class="count">${counts.COMPLETE || 0}<span>/${list.length - (counts.EXCUSED || 0)} done</span></div><div class="time">${time}</div></div>
+    <div class="meta"><div class="count">${counts.COMPLETE || 0}<span>/${list.length - (counts.EXCUSED || 0)} done</span></div><div class="time ${urgent ? "urgent" : ""}">${time}</div></div>
     <div class="stack" aria-hidden="true">${stack}</div>
+    ${banner}${nudge}
   </div>`;
   const err = error && !isWide() && error.length > 48 ? `<div class="card"><p class="msg err">${esc(error)}</p></div>` : "";
   return { summary, list: err + `<div class="card">${rows || `<p class="empty">No members yet.</p>`}</div>` };
@@ -809,7 +903,7 @@ function renderWeek() {
 function stats(key) {
   const days = [...new Set(Object.keys(ticks).map(id => id.split("|")[0]))].filter(isTradingDay).sort();
   let points = 0, run = 0, best = 0, closed = 0, complete = 0, last = null;
-  let completeDays = 0, social = 0, notes = 0, pics = 0, comebacks = 0, prevSt = null, since = null;
+  let noTrades = 0, completeDays = 0, social = 0, notes = 0, pics = 0, comebacks = 0, prevSt = null, since = null;
   const weeks = {};   // monday -> {n: closed days counted, ex: excused days, ok: all Complete, open: has an open day}
   for (const k of days) {
     if (last && nextTrading(last) !== k) run = 0;   // an unlogged trading day in between breaks a streak
@@ -822,7 +916,7 @@ function stats(key) {
     if (raw && !since) since = k;
     if (rec.social) social++;
     points += (POINTS[st] || 0) + POINTS.bonus * (rec.social ? 1 : 0);
-    if (st === "COMPLETE") { run++; best = Math.max(best, run); completeDays++; if (prevSt === "MISSING") comebacks++; }
+    if (st === "COMPLETE") { run++; best = Math.max(best, run); completeDays++; if (prevSt === "MISSING") comebacks++; if (rec.no_trade) noTrades++; }
     else if (isFinal(k)) run = 0;
     if (isFinal(k)) { closed++; if (st === "COMPLETE") complete++; prevSt = st; w.n++; if (st !== "COMPLETE") w.ok = false; }
     else w.open = true;
@@ -832,7 +926,7 @@ function stats(key) {
   const perfectWeeks = Object.entries(weeks).filter(([mon, w]) =>
     w.ok && !w.open && w.n > 0 && w.n + w.ex === [0, 1, 2, 3, 4].filter(i => isTradingDay(addDays(mon, i))).length).length;
   return { points, run, best, rate: closed ? Math.round(100 * complete / closed) : null,
-           completeDays, social, notes, pics, comebacks, perfectWeeks, since };
+           completeDays, social, notes, pics, comebacks, perfectWeeks, noTrades, since };
 }
 
 // ---------------------------------------------------------------- achievements
@@ -846,6 +940,7 @@ const ACHIEVEMENTS = [
   { id: "social",   icon: "📣", unit: "social posts",      metric: s => s.social,       goals: [5, 25, 100] },
   { id: "points",   icon: "💎", unit: "points",            metric: s => s.points,       goals: [100, 500, 1000] },
   { id: "comeback", icon: "🔁", unit: "comebacks",         metric: s => s.comebacks,    goals: [1, 5], one: "Back on track" },
+  { id: "patience", icon: "🧘", unit: "no-trade days",     metric: s => s.noTrades,     goals: [1, 10, 25], one: "Sat out" },
   { id: "first",    icon: "🎯", unit: "complete day",      metric: s => s.completeDays, goals: [1], one: "First complete" },
 ];
 function badgesFor(s) {
@@ -923,9 +1018,14 @@ function renderProfile(key) {
         style="${shotUrls[p] ? `background-image:url('${shotUrls[p]}')` : ""}"></button>`).join("")}</div>` : ""}
     </div>`).join("") : `<p class="empty">No notes or pictures yet.</p>`}</div>`;
 
+  const refl = Object.values(reflections).filter(r => r.member_key === key && (r.went_well || r.to_fix))
+    .sort((a, b) => b.week_start.localeCompare(a.week_start)).slice(0, 4);
+  const reflCard = refl.length ? `<div class="card reflect"><div class="cardhead"><h2>Weekly reflections</h2></div>${refl.map(r => `<div class="rentry">
+      <div class="who"><small>Week of ${fmtDay(r.week_start, { weekday: undefined })}</small></div>
+      ${r.went_well ? `<h4>Went well</h4><p>${esc(r.went_well)}</p>` : ""}${r.to_fix ? `<h4>To fix</h4><p>${esc(r.to_fix)}</p>` : ""}</div>`).join("")}</div>` : "";
   return isWide()
-    ? `<div class="desk"><div class="maincol">${head}${ach}</div><div class="side">${heat}${journal}</div></div>`
-    : head + ach + heat + journal;
+    ? `<div class="desk"><div class="maincol">${head}${ach}</div><div class="side">${heat}${journal}${reflCard}</div></div>`
+    : head + ach + heat + journal + reflCard;
 }
 
 // Pop up "Achievement unlocked" when you earn a new badge (remembered per browser).
@@ -1037,14 +1137,16 @@ function render() {
   renderTop(); renderTabbar();
   const app = document.getElementById("app");
   if (screen !== "app") { app.innerHTML = renderGate(); return; }
+  const f = document.activeElement, keep = f && f.id && f.id.startsWith("refl-") ? { id: f.id, a: f.selectionStart, b: f.selectionEnd } : null;
   if (tab === "admin" && isAdmin) app.innerHTML = renderAdmin();
   else if (profileKey) app.innerHTML = renderProfile(profileKey);
   else if (isWide()) {
     const d = renderDay();
-    app.innerHTML = `<div class="desk"><div class="maincol">${d.summary}${d.list}</div><div class="side">${renderWeek()}${renderBoard()}</div></div>`;
-  } else if (tab === "week") app.innerHTML = renderWeek();
+    app.innerHTML = `<div class="desk"><div class="maincol">${d.summary}${d.list}</div><div class="side">${renderWeek()}${renderReflections()}${renderBoard()}</div></div>`;
+  } else if (tab === "week") app.innerHTML = renderWeek() + renderReflections();
   else if (tab === "board") app.innerHTML = renderBoard();
   else { const d = renderDay(); app.innerHTML = d.summary + d.list; }
+  if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus(); try { el.setSelectionRange(keep.a, keep.b); } catch (e) {} } }
   renderPanelPics();
   checkUnlocks();
 }
@@ -1058,6 +1160,13 @@ document.addEventListener("click", async e => {
   const d = t.dataset;
   if (d.tab) return setTab(d.tab);
   if (d.profile) { profileKey = d.profile; if (tab === "admin") tab = "day"; render(); return window.scrollTo(0, 0); }
+  if (t.id === "goto-reflect") {
+    weekStart = mondayOf(today);
+    if (!isWide()) setTab("week"); else render();
+    const el = document.getElementById("reflect");
+    if (el) window.scrollTo(0, el.getBoundingClientRect().top + scrollY - 80);
+    return;
+  }
   if (t.id === "profile-back") { profileKey = null; render(); return window.scrollTo(0, 0); }
   if (d.tick) { const [key, r] = d.tick.split(":"); return editTick(selected, key, row => { row[r] = !row[r]; }); }
   if (d.edit) return openPanel(selected, d.edit);
@@ -1115,6 +1224,8 @@ document.addEventListener("click", async e => {
   }
 });
 document.addEventListener("input", e => {
+  if (e.target.id === "panel-notrade" && editing) { const on = e.target.checked; return editTick(editing.day, editing.key, row => { row.no_trade = on; }); }
+  if (e.target.dataset && e.target.dataset.refl) return editReflection(e.target.dataset.week, myKey(), e.target.dataset.refl, e.target.value);
   if (e.target.id === "panel-excused" && editing) { const on = e.target.checked; return editTick(editing.day, editing.key, row => { row.excused = on; }); }
   if (e.target.id !== "panel-note" || !editing) return;
   const v = e.target.value;
