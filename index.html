@@ -623,6 +623,39 @@ async function saveTick(id) {
   render();
 }
 
+// ---------------------------------------------------------------- rule-break picker (standard + your own)
+function tagPickHtml(rec) {
+  const on = rec.rule_breaks || [], mine = settings.customBreaks || [];
+  // standard tags, then your own, then any tag still on this day that's no longer in your list
+  const all = [...BREAKS.map(([b, label]) => [b, label]), ...mine.map(t => [t, t]),
+               ...on.filter(t => !BREAK_LABEL[t] && !mine.includes(t)).map(t => [t, t])];
+  return `<div class="tagpick">${all.map(([b, label]) => `<button data-break="${esc(b)}" aria-pressed="${on.includes(b)}">${esc(label)}</button>`).join("")}
+    <button id="show-add-break" aria-label="Add your own rule break" style="border-style:dashed;color:var(--accent-text)">+ Add your own</button></div>
+    <div class="addrow" id="add-break-row" hidden><input class="field" id="newbreak" maxlength="30" placeholder="e.g. Traded the news" aria-label="Your own rule break">
+      <button class="btn primary small" id="add-break">Add</button></div>
+    <p class="sub-hint" id="add-break-msg" style="margin-top:6px"></p>`;
+}
+function renderTagPick() {
+  const box = document.getElementById("panel-tags");
+  if (box && editing) box.innerHTML = tagPickHtml(tickOf(editing.day, editing.key) || {});
+}
+function addCustomBreak() {
+  const input = document.getElementById("newbreak"), msg = document.getElementById("add-break-msg");
+  const text = input.value.replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, 30);
+  if (!text || !editing) return;
+  const lower = text.toLowerCase(), mine = settings.customBreaks || [];
+  // If it already exists (standard or yours), just tick that one instead of making a duplicate.
+  const existing = BREAKS.find(([b, label]) => label.toLowerCase() === lower || b === lower)?.[0] || mine.find(t => t.toLowerCase() === lower);
+  if (!existing) {
+    if (mine.length >= MAX_CUSTOM_BREAKS) { msg.textContent = `You can have ${MAX_CUSTOM_BREAKS} of your own. Remove one in ⚙︎ Settings first.`; return; }
+    settings.customBreaks = [...mine, text];
+    saveSettings();
+  }
+  const tag = existing || text;
+  editTick(editing.day, editing.key, row => { if (!row.rule_breaks.includes(tag)) row.rule_breaks = [...row.rule_breaks, tag]; });
+  renderTagPick();
+}
+
 // ---------------------------------------------------------------- confetti
 function celebrate() {
   if (settings.confetti === false || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -652,7 +685,8 @@ function celebrate() {
 
 // ---------------------------------------------------------------- personal settings
 // Saved to your account (user_settings table) and cached in this browser so the right colors show instantly.
-const DEFAULT_SETTINGS = { theme: "system", confetti: true };
+const DEFAULT_SETTINGS = { theme: "system", confetti: true, customBreaks: [] };
+const MAX_CUSTOM_BREAKS = 12;
 let settings = { ...DEFAULT_SETTINGS }, settingsOpen = false;
 try { settings = { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem("mnq-settings") || "{}") }; } catch (e) {}
 function applyTheme() {
@@ -676,6 +710,13 @@ async function saveSettings() {
   applyTheme();
   if (session) await sb.from("user_settings").upsert({ user_id: session.user.id, settings, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
 }
+function customBreaksListHtml() {
+  const mine = settings.customBreaks || [];
+  return mine.length
+    ? mine.map(t => `<div class="mem"><span style="flex:1">⚠ ${esc(t)}</span><button class="btn danger small" data-remove-custom="${esc(t)}">Remove</button></div>`).join("")
+      + `<p class="sub-hint" style="margin-top:8px">Removing only takes it off your list; days where you used it keep the tag.</p>`
+    : `<p class="sub-hint">None yet. Add your own in your ✎ panel under "Rule breaks today".</p>`;
+}
 function openSettings() {
   editing = null; settingsOpen = true;
   const opt = (v, label) => `<button data-theme-set="${v}" aria-pressed="${settings.theme === v}">${label}</button>`;
@@ -685,6 +726,8 @@ function openSettings() {
     <h3>Appearance</h3>
     <div class="segset" role="group" aria-label="Appearance">${opt("system", "System")}${opt("light", "Light")}${opt("dark", "Dark")}</div>
     <p class="sub-hint" style="margin-top:8px">System follows your phone or computer.</p>
+    <h3>My rule breaks</h3>
+    <div id="settings-breaks">${customBreaksListHtml()}</div>
     <h3>Celebrations</h3>
     <label class="switchrow"><span><b>Confetti</b><small>When you complete your day.</small></span>
       <input type="checkbox" id="set-confetti" role="switch" ${settings.confetti !== false ? "checked" : ""}></label>
@@ -828,7 +871,7 @@ function openPanel(day, key) {
     <div class="pics" id="panel-pics"></div>
     <h3>Rule breaks today</h3>
     <p class="sub-hint">Be honest: it never costs points, and it helps you spot patterns.</p>
-    <div class="tagpick">${BREAKS.map(([b, label]) => `<button data-break="${b}" aria-pressed="${(rec.rule_breaks || []).includes(b)}">${label}</button>`).join("")}</div>
+    <div id="panel-tags">${tagPickHtml(rec)}</div>
     ${(wk => canEditReflection(wk, key) ? `<h3 id="panel-refl">Weekly reflection · ${fmtDay(wk, { weekday: undefined })} – ${fmtDay(addDays(wk, 4), { weekday: undefined })}</h3>
     <div class="reflect">
       <label for="panel-refl-well">What went well</label>
@@ -1298,6 +1341,14 @@ document.addEventListener("click", async e => {
   if (d.tick) { const [key, r] = d.tick.split(":"); return editTick(selected, key, row => { row[r] = !row[r]; }); }
   if (d.edit) return openPanel(selected, d.edit);
   if (t.id === "open-settings") return openSettings();
+  if (t.id === "show-add-break") { const row = document.getElementById("add-break-row"); row.hidden = false; document.getElementById("newbreak").focus(); return; }
+  if (t.id === "add-break") return addCustomBreak();
+  if (d.removeCustom) {
+    settings.customBreaks = (settings.customBreaks || []).filter(x => x !== d.removeCustom);
+    saveSettings();
+    document.getElementById("settings-breaks").innerHTML = customBreaksListHtml();
+    return;
+  }
   if (d.themeSet) {
     settings.theme = d.themeSet; saveSettings();
     document.querySelectorAll("[data-theme-set]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.themeSet === settings.theme)));
@@ -1374,6 +1425,7 @@ document.addEventListener("input", e => {
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && (editing || settingsOpen) && !document.getElementById("viewer").open) closePanel();
   if (e.key === "Enter" && e.target.id === "newmember") document.getElementById("addmember").click();
+  if (e.key === "Enter" && e.target.id === "newbreak") { e.preventDefault(); addCustomBreak(); }
 });
 document.getElementById("scrim").addEventListener("click", closePanel);
 wideQuery.addEventListener("change", () => render());
