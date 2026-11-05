@@ -625,9 +625,9 @@ async function saveTick(id) {
 
 // ---------------------------------------------------------------- rule-break picker (standard + your own)
 function tagPickHtml(rec) {
-  const on = rec.rule_breaks || [], mine = settings.customBreaks || [];
-  // standard tags, then your own, then any tag still on this day that's no longer in your list
-  const all = [...BREAKS.map(([b, label]) => [b, label]), ...mine.map(t => [t, t]),
+  const on = rec.rule_breaks || [], mine = settings.customBreaks || [], hidden = settings.hiddenBreaks || [];
+  // standard tags you haven't hidden, then your own, then any tag still on this day that's no longer in your list
+  const all = [...BREAKS.filter(([b]) => !hidden.includes(b) || on.includes(b)), ...mine.map(t => [t, t]),
                ...on.filter(t => !BREAK_LABEL[t] && !mine.includes(t)).map(t => [t, t])];
   return `<div class="tagpick">${all.map(([b, label]) => `<button data-break="${esc(b)}" aria-pressed="${on.includes(b)}">${esc(label)}</button>`).join("")}
     <button id="show-add-break" aria-label="Add your own rule break" style="border-style:dashed;color:var(--accent-text)">+ Add your own</button></div>
@@ -685,7 +685,7 @@ function celebrate() {
 
 // ---------------------------------------------------------------- personal settings
 // Saved to your account (user_settings table) and cached in this browser so the right colors show instantly.
-const DEFAULT_SETTINGS = { theme: "system", confetti: true, customBreaks: [] };
+const DEFAULT_SETTINGS = { theme: "system", confetti: true, customBreaks: [], hiddenBreaks: [] };
 const MAX_CUSTOM_BREAKS = 12;
 let settings = { ...DEFAULT_SETTINGS }, settingsOpen = false;
 try { settings = { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem("mnq-settings") || "{}") }; } catch (e) {}
@@ -711,11 +711,15 @@ async function saveSettings() {
   if (session) await sb.from("user_settings").upsert({ user_id: session.user.id, settings, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
 }
 function customBreaksListHtml() {
-  const mine = settings.customBreaks || [];
-  return mine.length
-    ? mine.map(t => `<div class="mem"><span style="flex:1">⚠ ${esc(t)}</span><button class="btn danger small" data-remove-custom="${esc(t)}">Remove</button></div>`).join("")
-      + `<p class="sub-hint" style="margin-top:8px">Removing only takes it off your list; days where you used it keep the tag.</p>`
-    : `<p class="sub-hint">None yet. Add your own in your ✎ panel under "Rule breaks today".</p>`;
+  const mine = settings.customBreaks || [], hidden = settings.hiddenBreaks || [];
+  const row = (label, btn) => `<div class="mem"><span style="flex:1">⚠ ${esc(label)}</span>${btn}</div>`;
+  const shown = BREAKS.filter(([b]) => !hidden.includes(b)).map(([b, label]) => row(label, `<button class="btn plain small" data-hide-break="${b}">Hide</button>`)).join("");
+  const own = mine.map(t => row(t + " (yours)", `<button class="btn danger small" data-remove-custom="${esc(t)}">Remove</button>`)).join("");
+  const gone = BREAKS.filter(([b]) => hidden.includes(b));
+  return shown + own
+    + (gone.length ? `<p class="sub-hint" style="margin:12px 0 6px">Hidden:</p><div class="tagpick">${gone.map(([b, label]) =>
+        `<button data-unhide-break="${b}" aria-label="Show ${esc(label)} again">+ ${esc(label)}</button>`).join("")}</div>` : "")
+    + `<p class="sub-hint" style="margin-top:10px">Add your own in your ✎ panel. Hiding or removing a tag only changes your list; days where you used it keep the tag.</p>`;
 }
 function openSettings() {
   editing = null; settingsOpen = true;
@@ -1343,6 +1347,13 @@ document.addEventListener("click", async e => {
   if (t.id === "open-settings") return openSettings();
   if (t.id === "show-add-break") { const row = document.getElementById("add-break-row"); row.hidden = false; document.getElementById("newbreak").focus(); return; }
   if (t.id === "add-break") return addCustomBreak();
+  if (d.hideBreak || d.unhideBreak) {
+    const b = d.hideBreak || d.unhideBreak, hidden = settings.hiddenBreaks || [];
+    settings.hiddenBreaks = d.hideBreak ? [...new Set([...hidden, b])] : hidden.filter(x => x !== b);
+    saveSettings();
+    document.getElementById("settings-breaks").innerHTML = customBreaksListHtml();
+    return;
+  }
   if (d.removeCustom) {
     settings.customBreaks = (settings.customBreaks || []).filter(x => x !== d.removeCustom);
     saveSettings();
