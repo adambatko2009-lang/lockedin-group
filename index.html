@@ -4,53 +4,53 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>MNQ Homework Tracker</title>
-<meta name="theme-color" content="#0b0e10" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#eef1f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#020617" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;600&family=Fira+Sans:wght@400;500;600;700&display=swap">
 <style>
   /* Layout: content cards scroll under floating glass bars (date bar on top, tab bar at the bottom on phones).
-     Glass is only on those bars, never on content. Monitors get a two-column dashboard and no tab bar. */
+     Glass is only on those bars, never on content. Monitors get a two-column dashboard and no tab bar.
+     Style: minimal Swiss. Slate neutrals, one monochrome "ink" for actions, color only for status.
+     Every text color meets 4.5:1 on its background in both themes. */
   :root {
-    --bg: #eef1f3; --surface: #ffffff; --surface-2: #eef1f3; --line: #dfe4e7;
-    --text: #0e1316; --text-2: #3d474d; --muted: #5f6b72;
-    --accent: #1f65b0; --accent-text: #1f65b0; --on-accent: #ffffff;
-    --good: #1b7a33; --warn: #e9a521; --crit: #b83232; --on-good: #ffffff; --on-warn: #14110a; --on-crit: #ffffff;
+    --bg: #f8fafc; --surface: #ffffff; --surface-2: #f1f5f9; --line: #e2e8f0; --line-strong: #cbd5e1;
+    --text: #0f172a; --text-2: #1e293b; --muted: #475569;
+    --accent: #0f172a; --accent-text: #0f172a; --on-accent: #ffffff;
+    --good: #15803d; --warn: #f59e0b; --crit: #dc2626; --on-good: #ffffff; --on-warn: #0f172a; --on-crit: #ffffff;
     --discord: #5865f2;
-    --glass: rgba(255, 255, 255, 0.62); --glass-edge: rgba(255, 255, 255, 0.75); --glass-shade: rgba(16, 24, 32, 0.14);
-    --glass-pill: rgba(255, 255, 255, 0.9);
-    --glow-a: rgba(31, 101, 176, 0.10); --glow-b: rgba(27, 122, 51, 0.08);
-    --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif;
-    --font-data: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --glass: rgba(255, 255, 255, 0.74); --glass-edge: rgba(15, 23, 42, 0.08); --glass-shade: rgba(15, 23, 42, 0.06);
+    --glass-pill: rgba(15, 23, 42, 0.06);
+    --font-ui: "Fira Sans", -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, sans-serif;
+    --font-data: "Fira Code", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   }
   /* Dark colors: when the device is dark (unless you picked Light in Settings), or when you picked Dark. */
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #0b0e10; --surface: #161a1d; --surface-2: #1f2427; --line: #2b3236;
-      --text: #eef1f2; --text-2: #b9c2c7; --muted: #9aa4aa;
-      --accent: #2f6fb8; --accent-text: #6cb2f0; --on-accent: #ffffff;
-      --good: #1f8a3b; --warn: #f2b33d; --crit: #c43d3d;
-      --glass: rgba(30, 36, 40, 0.58); --glass-edge: rgba(255, 255, 255, 0.14); --glass-shade: rgba(0, 0, 0, 0.45);
-      --glass-pill: rgba(255, 255, 255, 0.14);
-      --glow-a: rgba(47, 111, 184, 0.16); --glow-b: rgba(31, 138, 59, 0.10);
+      --bg: #020617; --surface: #0e1223; --surface-2: #1a1e2f; --line: #1e293b; --line-strong: #334155;
+      --text: #f8fafc; --text-2: #cbd5e1; --muted: #94a3b8;
+      --accent: #f8fafc; --accent-text: #f8fafc; --on-accent: #0f172a;
+      --good: #22c55e; --warn: #f59e0b; --crit: #dc2626; --on-good: #0f172a; --on-warn: #0f172a; --on-crit: #ffffff;
+      --glass: rgba(14, 18, 35, 0.72); --glass-edge: rgba(248, 250, 252, 0.08); --glass-shade: rgba(0, 0, 0, 0.4);
+      --glass-pill: rgba(248, 250, 252, 0.08);
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-      --bg: #0b0e10; --surface: #161a1d; --surface-2: #1f2427; --line: #2b3236;
-      --text: #eef1f2; --text-2: #b9c2c7; --muted: #9aa4aa;
-      --accent: #2f6fb8; --accent-text: #6cb2f0; --on-accent: #ffffff;
-      --good: #1f8a3b; --warn: #f2b33d; --crit: #c43d3d;
-      --glass: rgba(30, 36, 40, 0.58); --glass-edge: rgba(255, 255, 255, 0.14); --glass-shade: rgba(0, 0, 0, 0.45);
-      --glass-pill: rgba(255, 255, 255, 0.14);
-      --glow-a: rgba(47, 111, 184, 0.16); --glow-b: rgba(31, 138, 59, 0.10);
+      --bg: #020617; --surface: #0e1223; --surface-2: #1a1e2f; --line: #1e293b; --line-strong: #334155;
+      --text: #f8fafc; --text-2: #cbd5e1; --muted: #94a3b8;
+      --accent: #f8fafc; --accent-text: #f8fafc; --on-accent: #0f172a;
+      --good: #22c55e; --warn: #f59e0b; --crit: #dc2626; --on-good: #0f172a; --on-warn: #0f172a; --on-crit: #ffffff;
+      --glass: rgba(14, 18, 35, 0.72); --glass-edge: rgba(248, 250, 252, 0.08); --glass-shade: rgba(0, 0, 0, 0.4);
+      --glass-pill: rgba(248, 250, 252, 0.08);
       color-scheme: dark;
   }
   * { box-sizing: border-box; }
   html { min-height: 100%; }
   body {
     margin: 0; min-height: 100%; color: var(--text); font: 16px/1.4 var(--font-ui); -webkit-font-smoothing: antialiased;
-    background: radial-gradient(60% 40% at 15% 0%, var(--glow-a), transparent 70%),
-                radial-gradient(50% 40% at 100% 30%, var(--glow-b), transparent 70%), var(--bg);
-    background-attachment: fixed;
+    background: var(--bg);
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
     padding-top: calc(10px + env(safe-area-inset-top, 0px));
@@ -66,7 +66,7 @@
     background: var(--glass);
     -webkit-backdrop-filter: blur(22px) saturate(180%); backdrop-filter: blur(22px) saturate(180%);
     border: 1px solid var(--glass-edge);
-    box-shadow: inset 0 1px 0 var(--glass-edge), 0 10px 30px var(--glass-shade);
+    box-shadow: 0 8px 24px var(--glass-shade);
   }
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .glass { background: var(--surface); } }
   @media (prefers-reduced-transparency: reduce) { .glass { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; } }
@@ -92,8 +92,7 @@
     width: min(380px, calc(100% - 32px));
     display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; padding: 5px; border-radius: 999px;
   }
-  .tabbar .pill { position: absolute; top: 5px; bottom: 5px; left: 5px; border-radius: 999px;
-                  background: var(--glass-pill); box-shadow: inset 0 1px 0 var(--glass-edge); }
+  .tabbar .pill { position: absolute; top: 5px; bottom: 5px; left: 5px; border-radius: 999px; background: var(--glass-pill); }
   .tabbar button { position: relative; min-height: 50px; border: 0; background: transparent; border-radius: 999px; cursor: pointer;
                    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; color: var(--text-2); }
   .tabbar button svg { width: 22px; height: 22px; }
@@ -104,7 +103,7 @@
                    background: var(--crit); color: #fff; font-size: 10px; font-weight: 700; display: grid; place-items: center; }
 
   /* ---------- content (solid, no glass) ---------- */
-  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px; min-width: 0; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; min-width: 0; }
   .msg { font-size: 14px; color: var(--text-2); margin: 0; }
   .msg.err { color: var(--crit); }
 
@@ -112,13 +111,13 @@
   .track .fill { position: absolute; inset: 0 auto 0 0; border-radius: 3px; background: var(--muted); opacity: 0.6; }
   .track .now { position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: var(--text); box-shadow: 0 0 0 3px var(--surface); }
   .meta { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; gap: 10px; }
-  .meta .count { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .meta .count { font: 600 28px var(--font-data); letter-spacing: -0.02em; }
   .meta .count span { font-size: 17px; color: var(--muted); font-weight: 500; }
   .meta .time { font: 600 14px var(--font-data); color: var(--text-2); text-align: right; }
   .stack { display: flex; gap: 2px; height: 6px; margin-top: 12px; }
   .stack i { border-radius: 3px; min-width: 6px; }
 
-  .dot { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 800; }
+  .dot { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; }
   .COMPLETE { background: var(--good); color: var(--on-good); }
   .PARTIAL { background: var(--warn); color: var(--on-warn); }
   .MISSING { background: var(--crit); color: var(--on-crit); }
@@ -137,21 +136,21 @@
   .icon:active { background: var(--surface-2); }
   .toggles { display: grid; grid-template-columns: repeat(3, 1fr) 1fr; gap: 6px; }
   .toggles .t:nth-child(4) { margin-left: 6px; }
-  .t { min-height: 48px; border-radius: 12px; border: 1.5px solid var(--line); background: transparent; color: var(--text-2);
+  .t { min-height: 48px; border-radius: 10px; border: 1px solid var(--line-strong); background: transparent; color: var(--text-2);
        font-size: 13px; font-weight: 600; line-height: 1.15; padding: 6px 4px; cursor: pointer; text-align: center; }
   .t.bonus { border-style: dashed; }
   .t[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-  .t[aria-pressed="true"]::before { content: "✓ "; font-weight: 800; }
+  .t[aria-pressed="true"]::before { content: "✓ "; font-weight: 700; }
   .t:not(:disabled):active { transform: scale(0.96); filter: brightness(0.92); }
   .t:disabled { cursor: default; }
-  .member.locked .t:not([aria-pressed="true"]) { opacity: 0.55; }
+  .member.locked .t:not([aria-pressed="true"]) { opacity: 0.5; }
   .note { margin-top: 8px; }
   .note p { margin: 0; font-size: 14px; color: var(--text-2); overflow-wrap: anywhere; }
   .note input { width: 100%; min-height: 42px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px;
                 color: var(--text); font: 15px var(--font-ui); padding: 8px 12px; }
   .note input::placeholder { color: var(--muted); }
   .shots { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .shot { width: 64px; height: 64px; padding: 0; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2) center / cover no-repeat; cursor: zoom-in; }
+  .shot { width: 64px; height: 64px; padding: 0; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2) center / cover no-repeat; cursor: zoom-in; }
   .shot.busy { cursor: default; display: grid; place-items: center; font-size: 11px; color: var(--muted); }
   .shot:active { transform: scale(0.96); }
 
@@ -215,7 +214,7 @@
   .grid th { font: 600 12px var(--font-ui); color: var(--muted); padding-bottom: 2px; }
   .grid th.who { width: 31%; }
   .grid td.who { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .cell { width: 100%; height: 40px; border-radius: 10px; border: 0; font-size: 15px; font-weight: 800; cursor: pointer; display: grid; place-items: center; }
+  .cell { width: 100%; height: 40px; border-radius: 8px; border: 0; font-size: 14px; font-weight: 700; cursor: pointer; display: grid; place-items: center; }
   .cell:active { transform: scale(0.94); }
   .cell.none { background: var(--surface-2); color: var(--muted); cursor: default; font-weight: 400; }
   .cell.today { outline: 2px solid var(--text); outline-offset: 1px; }
@@ -227,7 +226,7 @@
   .lb li.top .rk { color: var(--text); }
   .who2 b { display: block; font-size: 17px; font-weight: 600; }
   .who2 span { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .pts { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .pts { font: 600 20px var(--font-data); }
   details { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
   summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--muted); }
   details p { font-size: 14px; color: var(--text-2); margin: 8px 0 0; }
@@ -258,21 +257,22 @@
   .phead p { margin: 2px 0 0; font-size: 14px; color: var(--muted); }
   .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
   .tile { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; }
-  .tile b { display: block; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .tile b { display: block; font: 600 22px var(--font-data); }
   .tile span { font-size: 12px; color: var(--muted); }
   .badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 14px 10px; }
   .badge { text-align: center; min-width: 0; }
-  .medal { width: 56px; height: 56px; margin: 0 auto 6px; border-radius: 50%; display: grid; place-items: center; font-size: 26px;
+  .medal { width: 56px; height: 56px; margin: 0 auto 6px; border-radius: 50%; display: grid; place-items: center; color: var(--tier);
            background: color-mix(in srgb, var(--tier) 22%, var(--surface)); box-shadow: inset 0 0 0 2.5px var(--tier); }
   .badge.locked .medal { background: var(--surface-2); box-shadow: inset 0 0 0 1.5px var(--line); }
-  .badge.locked .medal span { filter: grayscale(1); opacity: 0.35; }
+  .badge.locked .medal { color: var(--muted); }
+  .badge.locked .medal span { opacity: 0.45; }
   .badge b { display: block; font-size: 13px; font-weight: 600; line-height: 1.2; }
   .badge small { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; text-transform: capitalize; }
   .badge .bar { height: 4px; border-radius: 2px; background: var(--surface-2); margin: 6px 8px 0; overflow: hidden; }
   .badge .bar i { display: block; height: 100%; background: var(--accent-text); border-radius: 2px; }
   .tier-bronze { --tier: #c27c48; } .tier-silver { --tier: #9fb0bb; } .tier-gold { --tier: #e3b341; }
   .tier-diamond { --tier: #5cc8f0; } .tier-legend { --tier: #b37df0; }
-  .mini-badge { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; font-size: 12px; margin-left: 6px; vertical-align: -4px;
+  .mini-badge { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; color: var(--tier); margin-left: 6px; vertical-align: -4px;
                 background: color-mix(in srgb, var(--tier) 22%, var(--surface)); box-shadow: inset 0 0 0 1.5px var(--tier); }
   .heat-wrap { overflow-x: auto; }
   table.heat { border-collapse: separate; border-spacing: 3px; }
@@ -289,21 +289,22 @@
   .jentry p { margin: 6px 0 0; font-size: 15px; color: var(--text); overflow-wrap: anywhere; }
   .toast { position: fixed; z-index: 30; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 70px); transform: translateX(-50%);
            display: flex; align-items: center; gap: 12px; padding: 10px 18px 10px 10px; border-radius: 999px; max-width: calc(100% - 32px); }
-  .toast .medal { width: 42px; height: 42px; font-size: 20px; margin: 0; }
+  .toast .medal { width: 42px; height: 42px; margin: 0; }
   .toast b { display: block; font-size: 15px; } .toast span { font-size: 13px; color: var(--text-2); }
   @media (prefers-reduced-motion: no-preference) { .toast { animation: toast-in .45s cubic-bezier(.3, 1.4, .5, 1); } @keyframes toast-in { from { transform: translate(-50%, -30px); opacity: 0; } } }
 
   /* ---------- no-trade, countdown, reflection ---------- */
-  .ntag { flex: none; font-size: 12px; font-weight: 600; color: var(--text-2); background: var(--surface-2); border-radius: 6px; padding: 1px 6px; }
+  .ic { flex: none; vertical-align: -3px; }
+  .ntag { display: inline-flex; align-items: center; gap: 4px; flex: none; font-size: 12px; font-weight: 600; color: var(--text-2); background: var(--surface-2); border-radius: 6px; padding: 1px 6px; }
   @media (max-width: 420px) { .ntag-text { display: none; } }
   .time.urgent { color: var(--crit); }
   @media (prefers-reduced-motion: no-preference) {
     .time.urgent { animation: pulse 1.6s ease-in-out infinite; }
     @keyframes pulse { 50% { opacity: 0.4; } }
   }
-  .urgent-banner { margin-top: 12px; padding: 10px 12px; border-radius: 12px; font-size: 14px; font-weight: 600;
+  .urgent-banner { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 10px 12px; border-radius: 12px; font-size: 14px; font-weight: 600;
                    background: color-mix(in srgb, var(--crit) 16%, var(--surface)); color: var(--text); }
-  .reflect-nudge { margin-top: 12px; width: 100%; min-height: 44px; border-radius: 12px; border: 1.5px dashed var(--accent-text);
+  .reflect-nudge { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; width: 100%; min-height: 44px; border-radius: 12px; border: 1.5px dashed var(--accent-text);
                    background: transparent; color: var(--accent-text); font-size: 15px; font-weight: 600; cursor: pointer; }
   .reflect label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin: 4px 0 6px; }
   .reflect textarea { width: 100%; min-height: 76px; resize: vertical; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px;
@@ -319,13 +320,12 @@
 
   /* ---------- rule breaks, settings, confetti ---------- */
   .breaks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .bchip { font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; color: var(--text);
+  .bchip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; color: var(--text);
            background: color-mix(in srgb, var(--crit) 14%, var(--surface)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--crit) 45%, transparent); }
   .tagpick { display: flex; flex-wrap: wrap; gap: 8px; }
   .tagpick button { min-height: 38px; padding: 0 13px; border-radius: 999px; border: 1.5px solid var(--line); background: transparent;
                     color: var(--text-2); font-size: 14px; font-weight: 600; cursor: pointer; }
   .tagpick button[aria-pressed="true"] { border-color: var(--crit); color: var(--text); background: color-mix(in srgb, var(--crit) 14%, var(--surface)); }
-  .tagpick button[aria-pressed="true"]::before { content: "⚠ "; }
   .tagpick button:active { transform: scale(0.96); }
   .panel .sub-hint { font-size: 13px; color: var(--muted); margin: -4px 0 10px; }
   .segset { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; background: var(--surface-2); border-radius: 11px; padding: 3px; }
@@ -440,6 +440,23 @@ const ICON = { COMPLETE: "✓", PARTIAL: "◐", MISSING: "✕", WAITING: "", UNL
 const LABEL = { COMPLETE: "Complete", PARTIAL: "Partial", MISSING: "Missing", WAITING: "Waiting", UNLOGGED: "Not logged", EXCUSED: "Excused" };
 const STATUS_ORDER = ["COMPLETE", "PARTIAL", "MISSING", "WAITING", "UNLOGGED", "EXCUSED"];
 const STATUS_COLOR = { COMPLETE: "var(--good)", PARTIAL: "var(--warn)", MISSING: "var(--crit)", WAITING: "var(--line)", UNLOGGED: "var(--line)", EXCUSED: "var(--muted)" };
+// Outline icons (no emoji): decorative next to text, so hidden from screen readers.
+const ICON_PATHS = {
+  alert: '<path d="M12 4 2.8 20h18.4L12 4z"/><path d="M12 10v4.5M12 17.4v.1"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/>',
+  pen: '<path d="M4 20h4L19 9l-4-4L4 16v4z"/>',
+  pause: '<rect x="6.5" y="5" width="3.5" height="14" rx="1"/><rect x="14" y="5" width="3.5" height="14" rx="1"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/>',
+  flame: '<path d="M12 3c1 4 5.5 5.6 5.5 10.2A5.5 5.5 0 0 1 6.5 13c0-2.6 1.5-4.2 2.6-5.1.3 1.7 1.1 2.8 2.5 3.2C11 8 11.6 5.4 12 3z"/>',
+  check: '<circle cx="12" cy="12" r="9"/><path d="m8 12.3 2.8 2.8L16.2 9"/>',
+  calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  camera: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+  megaphone: '<path d="M4 10.5v3a1 1 0 0 0 1 1h2.5l6.5 4V5.5l-6.5 4H5a1 1 0 0 0-1 1z"/><path d="M17.5 9a4 4 0 0 1 0 6"/>',
+  diamond: '<path d="M6.5 4h11l3.5 5-9 11L3 9l3.5-5z"/><path d="M3 9h18"/>',
+  repeat: '<path d="M17 3l3 3-3 3"/><path d="M4 11.5V10a4 4 0 0 1 4-4h12"/><path d="M7 21l-3-3 3-3"/><path d="M20 12.5V14a4 4 0 0 1-4 4H4"/>',
+  target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>',
+};
+const ic = (name, px = 16) => `<svg class="ic" viewBox="0 0 24 24" width="${px}" height="${px}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name] || ""}</svg>`;
 const SVG = {
   note: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>`,
   day: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>`,
@@ -647,7 +664,7 @@ function addCustomBreak() {
   // If it already exists (standard or yours), just tick that one instead of making a duplicate.
   const existing = BREAKS.find(([b, label]) => label.toLowerCase() === lower || b === lower)?.[0] || mine.find(t => t.toLowerCase() === lower);
   if (!existing) {
-    if (mine.length >= MAX_CUSTOM_BREAKS) { msg.textContent = `You can have ${MAX_CUSTOM_BREAKS} of your own. Remove one in ⚙︎ Settings first.`; return; }
+    if (mine.length >= MAX_CUSTOM_BREAKS) { msg.textContent = `You can have ${MAX_CUSTOM_BREAKS} of your own. Remove one in Settings first.`; return; }
     settings.customBreaks = [...mine, text];
     saveSettings();
   }
@@ -694,7 +711,7 @@ function applyTheme() {
   if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
   else delete document.documentElement.dataset.theme;
   const dark = t === "dark" || (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
-  document.querySelectorAll('meta[name="theme-color"]').forEach(m => { m.removeAttribute("media"); m.content = dark ? "#0b0e10" : "#eef1f3"; });
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => { m.removeAttribute("media"); m.content = dark ? "#020617" : "#f8fafc"; });
 }
 applyTheme();
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
@@ -712,14 +729,14 @@ async function saveSettings() {
 }
 function customBreaksListHtml() {
   const mine = settings.customBreaks || [], hidden = settings.hiddenBreaks || [];
-  const row = (label, btn) => `<div class="mem"><span style="flex:1">⚠ ${esc(label)}</span>${btn}</div>`;
+  const row = (label, btn) => `<div class="mem"><span style="flex:1;display:inline-flex;align-items:center;gap:6px">${ic("alert", 14)}${esc(label)}</span>${btn}</div>`;
   const shown = BREAKS.filter(([b]) => !hidden.includes(b)).map(([b, label]) => row(label, `<button class="btn plain small" data-hide-break="${b}">Hide</button>`)).join("");
   const own = mine.map(t => row(t + " (yours)", `<button class="btn danger small" data-remove-custom="${esc(t)}">Remove</button>`)).join("");
   const gone = BREAKS.filter(([b]) => hidden.includes(b));
   return shown + own
     + (gone.length ? `<p class="sub-hint" style="margin:12px 0 6px">Hidden:</p><div class="tagpick">${gone.map(([b, label]) =>
         `<button data-unhide-break="${b}" aria-label="Show ${esc(label)} again">+ ${esc(label)}</button>`).join("")}</div>` : "")
-    + `<p class="sub-hint" style="margin-top:10px">Add your own in your ✎ panel. Hiding or removing a tag only changes your list; days where you used it keep the tag.</p>`;
+    + `<p class="sub-hint" style="margin-top:10px">Add your own in your note panel. Hiding or removing a tag only changes your list; days where you used it keep the tag.</p>`;
 }
 function openSettings() {
   editing = null; settingsOpen = true;
@@ -770,7 +787,7 @@ function renderReflections() {
   const label = `${fmtDay(week, { weekday: undefined })} – ${fmtDay(addDays(week, 4), { weekday: undefined })}`;
   const mineRow = reflections[week + "|" + me] || {};
   // You write it in your ✎ panel; this card is for reading everyone's.
-  const form = editable && canEdit(today, me) ? `<button class="reflect-nudge" id="goto-reflect" style="margin:0 0 6px">✎ ${mineRow.went_well || mineRow.to_fix ? "Edit" : "Write"} your reflection</button>` : "";
+  const form = editable && canEdit(today, me) ? `<button class="reflect-nudge" id="goto-reflect" style="margin:0 0 6px">${ic("pen", 16)}${mineRow.went_well || mineRow.to_fix ? "Edit" : "Write"} your reflection</button>` : "";
   const entries = activeMembers().map(m => {
     const r = reflections[week + "|" + m.key];
     if (!r || !(r.went_well || r.to_fix)) return "";
@@ -1011,11 +1028,11 @@ function renderDay() {
   const urgent = mins !== null && mins <= 60;   // last hour: the timer turns red
   const mine = myKey() && list.some(m => m.key === myKey()) ? statusOf(k, myKey()) : null;
   const banner = urgent && mine && mine !== "COMPLETE" && mine !== "EXCUSED"
-    ? `<div class="urgent-banner" role="alert">⏰ ${mins} min left to finish your homework</div>` : "";
+    ? `<div class="urgent-banner" role="alert">${ic("clock", 18)}${mins} min left to finish your homework</div>` : "";
   // Fridays: a reminder to write the weekly reflection, until you've written one.
   const ownRefl = myKey() ? reflections[mondayOf(today) + "|" + myKey()] : null;
   const nudge = k === today && parse(today).getUTCDay() === 5 && myKey() && !(ownRefl && (ownRefl.went_well || ownRefl.to_fix))
-    ? `<button class="reflect-nudge" id="goto-reflect">📝 Write your weekly reflection</button>` : "";
+    ? `<button class="reflect-nudge" id="goto-reflect">${ic("pen", 16)}Write your weekly reflection</button>` : "";
 
   const counts = {};
   list.forEach(m => { const s = statusOf(k, m.key); counts[s] = (counts[s] || 0) + 1; });
@@ -1037,9 +1054,9 @@ function renderDay() {
         style="${shotUrls[p] ? `background-image:url('${shotUrls[p]}')` : ""}"></button>`).join("")
       + Array.from({ length: uploading[m.key] || 0 }, () => `<span class="shot busy">Uploading…</span>`).join("");
     return `<div class="member ${editable ? "" : "locked"}">
-      <div class="mrow"><span class="name">${avatarHtml(m, 26)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === myKey() ? `<span class="you">YOU</span>` : ""}${rec.no_trade ? `<span class="ntag" title="No trade today: sat out on purpose">🧘<span class="ntag-text"> No trade</span></span>` : ""}</span>${editBtn}${dot(st, m.name)}</div>
+      <div class="mrow"><span class="name">${avatarHtml(m, 26)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === myKey() ? `<span class="you">YOU</span>` : ""}${rec.no_trade ? `<span class="ntag" title="No trade today: sat out on purpose">${ic("pause", 13)}<span class="ntag-text">No trade</span></span>` : ""}</span>${editBtn}${dot(st, m.name)}</div>
       <div class="toggles">${toggles}</div>
-      ${(rec.rule_breaks || []).length ? `<div class="breaks">${rec.rule_breaks.map(b => `<span class="bchip">⚠ ${esc(BREAK_LABEL[b] || b)}</span>`).join("")}</div>` : ""}
+      ${(rec.rule_breaks || []).length ? `<div class="breaks">${rec.rule_breaks.map(b => `<span class="bchip">${ic("alert", 13)}${esc(BREAK_LABEL[b] || b)}</span>`).join("")}</div>` : ""}
       ${note ? `<div class="note">${note}</div>` : ""}
       ${shots ? `<div class="shots">${shots}</div>` : ""}
     </div>`;
@@ -1103,16 +1120,16 @@ function stats(key) {
 // ---------------------------------------------------------------- achievements
 const TIERS = ["bronze", "silver", "gold", "diamond", "legend"];
 const ACHIEVEMENTS = [
-  { id: "streak",   icon: "🔥", unit: "day streak",        metric: s => s.best,         goals: [5, 10, 20, 50, 100] },
-  { id: "complete", icon: "✅", unit: "complete days",     metric: s => s.completeDays, goals: [10, 25, 50, 100, 250] },
-  { id: "week",     icon: "📅", unit: "perfect weeks",     metric: s => s.perfectWeeks, goals: [1, 4, 12], one: "Perfect week" },
-  { id: "shots",    icon: "📸", unit: "screenshots",       metric: s => s.pics,         goals: [1, 25, 100], one: "First screenshot" },
-  { id: "notes",    icon: "✍️", unit: "journal notes",     metric: s => s.notes,        goals: [10, 50, 150] },
-  { id: "social",   icon: "📣", unit: "social posts",      metric: s => s.social,       goals: [5, 25, 100] },
-  { id: "points",   icon: "💎", unit: "points",            metric: s => s.points,       goals: [100, 500, 1000] },
-  { id: "comeback", icon: "🔁", unit: "comebacks",         metric: s => s.comebacks,    goals: [1, 5], one: "Back on track" },
-  { id: "patience", icon: "🧘", unit: "no-trade days",     metric: s => s.noTrades,     goals: [1, 10, 25], one: "Sat out" },
-  { id: "first",    icon: "🎯", unit: "complete day",      metric: s => s.completeDays, goals: [1], one: "First complete" },
+  { id: "streak",   icon: "flame", unit: "day streak",        metric: s => s.best,         goals: [5, 10, 20, 50, 100] },
+  { id: "complete", icon: "check", unit: "complete days",     metric: s => s.completeDays, goals: [10, 25, 50, 100, 250] },
+  { id: "week",     icon: "calendar", unit: "perfect weeks",     metric: s => s.perfectWeeks, goals: [1, 4, 12], one: "Perfect week" },
+  { id: "shots",    icon: "camera", unit: "screenshots",       metric: s => s.pics,         goals: [1, 25, 100], one: "First screenshot" },
+  { id: "notes",    icon: "pen", unit: "journal notes",     metric: s => s.notes,        goals: [10, 50, 150] },
+  { id: "social",   icon: "megaphone", unit: "social posts",      metric: s => s.social,       goals: [5, 25, 100] },
+  { id: "points",   icon: "diamond", unit: "points",            metric: s => s.points,       goals: [100, 500, 1000] },
+  { id: "comeback", icon: "repeat", unit: "comebacks",         metric: s => s.comebacks,    goals: [1, 5], one: "Back on track" },
+  { id: "patience", icon: "pause", unit: "no-trade days",     metric: s => s.noTrades,     goals: [1, 10, 25], one: "Sat out" },
+  { id: "first",    icon: "target", unit: "complete day",      metric: s => s.completeDays, goals: [1], one: "First complete" },
 ];
 function badgesFor(s) {
   return ACHIEVEMENTS.flatMap(a => a.goals.map((goal, i) => {
@@ -1150,7 +1167,7 @@ function renderProfile(key) {
 
   const head = `<div class="card">
     <div class="phead">${avatarHtml(m, 64)}
-      <div><h1>${esc(m.name)}${key === myKey() ? `<span class="you">YOU</span>` : ""}</h1><p>Rank #${rankOf(key) || "–"} · since ${since}</p>${key === myKey() ? `<button class="linkbtn" id="open-settings" style="padding:0">⚙︎ Settings</button>` : ""}</div></div>
+      <div><h1>${esc(m.name)}${key === myKey() ? `<span class="you">YOU</span>` : ""}</h1><p>Rank #${rankOf(key) || "–"} · since ${since}</p>${key === myKey() ? `<button class="linkbtn" id="open-settings" style="padding:0;display:inline-flex;align-items:center;gap:6px">${ic("gear", 15)}Settings</button>` : ""}</div></div>
     <div class="tiles">
       <div class="tile"><b>${s.run}</b><span>Streak</span></div>
       <div class="tile"><b>${s.best}</b><span>Best streak</span></div>
@@ -1163,7 +1180,7 @@ function renderProfile(key) {
   const order = [...badges.filter(b => b.earned), ...badges.filter(b => !b.earned)];
   const ach = `<div class="card"><div class="cardhead"><h2>Achievements · ${earned}/${badges.length}</h2></div><div class="badges">
     ${order.map(b => `<div class="badge tier-${b.tier} ${b.earned ? "" : "locked"}" title="${esc(b.title)}">
-      <div class="medal"><span>${b.icon}</span></div><b>${esc(b.title)}</b>
+      <div class="medal"><span>${ic(b.icon, 26)}</span></div><b>${esc(b.title)}</b>
       ${b.earned ? `<small>${b.tier}</small>` : `<div class="bar" aria-label="${b.have} of ${b.goal}"><i style="width:${Math.round(100 * b.have / b.goal)}%"></i></div><small>${b.have}/${b.goal}</small>`}
     </div>`).join("")}</div></div>`;
 
@@ -1193,8 +1210,8 @@ function renderProfile(key) {
   Object.values(ticks).filter(r => r.member_key === key && r.day >= since30).forEach(r => (r.rule_breaks || []).forEach(b => { bcounts[b] = (bcounts[b] || 0) + 1; }));
   const btop = Object.entries(bcounts).sort((a, b) => b[1] - a[1]);
   const breaksCard = `<div class="card"><div class="cardhead"><h2>Rule breaks · last 30 days</h2></div>${btop.length
-    ? `<div class="bcount">${btop.map(([b, n]) => `<span class="bchip">⚠ ${esc(BREAK_LABEL[b] || b)} ×${n}</span>`).join("")}</div>`
-    : `<p class="empty">None logged in the last 30 days. 🧼</p>`}</div>`;
+    ? `<div class="bcount">${btop.map(([b, n]) => `<span class="bchip">${ic("alert", 13)}${esc(BREAK_LABEL[b] || b)} ×${n}</span>`).join("")}</div>`
+    : `<p class="empty">None logged in the last 30 days.</p>`}</div>`;
   const refl = Object.values(reflections).filter(r => r.member_key === key && (r.went_well || r.to_fix))
     .sort((a, b) => b.week_start.localeCompare(a.week_start)).slice(0, 4);
   const reflCard = refl.length ? `<div class="card reflect"><div class="cardhead"><h2>Weekly reflections</h2></div>${refl.map(r => `<div class="rentry">
@@ -1219,7 +1236,7 @@ function checkUnlocks() {
   const fresh = earned.filter(b => !seen.includes(b.id));
   if (!fresh.length) return;
   const b = fresh[fresh.length - 1], t = document.getElementById("toast");
-  t.innerHTML = `<div class="medal tier-${b.tier}"><span>${b.icon}</span></div><div><b>Achievement unlocked!</b><span>${esc(b.title)}${fresh.length > 1 ? ` · +${fresh.length - 1} more` : ""}</span></div>`;
+  t.innerHTML = `<div class="medal tier-${b.tier}"><span>${ic(b.icon, 26)}</span></div><div><b>Achievement unlocked!</b><span>${esc(b.title)}${fresh.length > 1 ? ` · +${fresh.length - 1} more` : ""}</span></div>`;
   t.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { t.hidden = true; }, 4500);
@@ -1234,7 +1251,7 @@ function renderBoard() {
     prev = r;
     const detail = [r.run ? `${r.run}-day streak` : null, r.rate === null ? null : `${r.rate}%`].filter(Boolean).join(" · ") || "–";
     return `<li class="${rank === 1 && r.points ? "top" : ""}"><span class="rk">${rank}</span>${avatarHtml(r.m, 32)}
-      <div class="who2"><b><button class="namebtn" data-profile="${r.key}">${esc(r.name)}</button>${(b => b ? `<span class="mini-badge tier-${b.tier}" title="${esc(b.title)}">${b.icon}</span>` : "")(topStreakBadge(r))}${r.key === myKey() ? `<span class="you">YOU</span>` : ""}</b><span>${detail}</span></div>
+      <div class="who2"><b><button class="namebtn" data-profile="${r.key}">${esc(r.name)}</button>${(b => b ? `<span class="mini-badge tier-${b.tier}" title="${esc(b.title)}">${ic(b.icon, 13)}</span>` : "")(topStreakBadge(r))}${r.key === myKey() ? `<span class="you">YOU</span>` : ""}</b><span>${detail}</span></div>
       <span class="pts" aria-label="${r.points} points">${r.points}</span></li>`;
   }).join("");
   const me = members.find(m => m.key === myKey());
