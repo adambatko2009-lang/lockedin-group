@@ -355,6 +355,9 @@
   .bcount { display: flex; flex-wrap: wrap; gap: 8px; }
   #confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 40; }
 
+  .note a, .jentry a, .rentry a { color: var(--accent-text); font-weight: 500; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
+  .note a:hover, .jentry a:hover, .rentry a:hover { text-decoration-thickness: 2px; }
+
   /* ---------- admin ---------- */
   .cardhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -6px -6px 10px 0; }
   .cardhead h2 { margin: 0; font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; }
@@ -813,7 +816,7 @@ function renderReflections() {
     const r = reflections[week + "|" + m.key];
     if (!r || !(r.went_well || r.to_fix)) return "";
     return `<div class="rentry"><div class="who">${avatarHtml(m, 24)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === me ? `<span class="you">YOU</span>` : ""}</div>
-      ${r.went_well ? `<h4>Went well</h4><p>${esc(r.went_well)}</p>` : ""}${r.to_fix ? `<h4>To fix</h4><p>${esc(r.to_fix)}</p>` : ""}</div>`;
+      ${r.went_well ? `<h4>Went well</h4><p>${linkify(r.went_well)}</p>` : ""}${r.to_fix ? `<h4>To fix</h4><p>${linkify(r.to_fix)}</p>` : ""}</div>`;
   }).join("");
   return `<div class="card reflect" id="reflect"><div class="cardhead"><h2>Weekly reflection · ${label}</h2></div>
     ${form}${entries || `<p class="empty">No reflections for this week yet.</p>`}</div>`;
@@ -975,6 +978,15 @@ function slug(name) {
 
 // ---------------------------------------------------------------- rendering helpers
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+// Text with clickable links (only http/https). Shows a short "instagram.com/p/…" label; the full address is on hover.
+function linkify(text) {
+  return esc(text).replace(/https?:\/\/[^\s<]+/g, raw => {
+    const trail = raw.match(/[.,;:!?)\]]+$/), url = trail ? raw.slice(0, -trail[0].length) : raw;
+    let label = url.replace(/^https?:\/\/(www\.)?/, "");
+    if (label.length > 34) label = label.slice(0, 32) + "…";
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer nofollow" title="${url}">${label}</a>${trail ? trail[0] : ""}`;
+  });
+}
 const dot = (st, name) => `<span class="dot ${st}" role="img" aria-label="${name ? esc(name) + ": " : ""}${LABEL[st]}" title="${LABEL[st]}">${ICON[st]}</span>`;
 const wideQuery = window.matchMedia("(min-width: 960px)");
 const isWide = () => wideQuery.matches;
@@ -1067,7 +1079,7 @@ function renderDay() {
     const toggles = RULES.map(([r, label, kind]) =>
       `<button class="t ${kind}" data-tick="${m.key}:${r}" aria-pressed="${!!rec[r]}" ${editable ? "" : "disabled"}
         aria-label="${esc(m.name)}: ${label}${kind === "bonus" ? " (bonus)" : ""}">${label}</button>`).join("");
-    const note = rec.note ? `<p>${esc(rec.note)}</p>` : "";
+    const note = rec.note ? `<p>${linkify(rec.note)}</p>` : "";
     const images = rec.images || [];
     allShots.push(...images);
     const editBtn = editable ? `<button class="icon ${rec.note || images.length ? "has" : ""}" data-edit="${m.key}" aria-label="Note and pictures for ${esc(m.name)}">${SVG.note}</button>` : `<span class="nb-space"></span>`;
@@ -1222,7 +1234,7 @@ function renderProfile(key) {
   ensureShotUrls(paths);
   const journal = `<div class="card"><div class="cardhead"><h2>Recent journal</h2></div>${entries.length ? entries.map(r => `<div class="jentry">
       <div class="jd"><span>${fmtDay(r.day)}</span>${dot(statusOf(r.day, key))}</div>
-      ${r.note ? `<p>${esc(r.note)}</p>` : ""}
+      ${r.note ? `<p>${linkify(r.note)}</p>` : ""}
       ${(r.images || []).length ? `<div class="shots">${r.images.map((p, i) => `<button class="shot" data-view-shot="${key}|${esc(p)}" aria-label="Picture ${i + 1}, ${fmtDay(r.day)}"
         style="${shotUrls[p] ? `background-image:url('${shotUrls[p]}')` : ""}"></button>`).join("")}</div>` : ""}
     </div>`).join("") : `<p class="empty">No notes or pictures yet.</p>`}</div>`;
@@ -1237,7 +1249,7 @@ function renderProfile(key) {
     .sort((a, b) => b.week_start.localeCompare(a.week_start)).slice(0, 4);
   const reflCard = refl.length ? `<div class="card reflect"><div class="cardhead"><h2>Weekly reflections</h2></div>${refl.map(r => `<div class="rentry">
       <div class="who"><small>Week of ${fmtDay(r.week_start, { weekday: undefined })}</small></div>
-      ${r.went_well ? `<h4>Went well</h4><p>${esc(r.went_well)}</p>` : ""}${r.to_fix ? `<h4>To fix</h4><p>${esc(r.to_fix)}</p>` : ""}</div>`).join("")}</div>` : "";
+      ${r.went_well ? `<h4>Went well</h4><p>${linkify(r.went_well)}</p>` : ""}${r.to_fix ? `<h4>To fix</h4><p>${linkify(r.to_fix)}</p>` : ""}</div>`).join("")}</div>` : "";
   return isWide()
     ? `<div class="desk"><div class="maincol">${head}${ach}</div><div class="side">${heat}${breaksCard}${journal}${reflCard}</div></div>`
     : head + ach + heat + breaksCard + journal + reflCard;
