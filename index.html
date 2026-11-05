@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>MNQ Homework Tracker</title>
-<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#17181c" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +12,8 @@
 <style>
   /* Layout: content cards scroll under floating glass bars (date bar on top, tab bar at the bottom on phones).
      Glass is only on those bars, never on content. Monitors get a two-column dashboard and no tab bar.
-     Style: "graphite" (black, cool grays, chrome numbers), blue for actions, traffic-light status colors.
+     Style: "graphite" (charcoal, cool grays, chrome numbers), blue for actions, traffic-light status colors.
+     A faint dot grid + soft blue glows sit behind everything so the frosted glass bars read clearly.
      Dark is the default look; light is its mirror. Every text color meets 4.5:1 on its background in both themes. */
   :root {
     --bg: #f5f5f7; --surface: #ffffff; --surface-2: #ececf1; --line: rgba(10, 10, 11, 0.08); --line-strong: rgba(10, 10, 11, 0.16);
@@ -22,34 +23,37 @@
     --accent: #2563eb; --accent-text: #1d4ed8; --on-accent: #ffffff;
     --good: #28c840; --warn: #febc2e; --crit: #ff5f57; --on-good: #0a0a0b; --on-warn: #0a0a0b; --on-crit: #0a0a0b;
     --discord: #5865f2;
-    --glass: rgba(255, 255, 255, 0.72); --glass-edge: rgba(10, 10, 11, 0.08); --glass-shade: rgba(0, 0, 0, 0.06);
-    --glass-pill: rgba(10, 10, 11, 0.07);
+    --glass: rgba(255, 255, 255, 0.6); --glass-edge: rgba(10, 10, 11, 0.10); --glass-shade: rgba(0, 0, 0, 0.08);
+    --glass-pill: rgba(10, 10, 11, 0.07); --glass-hi: rgba(255, 255, 255, 0.8);
+    --glow-1: rgba(37, 99, 235, 0.10); --glow-2: rgba(96, 165, 250, 0.08); --dots: rgba(10, 10, 11, 0.06);
     --font-ui: "Geist", -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, sans-serif;
     --font-data: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   }
   /* Dark colors: when the device is dark (unless you picked Light in Settings), or when you picked Dark. */
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #000000; --surface: #141418; --surface-2: #1c1c21; --line: rgba(255, 255, 255, 0.08); --line-strong: rgba(255, 255, 255, 0.16);
-      --card: linear-gradient(180deg, #1c1c21 0%, #0b0b0e 100%); --card-hi: rgba(255, 255, 255, 0.06);
+      --bg: #17181c; --surface: #222329; --surface-2: #2b2c33; --line: rgba(255, 255, 255, 0.08); --line-strong: rgba(255, 255, 255, 0.16);
+      --card: linear-gradient(180deg, #25262c 0%, #1e1f24 100%); --card-hi: rgba(255, 255, 255, 0.06);
       --chrome: linear-gradient(180deg, #ffffff 0%, #ececf1 34%, #9d9da8 58%, #e6e6ec 82%, #c4c4cc 100%);
-      --text: #f5f5f7; --text-2: #c9c9d1; --muted: #8e8e99;
+      --text: #f5f5f7; --text-2: #c9c9d1; --muted: #9a9aa6;
       --accent: #2563eb; --accent-text: #60a5fa; --on-accent: #ffffff;
       --good: #28c840; --warn: #febc2e; --crit: #ff5f57; --on-good: #0a0a0b; --on-warn: #0a0a0b; --on-crit: #0a0a0b;
-      --glass: rgba(12, 12, 14, 0.72); --glass-edge: rgba(255, 255, 255, 0.08); --glass-shade: rgba(0, 0, 0, 0.5);
-      --glass-pill: rgba(255, 255, 255, 0.10);
+      --glass: rgba(255, 255, 255, 0.08); --glass-edge: rgba(255, 255, 255, 0.18); --glass-shade: rgba(0, 0, 0, 0.35);
+      --glass-pill: rgba(255, 255, 255, 0.14); --glass-hi: rgba(255, 255, 255, 0.14);
+      --glow-1: rgba(37, 99, 235, 0.22); --glow-2: rgba(96, 165, 250, 0.12); --dots: rgba(255, 255, 255, 0.05);
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-      --bg: #000000; --surface: #141418; --surface-2: #1c1c21; --line: rgba(255, 255, 255, 0.08); --line-strong: rgba(255, 255, 255, 0.16);
-      --card: linear-gradient(180deg, #1c1c21 0%, #0b0b0e 100%); --card-hi: rgba(255, 255, 255, 0.06);
+      --bg: #17181c; --surface: #222329; --surface-2: #2b2c33; --line: rgba(255, 255, 255, 0.08); --line-strong: rgba(255, 255, 255, 0.16);
+      --card: linear-gradient(180deg, #25262c 0%, #1e1f24 100%); --card-hi: rgba(255, 255, 255, 0.06);
       --chrome: linear-gradient(180deg, #ffffff 0%, #ececf1 34%, #9d9da8 58%, #e6e6ec 82%, #c4c4cc 100%);
-      --text: #f5f5f7; --text-2: #c9c9d1; --muted: #8e8e99;
+      --text: #f5f5f7; --text-2: #c9c9d1; --muted: #9a9aa6;
       --accent: #2563eb; --accent-text: #60a5fa; --on-accent: #ffffff;
       --good: #28c840; --warn: #febc2e; --crit: #ff5f57; --on-good: #0a0a0b; --on-warn: #0a0a0b; --on-crit: #0a0a0b;
-      --glass: rgba(12, 12, 14, 0.72); --glass-edge: rgba(255, 255, 255, 0.08); --glass-shade: rgba(0, 0, 0, 0.5);
-      --glass-pill: rgba(255, 255, 255, 0.10);
+      --glass: rgba(255, 255, 255, 0.08); --glass-edge: rgba(255, 255, 255, 0.18); --glass-shade: rgba(0, 0, 0, 0.35);
+      --glass-pill: rgba(255, 255, 255, 0.14); --glass-hi: rgba(255, 255, 255, 0.14);
+      --glow-1: rgba(37, 99, 235, 0.22); --glow-2: rgba(96, 165, 250, 0.12); --dots: rgba(255, 255, 255, 0.05);
       color-scheme: dark;
   }
   * { box-sizing: border-box; }
@@ -62,6 +66,14 @@
     padding-top: calc(10px + env(safe-area-inset-top, 0px));
     padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px));
   }
+  /* Calm backdrop so the glass bars have something to blur: two soft blue glows + a faint dot grid. Stays still while you scroll. */
+  body::after {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(42% 36% at 12% 8%, var(--glow-1), transparent 70%),
+      radial-gradient(38% 32% at 92% 88%, var(--glow-2), transparent 70%),
+      radial-gradient(var(--dots) 1px, transparent 1.4px) 0 0 / 22px 22px;
+  }
   main { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
   [hidden] { display: none !important; }
   button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent; }
@@ -70,9 +82,9 @@
   /* ---------- glass: navigation layer only ---------- */
   .glass {
     background: var(--glass);
-    -webkit-backdrop-filter: blur(22px) saturate(180%); backdrop-filter: blur(22px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%);
     border: 1px solid var(--glass-edge);
-    box-shadow: 0 8px 24px var(--glass-shade);
+    box-shadow: inset 0 1px 0 var(--glass-hi), 0 10px 30px var(--glass-shade);
   }
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .glass { background: var(--surface); } }
   @media (prefers-reduced-transparency: reduce) { .glass { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; } }
@@ -720,7 +732,7 @@ function applyTheme() {
   if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
   else delete document.documentElement.dataset.theme;
   const dark = t === "dark" || (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
-  document.querySelectorAll('meta[name="theme-color"]').forEach(m => { m.removeAttribute("media"); m.content = dark ? "#000000" : "#f5f5f7"; });
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => { m.removeAttribute("media"); m.content = dark ? "#17181c" : "#f5f5f7"; });
 }
 applyTheme();
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
