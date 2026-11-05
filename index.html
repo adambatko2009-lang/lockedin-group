@@ -21,8 +21,9 @@
     --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif;
     --font-data: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
   }
+  /* Dark colors: when the device is dark (unless you picked Light in Settings), or when you picked Dark. */
   @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
       --bg: #0b0e10; --surface: #161a1d; --surface-2: #1f2427; --line: #2b3236;
       --text: #eef1f2; --text-2: #b9c2c7; --muted: #9aa4aa;
       --accent: #2f6fb8; --accent-text: #6cb2f0; --on-accent: #ffffff;
@@ -32,6 +33,16 @@
       --glow-a: rgba(47, 111, 184, 0.16); --glow-b: rgba(31, 138, 59, 0.10);
       color-scheme: dark;
     }
+  }
+  :root[data-theme="dark"] {
+      --bg: #0b0e10; --surface: #161a1d; --surface-2: #1f2427; --line: #2b3236;
+      --text: #eef1f2; --text-2: #b9c2c7; --muted: #9aa4aa;
+      --accent: #2f6fb8; --accent-text: #6cb2f0; --on-accent: #ffffff;
+      --good: #1f8a3b; --warn: #f2b33d; --crit: #c43d3d;
+      --glass: rgba(30, 36, 40, 0.58); --glass-edge: rgba(255, 255, 255, 0.14); --glass-shade: rgba(0, 0, 0, 0.45);
+      --glass-pill: rgba(255, 255, 255, 0.14);
+      --glow-a: rgba(47, 111, 184, 0.16); --glow-b: rgba(31, 138, 59, 0.10);
+      color-scheme: dark;
   }
   * { box-sizing: border-box; }
   html { min-height: 100%; }
@@ -306,6 +317,23 @@
   .rentry h4 { margin: 6px 0 2px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
   .rentry p { margin: 0; font-size: 15px; overflow-wrap: anywhere; white-space: pre-wrap; }
 
+  /* ---------- rule breaks, settings, confetti ---------- */
+  .breaks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .bchip { font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; color: var(--text);
+           background: color-mix(in srgb, var(--crit) 14%, var(--surface)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--crit) 45%, transparent); }
+  .tagpick { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tagpick button { min-height: 38px; padding: 0 13px; border-radius: 999px; border: 1.5px solid var(--line); background: transparent;
+                    color: var(--text-2); font-size: 14px; font-weight: 600; cursor: pointer; }
+  .tagpick button[aria-pressed="true"] { border-color: var(--crit); color: var(--text); background: color-mix(in srgb, var(--crit) 14%, var(--surface)); }
+  .tagpick button[aria-pressed="true"]::before { content: "⚠ "; }
+  .tagpick button:active { transform: scale(0.96); }
+  .panel .sub-hint { font-size: 13px; color: var(--muted); margin: -4px 0 10px; }
+  .segset { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; background: var(--surface-2); border-radius: 11px; padding: 3px; }
+  .segset button { min-height: 38px; border: 0; border-radius: 8px; background: transparent; color: var(--text-2); font-size: 15px; font-weight: 600; cursor: pointer; }
+  .segset button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22); }
+  .bcount { display: flex; flex-wrap: wrap; gap: 8px; }
+  #confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 40; }
+
   /* ---------- admin ---------- */
   .cardhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -6px -6px 10px 0; }
   .cardhead h2 { margin: 0; font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
@@ -352,9 +380,10 @@
     .desk .maincol, .desk .side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
     .card { padding: 18px 20px; }
     .member { display: grid; grid-template-columns: 150px minmax(0, 1fr) 36px 28px;
-              grid-template-areas: "name tg nb st" ". note note note" ". shots shots shots";
+              grid-template-areas: "name tg nb st" ". breaks breaks breaks" ". note note note" ". shots shots shots";
               align-items: center; column-gap: 12px; padding: 10px 0; }
     .member .shots { grid-area: shots; margin-top: 6px; }
+    .member .breaks { grid-area: breaks; margin-top: 6px; }
     .shot { width: 56px; height: 56px; }
     .member:first-child { padding-top: 0; }
     .member .mrow { display: contents; }
@@ -400,6 +429,10 @@
 // ---------------------------------------------------------------- rules (change these here, on GitHub)
 const RULES = [["chart", "Chart with execution", "req"], ["journal", "Journal", "req"], ["review", "HTF", "req"], ["social", "Social", "bonus"]];
 const REQUIRED = RULES.filter(r => r[2] === "req").map(r => r[0]);
+// Rule breaks members can tag on their day (honest self-reporting, never costs points). Must match update-6 SQL.
+const BREAKS = [["moved_stop", "Moved stop"], ["revenge", "Revenge trade"], ["oversized", "Oversized"], ["fomo", "FOMO entry"],
+                ["no_plan", "No plan"], ["overtraded", "Overtraded"], ["early_exit", "Cut winner early"], ["ignored_htf", "Ignored HTF"]];
+const BREAK_LABEL = Object.fromEntries(BREAKS);
 const POINTS = { COMPLETE: 2, PARTIAL: 1, MISSING: 0, bonus: 1 };
 const CUTOFF_HOUR = 9;  // New York time; must match current_trading_day() in supabase/setup.sql
 
@@ -413,6 +446,7 @@ const SVG = {
   week: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>`,
   board: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 20V11M12 20V5M18 20v-6"/></svg>`,
   admin: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M17 11l2 2 4-4"/></svg>`,
+  gear: `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>`,
   camera: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>`,
   discord: `<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M20.3 4.4A19.6 19.6 0 0 0 15.4 3l-.6 1.3a18 18 0 0 0-5.5 0L8.7 3a19.6 19.6 0 0 0-4.9 1.5C.7 9.1-.2 13.6.3 18a19.8 19.8 0 0 0 6 3l1.3-2.1a12.8 12.8 0 0 1-2-1l.5-.4a14 14 0 0 0 12 0l.5.4-2 1 1.3 2.1a19.7 19.7 0 0 0 6-3c.6-5.1-.8-9.6-3.6-13.6ZM8.1 15.3c-1.2 0-2.1-1.1-2.1-2.4s.9-2.4 2.1-2.4 2.2 1.1 2.1 2.4c0 1.3-.9 2.4-2.1 2.4Zm7.8 0c-1.2 0-2.1-1.1-2.1-2.4s.9-2.4 2.1-2.4 2.2 1.1 2.1 2.4c0 1.3-.9 2.4-2.1 2.4Z"/></svg>`,
 };
@@ -496,6 +530,7 @@ async function loadAll() {
     sb.from("admins").select("user_id").eq("user_id", session.user.id),
   ]);
   profile = prof; isAdmin = !!(adm && adm.length);
+  loadSettings();
   if (!isAdmin && (!profile || profile.status === "pending")) { screen = "waiting"; return render(); }
   if (!isAdmin && profile.status === "rejected") { screen = "rejected"; return render(); }
 
@@ -560,17 +595,20 @@ const pending = {}, timers = {};
 function editTick(k, key, mutate, quiet) {
   if (!canEdit(k, key)) return;
   const id = k + "|" + key;
-  const row = Object.assign({ day: k, member_key: key, chart: false, journal: false, review: false, social: false, note: "", images: [], no_trade: false }, tickOf(k, key));
+  const row = Object.assign({ day: k, member_key: key, chart: false, journal: false, review: false, social: false, note: "", images: [], no_trade: false, rule_breaks: [] }, tickOf(k, key));
   row.images = [...(row.images || [])];
+  row.rule_breaks = [...(row.rule_breaks || [])];
+  const before = statusOf(k, key);
   mutate(row);
   ticks[id] = row; pending[id] = true;
+  if (key === myKey() && before !== "COMPLETE" && statusOf(k, key) === "COMPLETE") celebrate();
   if (quiet) renderTop(); else render();
   clearTimeout(timers[id]);
   timers[id] = setTimeout(() => saveTick(id), 450);
 }
 async function saveTick(id) {
   const row = ticks[id];
-  const body = { day: row.day, member_key: row.member_key, chart: !!row.chart, journal: !!row.journal, review: !!row.review, social: !!row.social, note: row.note || "", images: row.images || [], excused: !!row.excused, no_trade: !!row.no_trade };
+  const body = { day: row.day, member_key: row.member_key, chart: !!row.chart, journal: !!row.journal, review: !!row.review, social: !!row.social, note: row.note || "", images: row.images || [], excused: !!row.excused, no_trade: !!row.no_trade, rule_breaks: row.rule_breaks || [] };
   saving++; renderTop();
   const { error: e } = await sb.from("ticks").upsert(body, { onConflict: "day,member_key" });
   saving--;
@@ -583,6 +621,77 @@ async function saveTick(id) {
     if (data) ticks[id] = data; else delete ticks[id];
   } else error = "";
   render();
+}
+
+// ---------------------------------------------------------------- confetti
+function celebrate() {
+  if (settings.confetti === false || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const c = document.createElement("canvas"), dpr = window.devicePixelRatio || 1;
+  c.id = "confetti"; c.width = innerWidth * dpr; c.height = innerHeight * dpr;
+  document.body.appendChild(c);
+  const g = c.getContext("2d"), css = getComputedStyle(document.documentElement);
+  const colors = ["--good", "--warn", "--accent-text", "--crit"].map(v => css.getPropertyValue(v).trim()).concat("#ffffff");
+  const bits = Array.from({ length: 150 }, () => ({
+    x: innerWidth / 2 + (Math.random() - 0.5) * 120, y: innerHeight * 0.32,
+    vx: (Math.random() - 0.5) * 13, vy: -Math.random() * 13 - 4, r: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.4,
+    w: 6 + Math.random() * 6, h: 3 + Math.random() * 4, color: colors[Math.floor(Math.random() * colors.length)],
+  }));
+  const start = performance.now();
+  (function frame(now) {
+    const t = now - start;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, innerWidth, innerHeight);
+    g.globalAlpha = Math.max(0, 1 - Math.max(0, t - 1400) / 800);
+    for (const b of bits) {
+      b.vy += 0.38; b.vx *= 0.99; b.x += b.vx; b.y += b.vy; b.r += b.vr;
+      g.save(); g.translate(b.x, b.y); g.rotate(b.r); g.fillStyle = b.color; g.fillRect(-b.w / 2, -b.h / 2, b.w, b.h); g.restore();
+    }
+    if (t < 2200) requestAnimationFrame(frame); else c.remove();
+  })(start);
+}
+
+// ---------------------------------------------------------------- personal settings
+// Saved to your account (user_settings table) and cached in this browser so the right colors show instantly.
+const DEFAULT_SETTINGS = { theme: "system", confetti: true };
+let settings = { ...DEFAULT_SETTINGS }, settingsOpen = false;
+try { settings = { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem("mnq-settings") || "{}") }; } catch (e) {}
+function applyTheme() {
+  const t = settings.theme;
+  if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+  else delete document.documentElement.dataset.theme;
+  const dark = t === "dark" || (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => { m.removeAttribute("media"); m.content = dark ? "#0b0e10" : "#eef1f3"; });
+}
+applyTheme();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
+async function loadSettings() {
+  const { data, error: e } = await sb.from("user_settings").select("settings").eq("user_id", session.user.id).maybeSingle();
+  if (e || !data) return;
+  settings = { ...DEFAULT_SETTINGS, ...data.settings };
+  try { localStorage.setItem("mnq-settings", JSON.stringify(settings)); } catch (err) {}
+  applyTheme();
+}
+async function saveSettings() {
+  try { localStorage.setItem("mnq-settings", JSON.stringify(settings)); } catch (e) {}
+  applyTheme();
+  if (session) await sb.from("user_settings").upsert({ user_id: session.user.id, settings, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+}
+function openSettings() {
+  editing = null; settingsOpen = true;
+  const opt = (v, label) => `<button data-theme-set="${v}" aria-pressed="${settings.theme === v}">${label}</button>`;
+  document.getElementById("panel").innerHTML = `<div class="grab" aria-hidden="true"></div>
+    <header><div><b id="panel-title">Settings</b><span>Only for you · saved to your account</span></div>
+      <button class="round" id="panel-close" aria-label="Close">✕</button></header>
+    <h3>Appearance</h3>
+    <div class="segset" role="group" aria-label="Appearance">${opt("system", "System")}${opt("light", "Light")}${opt("dark", "Dark")}</div>
+    <p class="sub-hint" style="margin-top:8px">System follows your phone or computer.</p>
+    <h3>Celebrations</h3>
+    <label class="switchrow"><span><b>Confetti</b><small>When you complete your day.</small></span>
+      <input type="checkbox" id="set-confetti" role="switch" ${settings.confetti !== false ? "checked" : ""}></label>
+    <button class="btn primary done" id="panel-done">Done</button>`;
+  document.getElementById("scrim").hidden = false;
+  document.getElementById("panel").hidden = false;
+  document.body.style.overflow = "hidden";
 }
 
 // ---------------------------------------------------------------- weekly reflection
@@ -717,6 +826,9 @@ function openPanel(day, key) {
     <div class="count-hint" id="panel-count">${(rec.note || "").length}/140</div>
     <h3>Pictures <span id="panel-pics-count"></span></h3>
     <div class="pics" id="panel-pics"></div>
+    <h3>Rule breaks today</h3>
+    <p class="sub-hint">Be honest: it never costs points, and it helps you spot patterns.</p>
+    <div class="tagpick">${BREAKS.map(([b, label]) => `<button data-break="${b}" aria-pressed="${(rec.rule_breaks || []).includes(b)}">${label}</button>`).join("")}</div>
     ${(wk => canEditReflection(wk, key) ? `<h3 id="panel-refl">Weekly reflection · ${fmtDay(wk, { weekday: undefined })} – ${fmtDay(addDays(wk, 4), { weekday: undefined })}</h3>
     <div class="reflect">
       <label for="panel-refl-well">What went well</label>
@@ -735,8 +847,8 @@ function openPanel(day, key) {
 }
 
 function closePanel() {
-  if (!editing) return;
-  editing = null;
+  if (!editing && !settingsOpen) return;
+  editing = null; settingsOpen = false;
   document.getElementById("panel").hidden = true;
   document.getElementById("scrim").hidden = true;
   document.body.style.overflow = "";
@@ -810,6 +922,7 @@ function renderTop() {
         <button class="round" id="next" aria-label="Next trading day" ${selected >= today || tab === "admin" ? "disabled" : ""}>›</button>
       </div>
       <div class="end"><span>${status}</span>${selected !== today && tab !== "admin" ? `<button id="gotoday">Today</button>` : ""}
+        <button id="open-settings" aria-label="Settings">${SVG.gear}</button>
         ${isAdmin ? `<button id="toggleadmin" class="${tab === "admin" ? "on" : ""}">Admin${pendingCount() ? `<span class="count" aria-label="${pendingCount()} waiting">${pendingCount()}</span>` : ""}</button>` : ""}</div>`;
     return;
   }
@@ -822,7 +935,10 @@ function renderTop() {
     prev = `<button class="round" id="pw" aria-label="Previous week">‹</button>`;
     next = `<button class="round" id="nw" aria-label="Next week" ${weekStart >= mondayOf(today) ? "disabled" : ""}>›</button>`;
     mid = `<b>${fmtDay(weekStart, { weekday: undefined })} – ${fmtDay(addDays(weekStart, 4), { weekday: undefined })}</b>${statusText()}`;
-  } else mid = `<b>${tab === "admin" ? "Admin" : "Ranking"}</b>${statusText()}`;
+  } else {
+    mid = `<b>${tab === "admin" ? "Admin" : "Ranking"}</b>${statusText()}`;
+    if (tab === "board") prev = `<button class="round" id="open-settings" aria-label="Settings">${SVG.gear}</button>`;
+  }
   top.innerHTML = prev + `<div class="mid">${mid}</div>` + next;
 }
 
@@ -876,6 +992,7 @@ function renderDay() {
     return `<div class="member ${editable ? "" : "locked"}">
       <div class="mrow"><span class="name">${avatarHtml(m, 26)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === myKey() ? `<span class="you">YOU</span>` : ""}${rec.no_trade ? `<span class="ntag" title="No trade today: sat out on purpose">🧘<span class="ntag-text"> No trade</span></span>` : ""}</span>${editBtn}${dot(st, m.name)}</div>
       <div class="toggles">${toggles}</div>
+      ${(rec.rule_breaks || []).length ? `<div class="breaks">${rec.rule_breaks.map(b => `<span class="bchip">⚠ ${esc(BREAK_LABEL[b] || b)}</span>`).join("")}</div>` : ""}
       ${note ? `<div class="note">${note}</div>` : ""}
       ${shots ? `<div class="shots">${shots}</div>` : ""}
     </div>`;
@@ -986,7 +1103,7 @@ function renderProfile(key) {
 
   const head = `<div class="card">
     <div class="phead">${avatarHtml(m, 64)}
-      <div><h1>${esc(m.name)}${key === myKey() ? `<span class="you">YOU</span>` : ""}</h1><p>Rank #${rankOf(key) || "–"} · since ${since}</p></div></div>
+      <div><h1>${esc(m.name)}${key === myKey() ? `<span class="you">YOU</span>` : ""}</h1><p>Rank #${rankOf(key) || "–"} · since ${since}</p>${key === myKey() ? `<button class="linkbtn" id="open-settings" style="padding:0">⚙︎ Settings</button>` : ""}</div></div>
     <div class="tiles">
       <div class="tile"><b>${s.run}</b><span>Streak</span></div>
       <div class="tile"><b>${s.best}</b><span>Best streak</span></div>
@@ -1025,14 +1142,20 @@ function renderProfile(key) {
         style="${shotUrls[p] ? `background-image:url('${shotUrls[p]}')` : ""}"></button>`).join("")}</div>` : ""}
     </div>`).join("") : `<p class="empty">No notes or pictures yet.</p>`}</div>`;
 
+  const since30 = addDays(today, -30), bcounts = {};
+  Object.values(ticks).filter(r => r.member_key === key && r.day >= since30).forEach(r => (r.rule_breaks || []).forEach(b => { bcounts[b] = (bcounts[b] || 0) + 1; }));
+  const btop = Object.entries(bcounts).sort((a, b) => b[1] - a[1]);
+  const breaksCard = `<div class="card"><div class="cardhead"><h2>Rule breaks · last 30 days</h2></div>${btop.length
+    ? `<div class="bcount">${btop.map(([b, n]) => `<span class="bchip">⚠ ${esc(BREAK_LABEL[b] || b)} ×${n}</span>`).join("")}</div>`
+    : `<p class="empty">None logged in the last 30 days. 🧼</p>`}</div>`;
   const refl = Object.values(reflections).filter(r => r.member_key === key && (r.went_well || r.to_fix))
     .sort((a, b) => b.week_start.localeCompare(a.week_start)).slice(0, 4);
   const reflCard = refl.length ? `<div class="card reflect"><div class="cardhead"><h2>Weekly reflections</h2></div>${refl.map(r => `<div class="rentry">
       <div class="who"><small>Week of ${fmtDay(r.week_start, { weekday: undefined })}</small></div>
       ${r.went_well ? `<h4>Went well</h4><p>${esc(r.went_well)}</p>` : ""}${r.to_fix ? `<h4>To fix</h4><p>${esc(r.to_fix)}</p>` : ""}</div>`).join("")}</div>` : "";
   return isWide()
-    ? `<div class="desk"><div class="maincol">${head}${ach}</div><div class="side">${heat}${journal}${reflCard}</div></div>`
-    : head + ach + heat + journal + reflCard;
+    ? `<div class="desk"><div class="maincol">${head}${ach}</div><div class="side">${heat}${breaksCard}${journal}${reflCard}</div></div>`
+    : head + ach + heat + breaksCard + journal + reflCard;
 }
 
 // Pop up "Achievement unlocked" when you earn a new badge (remembered per browser).
@@ -1174,6 +1297,17 @@ document.addEventListener("click", async e => {
   if (t.id === "profile-back") { profileKey = null; render(); return window.scrollTo(0, 0); }
   if (d.tick) { const [key, r] = d.tick.split(":"); return editTick(selected, key, row => { row[r] = !row[r]; }); }
   if (d.edit) return openPanel(selected, d.edit);
+  if (t.id === "open-settings") return openSettings();
+  if (d.themeSet) {
+    settings.theme = d.themeSet; saveSettings();
+    document.querySelectorAll("[data-theme-set]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.themeSet === settings.theme)));
+    return;
+  }
+  if (d.break && editing) {
+    const b = d.break, on = t.getAttribute("aria-pressed") !== "true";
+    t.setAttribute("aria-pressed", String(on));
+    return editTick(editing.day, editing.key, row => { row.rule_breaks = on ? [...new Set([...row.rule_breaks, b])] : row.rule_breaks.filter(x => x !== b); });
+  }
   if (t.id === "panel-close" || t.id === "panel-done") return closePanel();
   if (d.removeShot) {
     if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Delete?"; return; }
@@ -1228,6 +1362,7 @@ document.addEventListener("click", async e => {
   }
 });
 document.addEventListener("input", e => {
+  if (e.target.id === "set-confetti") { settings.confetti = e.target.checked; return saveSettings(); }
   if (e.target.id === "panel-notrade" && editing) { const on = e.target.checked; return editTick(editing.day, editing.key, row => { row.no_trade = on; }); }
   if (e.target.dataset && e.target.dataset.refl) return editReflection(e.target.dataset.week, e.target.dataset.key, e.target.dataset.refl, e.target.value);
   if (e.target.id === "panel-excused" && editing) { const on = e.target.checked; return editTick(editing.day, editing.key, row => { row.excused = on; }); }
@@ -1237,7 +1372,7 @@ document.addEventListener("input", e => {
   editTick(editing.day, editing.key, row => { row.note = v; }, true);
 });
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape" && editing && !document.getElementById("viewer").open) closePanel();
+  if (e.key === "Escape" && (editing || settingsOpen) && !document.getElementById("viewer").open) closePanel();
   if (e.key === "Enter" && e.target.id === "newmember") document.getElementById("addmember").click();
 });
 document.getElementById("scrim").addEventListener("click", closePanel);
