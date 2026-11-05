@@ -488,7 +488,9 @@ function statusOf(k, key) {
 }
 
 // ---------------------------------------------------------------- data
+let loadStep = "starting";
 async function loadAll() {
+  loadStep = "your account";
   const [{ data: prof }, { data: adm }] = await Promise.all([
     sb.from("profiles").select("*").eq("user_id", session.user.id).maybeSingle(),
     sb.from("admins").select("user_id").eq("user_id", session.user.id),
@@ -497,6 +499,7 @@ async function loadAll() {
   if (!isAdmin && (!profile || profile.status === "pending")) { screen = "waiting"; return render(); }
   if (!isAdmin && profile.status === "rejected") { screen = "rejected"; return render(); }
 
+  loadStep = "members and ticks";
   const [m, h, t] = await Promise.all([
     sb.from("members").select("*"),
     sb.from("holidays").select("day"),
@@ -512,10 +515,13 @@ async function loadAll() {
   if (selected > today || !isTradingDay(selected)) selected = today;
   weekStart = mondayOf(selected);
   // Weekly reflections (update 5). If that update isn't installed yet, the rest still works.
+  loadStep = "weekly reflections";
   const rf = await sb.from("reflections").select("*").order("week_start", { ascending: false }).limit(3000);
   reflections = {};
   if (!rf.error) (rf.data || []).forEach(r => { reflections[r.week_start + "|" + r.member_key] = r; });
+  loadStep = "admin list";
   if (isAdmin) await loadPeople();
+  loadStep = "done";
   if (!isAdmin && tab === "admin") tab = "day";
   loaded = true; screen = "app";
   subscribe();
@@ -607,20 +613,16 @@ function renderReflections() {
   const week = weekStart, me = myKey(), editable = canEditReflection(week, me);
   const label = `${fmtDay(week, { weekday: undefined })} – ${fmtDay(addDays(week, 4), { weekday: undefined })}`;
   const mineRow = reflections[week + "|" + me] || {};
-  const form = editable ? `<form onsubmit="return false">
-      <label for="refl-well">What went well</label>
-      <textarea id="refl-well" data-refl="went_well" data-week="${week}" maxlength="600" placeholder="Patience on entries, followed the plan…">${esc(mineRow.went_well)}</textarea>
-      <label for="refl-fix">What to fix next week</label>
-      <textarea id="refl-fix" data-refl="to_fix" data-week="${week}" maxlength="600" placeholder="Stop moving my stop, size down after a loss…">${esc(mineRow.to_fix)}</textarea>
-      <p class="hint">Saves automatically · the whole group can read it</p></form>` : "";
-  const entries = activeMembers().filter(m => !(editable && m.key === me)).map(m => {
+  // You write it in your ✎ panel; this card is for reading everyone's.
+  const form = editable && canEdit(today, me) ? `<button class="reflect-nudge" id="goto-reflect" style="margin:0 0 6px">✎ ${mineRow.went_well || mineRow.to_fix ? "Edit" : "Write"} your reflection</button>` : "";
+  const entries = activeMembers().map(m => {
     const r = reflections[week + "|" + m.key];
     if (!r || !(r.went_well || r.to_fix)) return "";
-    return `<div class="rentry"><div class="who">${avatarHtml(m, 24)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button></div>
+    return `<div class="rentry"><div class="who">${avatarHtml(m, 24)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === me ? `<span class="you">YOU</span>` : ""}</div>
       ${r.went_well ? `<h4>Went well</h4><p>${esc(r.went_well)}</p>` : ""}${r.to_fix ? `<h4>To fix</h4><p>${esc(r.to_fix)}</p>` : ""}</div>`;
   }).join("");
   return `<div class="card reflect" id="reflect"><div class="cardhead"><h2>Weekly reflection · ${label}</h2></div>
-    ${form}${entries || (form ? "" : `<p class="empty">No reflections for this week.</p>`)}</div>`;
+    ${form}${entries || `<p class="empty">No reflections for this week yet.</p>`}</div>`;
 }
 
 // ---------------------------------------------------------------- screenshots
@@ -715,6 +717,13 @@ function openPanel(day, key) {
     <div class="count-hint" id="panel-count">${(rec.note || "").length}/140</div>
     <h3>Pictures <span id="panel-pics-count"></span></h3>
     <div class="pics" id="panel-pics"></div>
+    ${(wk => canEditReflection(wk, key) ? `<h3 id="panel-refl">Weekly reflection · ${fmtDay(wk, { weekday: undefined })} – ${fmtDay(addDays(wk, 4), { weekday: undefined })}</h3>
+    <div class="reflect">
+      <label for="panel-refl-well">What went well</label>
+      <textarea id="panel-refl-well" data-refl="went_well" data-week="${wk}" data-key="${key}" maxlength="600" placeholder="Patience on entries, followed the plan…">${esc((reflections[wk + "|" + key] || {}).went_well)}</textarea>
+      <label for="panel-refl-fix">What to fix next week</label>
+      <textarea id="panel-refl-fix" data-refl="to_fix" data-week="${wk}" data-key="${key}" maxlength="600" placeholder="Stop moving my stop, size down after a loss…">${esc((reflections[wk + "|" + key] || {}).to_fix)}</textarea>
+      <p class="hint">Saves automatically · the whole group can read it</p></div>` : "")(mondayOf(day))}
     ${isAdmin ? `<h3>Admin</h3>
     <label class="switchrow"><span><b>Excused</b><small>Sick, travelling… Doesn't count as missed, doesn't break the streak.</small></span>
       <input type="checkbox" id="panel-excused" role="switch" ${rec.excused ? "checked" : ""}></label>` : ""}
@@ -1135,7 +1144,6 @@ function render() {
   renderTop(); renderTabbar();
   const app = document.getElementById("app");
   if (screen !== "app") { app.innerHTML = renderGate(); return; }
-  const f = document.activeElement, keep = f && f.id && f.id.startsWith("refl-") ? { id: f.id, a: f.selectionStart, b: f.selectionEnd } : null;
   if (tab === "admin" && isAdmin) app.innerHTML = renderAdmin();
   else if (profileKey) app.innerHTML = renderProfile(profileKey);
   else if (isWide()) {
@@ -1144,7 +1152,6 @@ function render() {
   } else if (tab === "week") app.innerHTML = renderWeek() + renderReflections();
   else if (tab === "board") app.innerHTML = renderBoard();
   else { const d = renderDay(); app.innerHTML = d.summary + d.list; }
-  if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus(); try { el.setSelectionRange(keep.a, keep.b); } catch (e) {} } }
   renderPanelPics();
   checkUnlocks();
 }
@@ -1159,10 +1166,9 @@ document.addEventListener("click", async e => {
   if (d.tab) return setTab(d.tab);
   if (d.profile) { profileKey = d.profile; if (tab === "admin") tab = "day"; render(); return window.scrollTo(0, 0); }
   if (t.id === "goto-reflect") {
-    weekStart = mondayOf(today);
-    if (!isWide()) setTab("week"); else render();
-    const el = document.getElementById("reflect");
-    if (el) window.scrollTo(0, el.getBoundingClientRect().top + scrollY - 80);
+    openPanel(today, myKey());
+    const el = document.getElementById("panel-refl");
+    if (el) el.scrollIntoView({ block: "start" });
     return;
   }
   if (t.id === "profile-back") { profileKey = null; render(); return window.scrollTo(0, 0); }
@@ -1223,7 +1229,7 @@ document.addEventListener("click", async e => {
 });
 document.addEventListener("input", e => {
   if (e.target.id === "panel-notrade" && editing) { const on = e.target.checked; return editTick(editing.day, editing.key, row => { row.no_trade = on; }); }
-  if (e.target.dataset && e.target.dataset.refl) return editReflection(e.target.dataset.week, myKey(), e.target.dataset.refl, e.target.value);
+  if (e.target.dataset && e.target.dataset.refl) return editReflection(e.target.dataset.week, e.target.dataset.key, e.target.dataset.refl, e.target.value);
   if (e.target.id === "panel-excused" && editing) { const on = e.target.checked; return editTick(editing.day, editing.key, row => { row.excused = on; }); }
   if (e.target.id !== "panel-note" || !editing) return;
   const v = e.target.value;
@@ -1267,6 +1273,10 @@ function showCrash(err) {
 }
 window.addEventListener("error", e => showCrash(e.error || e.message));
 window.addEventListener("unhandledrejection", e => showCrash(e.reason));
+setTimeout(() => {
+  if (screen === "loading") showCrash(new Error(`Still loading after 12 seconds (stuck at: ${loadStep}). ` +
+    "Close all other tabs of this site, then reload. If it keeps happening, send Batko this message."));
+}, 12000);
 
 // ---------------------------------------------------------------- start
 (async () => {
