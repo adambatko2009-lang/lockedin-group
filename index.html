@@ -283,7 +283,8 @@
   @media (prefers-reduced-motion: no-preference) { .toast { animation: toast-in .45s cubic-bezier(.3, 1.4, .5, 1); } @keyframes toast-in { from { transform: translate(-50%, -30px); opacity: 0; } } }
 
   /* ---------- no-trade, countdown, reflection ---------- */
-  .t.notrade { background: var(--surface-2); color: var(--text); border-style: solid; border-color: var(--line); }
+  .ntag { flex: none; font-size: 12px; font-weight: 600; color: var(--text-2); background: var(--surface-2); border-radius: 6px; padding: 1px 6px; }
+  @media (max-width: 420px) { .ntag-text { display: none; } }
   .time.urgent { color: var(--crit); }
   @media (prefers-reduced-motion: no-preference) {
     .time.urgent { animation: pulse 1.6s ease-in-out infinite; }
@@ -478,10 +479,8 @@ const canEdit = (k, key) => isAdmin || (key === myKey() && k === today && !isFin
 function statusOf(k, key) {
   const rec = tickOf(k, key);
   if (rec && rec.excused) return "EXCUSED";   // set by the admin: sick, travelling...
-  // On a no-trade day (sat out, no setup) the chart isn't required; journal + HTF still are.
-  const need = rec && rec.no_trade ? REQUIRED.filter(r => r !== "chart") : REQUIRED;
-  const req = rec ? need.filter(r => rec[r]).length : 0;
-  if (req === need.length) return "COMPLETE";
+  const req = rec ? REQUIRED.filter(r => rec[r]).length : 0;
+  if (req === REQUIRED.length) return "COMPLETE";
   if (req > 0) return "PARTIAL";
   if (!isFinal(k)) return "WAITING";       // the day is still open, nothing yet isn't a fail
   if (!dayHasAny(k)) return "UNLOGGED";      // nobody logged anything that day: don't count it
@@ -709,7 +708,7 @@ function openPanel(day, key) {
   panel.innerHTML = `<div class="grab" aria-hidden="true"></div>
     <header><div><b id="panel-title">${esc(m ? m.name : key)}</b><span>${fmtDay(day, { weekday: "long", month: "long" })}</span></div>
       <button class="round" id="panel-close" aria-label="Close">✕</button></header>
-    <label class="switchrow"><span><b>No trade today</b><small>No setup, sat out. Chart not needed; journal + HTF still are.</small></span>
+    <label class="switchrow"><span><b>No trade today</b><small>Shows the group you sat out on purpose. Chart with executions, journal and HTF are still required.</small></span>
       <input type="checkbox" id="panel-notrade" role="switch" ${rec.no_trade ? "checked" : ""}></label>
     <h3>Note</h3>
     <textarea id="panel-note" maxlength="140" placeholder="What did you trade, what did you learn?">${esc(rec.note)}</textarea>
@@ -855,9 +854,8 @@ function renderDay() {
   const allShots = [];
   const rows = ordered.map(m => {
     const st = statusOf(k, m.key), rec = tickOf(k, m.key) || {}, editable = canEdit(k, m.key);
-    const toggles = RULES.map(([r, label, kind]) => r === "chart" && rec.no_trade
-      ? `<button class="t notrade" data-edit="${m.key}" ${editable ? "" : "disabled"} aria-label="${esc(m.name)}: no trade today">🧘 No trade</button>`
-      : `<button class="t ${kind}" data-tick="${m.key}:${r}" aria-pressed="${!!rec[r]}" ${editable ? "" : "disabled"}
+    const toggles = RULES.map(([r, label, kind]) =>
+      `<button class="t ${kind}" data-tick="${m.key}:${r}" aria-pressed="${!!rec[r]}" ${editable ? "" : "disabled"}
         aria-label="${esc(m.name)}: ${label}${kind === "bonus" ? " (bonus)" : ""}">${label}</button>`).join("");
     const note = rec.note ? `<p>${esc(rec.note)}</p>` : "";
     const images = rec.images || [];
@@ -867,7 +865,7 @@ function renderDay() {
         style="${shotUrls[p] ? `background-image:url('${shotUrls[p]}')` : ""}"></button>`).join("")
       + Array.from({ length: uploading[m.key] || 0 }, () => `<span class="shot busy">Uploading…</span>`).join("");
     return `<div class="member ${editable ? "" : "locked"}">
-      <div class="mrow"><span class="name">${avatarHtml(m, 26)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === myKey() ? `<span class="you">YOU</span>` : ""}</span>${editBtn}${dot(st, m.name)}</div>
+      <div class="mrow"><span class="name">${avatarHtml(m, 26)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === myKey() ? `<span class="you">YOU</span>` : ""}${rec.no_trade ? `<span class="ntag" title="No trade today: sat out on purpose">🧘<span class="ntag-text"> No trade</span></span>` : ""}</span>${editBtn}${dot(st, m.name)}</div>
       <div class="toggles">${toggles}</div>
       ${note ? `<div class="note">${note}</div>` : ""}
       ${shots ? `<div class="shots">${shots}</div>` : ""}
