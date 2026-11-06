@@ -7,7 +7,8 @@
 <meta name="theme-color" content="#17181c" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icons/favicon-64.png">
+<link rel="icon" type="image/png" sizes="128x128" href="icons/favicon-128.png?v=2">
+<link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png?v=2">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -440,6 +441,9 @@
   .field.code { font: 600 17px var(--font-data); letter-spacing: 0.08em; text-transform: uppercase; }
   .reqbox { text-align: left; }
   .reqbox textarea.field { font: 15px/1.4 var(--font-ui); resize: vertical; }
+  .phead h1 .rolechip { font-size: 12px; padding: 1px 7px; vertical-align: 4px; letter-spacing: 0; }
+  .rolechip.role-owner { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .rolechip.role-member { color: var(--muted); }
   .rolechip { display: inline-block; font-size: 11px; font-weight: 700; color: var(--accent-text); border: 1px solid currentColor; border-radius: 6px; padding: 0 5px; margin-left: 8px; vertical-align: 2px; }
   .codebox { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
   .codebox code { font: 600 24px var(--font-data); letter-spacing: 0.08em; margin-right: auto; user-select: all; -webkit-user-select: all; }
@@ -544,6 +548,9 @@
     .topbar .end button { border: 0; background: var(--glass-pill); color: var(--accent-text); font-size: 13px; font-weight: 600; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
     .topbar .end button.on { background: var(--accent); color: var(--on-accent); }
     .topbar .end button { display: inline-flex; align-items: center; gap: 6px; }
+    .topbar .end .gearbtn { position: relative; width: 34px; height: 34px; padding: 0; justify-content: center; }
+    .topbar .end .gearbtn svg { width: 19px; height: 19px; }
+    .topbar .end .gearbtn .count { position: absolute; top: -4px; right: -6px; }
     .topbar .end .count { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--crit); color: #fff;
                           font-size: 11px; font-weight: 700; display: inline-grid; place-items: center; }
     .round:hover:not(:disabled) { background: var(--glass-pill); }
@@ -1532,7 +1539,7 @@ function renderTop() {
         <button class="round" id="next" aria-label="Next trading day" ${selected >= today || tab === "admin" || tab === "me" ? "disabled" : ""}>›</button>
       </div>
       <div class="end"><span>${status}</span>${selected !== today && tab !== "admin" && tab !== "me" ? `<button id="gotoday">Today</button>` : ""}
-        ${isAdmin ? `<button id="toggleadmin" class="${tab === "admin" ? "on" : ""}">Admin${pendingCount() ? `<span class="count" aria-label="${pendingCount()} waiting">${pendingCount()}</span>` : ""}</button>` : ""}
+        ${isAdmin ? `<button id="toggleadmin" class="gearbtn ${tab === "admin" ? "on" : ""}" aria-label="Admin" title="Admin">${SVG.gear}${pendingCount() ? `<span class="count" aria-label="${pendingCount()} waiting">${pendingCount()}</span>` : ""}</button>` : ""}
         <button id="toggleme" class="${tab === "me" ? "on" : ""}">${SVG.me.replace("<svg ", '<svg width="16" height="16" ')}Me</button></div>`;
     return;
   }
@@ -1558,7 +1565,7 @@ function renderTabbar() {
   const list = tabsList(), labels = { day: "Day", week: "Week", board: "Ranking", admin: "Admin", me: "Me" };
   const i = Math.max(0, list.indexOf(tab));
   bar.innerHTML = `<div class="pill" style="width:calc((100% - 10px) / ${list.length});transform:translateX(${i * 100}%)" aria-hidden="true"></div>` +
-    list.map(t => `<button role="tab" data-tab="${t}" aria-selected="${t === tab}" aria-label="${labels[t]}">${SVG[t]}<span>${labels[t]}</span>
+    list.map(t => `<button role="tab" data-tab="${t}" aria-selected="${t === tab}" aria-label="${labels[t]}">${t === "admin" ? SVG.gear : SVG[t]}<span>${labels[t]}</span>
       ${t === "admin" && pendingCount() ? `<i class="badge">${pendingCount()}</i>` : ""}</button>`).join("");
 }
 
@@ -1724,6 +1731,15 @@ function rankOf(key) {
   return null;
 }
 
+// Owner / Admin / Member. Your own is always known; group managers also see everyone else's.
+function roleForKey(key) {
+  const g = group();
+  if (!g) return "";
+  if (key === myKey()) return g.owner_id === session.user.id ? "Owner" : (myMembership() || {}).role === "admin" ? "Admin" : "Member";
+  const p = people.find(x => x.member_key === key && x.status === "approved");
+  if (!p) return "";
+  return p.user_id === g.owner_id ? "Owner" : p.role === "admin" ? "Admin" : "Member";
+}
 function renderProfile(key) {
   const m = members.find(x => x.key === key);
   if (!m) return `<div class="card"><p class="msg">Member not found.</p></div>`;
@@ -1732,7 +1748,7 @@ function renderProfile(key) {
 
   const head = `<div class="card">
     <div class="phead">${avatarHtml(m, 64)}
-      <div><h1>${esc(m.name)}${key === myKey() ? `<span class="you">YOU</span>` : ""}</h1><p>Rank #${rankOf(key) || "–"} · since ${since}</p></div></div>
+      <div><h1>${esc(m.name)}${key === myKey() ? `<span class="you">YOU</span>` : ""}${(r => r ? `<span class="rolechip role-${r.toLowerCase()}">${r}</span>` : "")(roleForKey(key))}</h1><p>Rank #${rankOf(key) || "–"} · since ${since}</p></div></div>
     <div class="tiles">
       <div class="tile"><b>${s.run}</b><span>Streak</span></div>
       <div class="tile"><b>${s.best}</b><span>Best streak</span></div>
