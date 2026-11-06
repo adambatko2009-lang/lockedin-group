@@ -501,7 +501,7 @@
   .tour-card { position: fixed; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 18px; padding: 16px 18px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45); }
   .tour-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
   .tour-n { font: 600 12px var(--font-data); color: var(--muted); }
-  .tour-skip { border: 0; background: none; color: var(--muted); font: 600 13px var(--font-ui); cursor: pointer; padding: 6px 0 6px 10px; text-decoration: underline; text-underline-offset: 3px; }
+  .tour-x { width: 32px; height: 32px; font-size: 14px; background: var(--glass-pill); color: inherit; }
   .tour-card h3 { margin: 0 0 6px; font-size: 18px; letter-spacing: -0.01em; }
   .tour-card p { margin: 0; font-size: 15px; line-height: 1.45; color: var(--text-2); }
   .tour-dots { display: flex; gap: 5px; margin: 14px 0 12px; }
@@ -605,7 +605,7 @@
 <div class="tour" id="tour" hidden>
   <div class="tour-hole" id="tour-hole"></div>
   <div class="tour-card" id="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-title">
-    <div class="tour-top"><span class="tour-n" id="tour-n"></span><button class="tour-skip" id="tour-skip">Skip tutorial</button></div>
+    <div class="tour-top"><span class="tour-n" id="tour-n"></span><button class="round tour-x" id="tour-skip" aria-label="Skip tutorial" title="Skip tutorial">✕</button></div>
     <h3 id="tour-title"></h3><p id="tour-text"></p>
     <div class="tour-dots" id="tour-dots" aria-hidden="true"></div>
     <div class="tour-actions"><button class="btn plain small" id="tour-back">Back</button><button class="btn primary small" id="tour-next">Next</button></div>
@@ -1520,6 +1520,7 @@ function groupButton(px) {
   const g = group();
   return `<button class="gname" id="open-groups" aria-label="Groups: ${esc(g ? g.name : "")}">${groupLogo(g, px)}<span>${esc(g ? g.name : "Groups")}</span>${pendingElsewhere() ? `<i class="gdot" aria-hidden="true"></i>` : ""}<svg class="chev" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
 }
+const XMARK = `<span class="x" aria-hidden="true">✕</span>`;
 // App owner: group requests waiting. (People waiting in the open group show on the Admin tab.)
 const pendingElsewhere = () => isAppOwner && requests.some(r => r.status === "pending") && tab !== "admin" ? 1 : 0;
 function renderTop() {
@@ -1530,21 +1531,22 @@ function renderTop() {
   if (profileKey && tab !== "admin") {
     const m = members.find(x => x.key === profileKey);
     top.innerHTML = isWide()
-      ? `${groupButton(24)}<div class="center"><b>Profile</b></div><div class="end"><button id="profile-back">‹ Back</button></div>`
-      : `<button class="round" id="profile-back" aria-label="Back">‹</button><div class="mid"><b>${esc(m ? m.name : "")}</b></div><span></span>`;
+      ? `${groupButton(24)}<div class="center"><b>${esc(m ? m.name : "Profile")}</b></div><div class="end"><button id="profile-back" class="gearbtn" aria-label="Close profile" title="Close">${XMARK}</button></div>`
+      : `<span></span><div class="mid"><b>${esc(m ? m.name : "")}</b></div><button class="round" id="profile-back" aria-label="Close profile">✕</button>`;
     return;
   }
   if (isWide()) {
     const status = error ? `<span class="err">${esc(error)}</span>` : saving || Object.keys(pending).length ? "Saving…" : "";
     top.innerHTML = `${groupButton(24)}
-      <div class="center">
-        <button class="round" id="prev" aria-label="Previous trading day" ${tab === "admin" || tab === "me" ? "disabled" : ""}>‹</button>
-        ${tab === "admin" || tab === "me" ? `<b>${tab === "me" ? "Me" : fmtDay(selected)}</b>` : datePickHtml()}
-        <button class="round" id="next" aria-label="Next trading day" ${selected >= today || tab === "admin" || tab === "me" ? "disabled" : ""}>›</button>
+      <div class="center">${tab === "admin" || tab === "me" ? `<b>${tab === "me" ? "Me" : "Admin"}</b>` : `
+        <button class="round" id="prev" aria-label="Previous trading day">‹</button>
+        ${datePickHtml()}
+        <button class="round" id="next" aria-label="Next trading day" ${selected >= today ? "disabled" : ""}>›</button>`}
       </div>
       <div class="end"><span>${status}</span>${selected !== today && tab !== "admin" && tab !== "me" ? `<button id="gotoday">Today</button>` : ""}
-        ${isAdmin ? `<button id="toggleadmin" class="gearbtn ${tab === "admin" ? "on" : ""}" aria-label="${tab === "admin" ? "Close Admin" : "Admin"}" title="${tab === "admin" ? "Close Admin" : "Admin"}">${tab === "admin" ? `<span class="x" aria-hidden="true">✕</span>` : SVG.gear}${pendingCount() ? `<span class="count" aria-label="${pendingCount()} waiting">${pendingCount()}</span>` : ""}</button>` : ""}
-        <button id="toggleme" class="${tab === "me" ? "on" : ""}">${SVG.me.replace("<svg ", '<svg width="16" height="16" ')}Me</button></div>`;
+        ${isAdmin ? `<button id="toggleadmin" class="gearbtn ${tab === "admin" ? "on" : ""}" aria-label="${tab === "admin" ? "Close Admin" : "Admin"}" title="${tab === "admin" ? "Close Admin" : "Admin"}">${tab === "admin" ? `${XMARK}` : SVG.gear}${pendingCount() ? `<span class="count" aria-label="${pendingCount()} waiting">${pendingCount()}</span>` : ""}</button>` : ""}
+        ${tab === "me" ? `<button id="toggleme" class="gearbtn on" aria-label="Close Me" title="Close">${XMARK}</button>`
+          : `<button id="toggleme">${SVG.me.replace("<svg ", '<svg width="16" height="16" ')}Me</button>`}</div>`;
     return;
   }
   let prev = `<span></span>`, next = `<span></span>`, mid;
@@ -1558,7 +1560,7 @@ function renderTop() {
     mid = `<b>${fmtDay(weekStart, { weekday: undefined })} – ${fmtDay(addDays(weekStart, 4), { weekday: undefined })}</b>${statusText()}`;
   } else {
     mid = `<b>${{ admin: "Admin", board: "Ranking", me: "Me" }[tab] || ""}</b>${statusText()}`;
-    if (tab === "admin") next = `<button class="round" id="close-admin" aria-label="Close Admin">✕</button>`;
+    if (tab === "admin" || tab === "me") next = `<button class="round" id="close-admin" aria-label="Close ${tab === "me" ? "Me" : "Admin"}">✕</button>`;
   }
   top.innerHTML = prev + `<div class="mid">${groupButton(16)}${mid}</div>` + next;
 }
@@ -2057,7 +2059,7 @@ function renderGate() {
   return `<div class="card"><p class="msg">Loading…</p></div>`;
 }
 
-// The Me tab: your account (groups, settings, tutorial, sign out) and your own profile with badges.
+// The Me tab: your own profile with badges, then your account (groups, settings, tutorial, sign out) at the bottom.
 function renderMe() {
   const g = group(), m = members.find(x => x.key === myKey());
   const chev = `<svg class="chev" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M4.5 2.5 8 6l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -2071,7 +2073,7 @@ function renderMe() {
     </div>
     <div class="account"><span>Signed in as <b>${esc(who)}</b></span><button class="linkbtn" id="signout">Sign out</button></div></div>`;
   const prof = m ? renderProfile(m.key) : `<div class="card"><p class="msg">You don't have a name in ${esc(g ? g.name : "this group")}, so there's no profile here.</p></div>`;
-  return account + prof;
+  return prof + account;
 }
 
 function render() {
@@ -2094,7 +2096,9 @@ function render() {
   if (tour) requestAnimationFrame(placeTour);
 }
 
-function setTab(t) { tab = t; profileKey = null; flash = ""; try { localStorage.setItem("tab", t); } catch (e) {} render(); window.scrollTo(0, 0); }
+function setTab(t) {
+  if (t === tab && !profileKey) { selected = today; weekStart = mondayOf(today); }
+  tab = t; profileKey = null; flash = ""; try { localStorage.setItem("tab", t); } catch (e) {} render(); window.scrollTo(0, 0); }
 
 // ---------------------------------------------------------------- events
 document.addEventListener("click", async e => {
@@ -2295,7 +2299,10 @@ document.addEventListener("click", e => { if (e.target.id === "daypick" && e.tar
   }, { passive: true });
 })();
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape" && (editing || settingsOpen) && !document.getElementById("viewer").open) closePanel();
+  if (e.key !== "Escape" || document.getElementById("viewer").open || tour) return;
+  if (editing || settingsOpen) return closePanel();
+  if (profileKey) { profileKey = null; render(); return window.scrollTo(0, 0); }
+  if (tab === "admin" || tab === "me") setTab("day");
   if (e.key === "Enter" && e.target.id === "newmember") document.getElementById("addmember").click();
   if (e.key === "Enter" && e.target.id === "joincode") { e.preventDefault(); joinWithCode(); }
   if (e.key === "Enter" && e.target.id === "newbreak") { e.preventDefault(); addCustomBreak(); }
@@ -2390,7 +2397,7 @@ function tourSteps() {
   const tabEl = t => wide ? null : q(`.tabbar [data-tab="${t}"]`);
   const myRow = () => { const b = document.querySelector(`.member [data-tick^="${me}:"]`) || document.querySelector(`[data-edit="${me}"]`); return b && b.closest(".member"); };
   const steps = [
-    { title: `Welcome to ${g ? g.name : "LockedIn"}`, text: "Here's a quick tour of everything: about a minute. You can skip it now and replay it any time from the Me tab." },
+    { title: `Welcome to ${g ? g.name : "LockedIn"}`, text: "Here's a quick tour of everything: about a minute. Tap ✕ to skip it, and replay it any time from the Me tab." },
     mine && { el: wide ? myRow : q(".quick .qgrid"), title: "Tick your homework",
       text: `Tap a box when it's done. Required: ${esc(listText(req))}. All required ticked = Complete (green circle).`
         + (bonus.length ? ` ${esc(listText(bonus))} ${bonus.length > 1 ? "are bonus boxes" : "is a bonus box"}: extra points.` : "")
@@ -2446,7 +2453,6 @@ function showTourStep() {
   document.getElementById("tour-dots").innerHTML = tour.steps.map((_, j) => `<i class="${j === tour.i ? "on" : ""}"></i>`).join("");
   document.getElementById("tour-back").hidden = tour.i === 0;
   document.getElementById("tour-next").textContent = tour.i === 0 ? "Start tour" : last ? "Finish" : "Next";
-  document.getElementById("tour-skip").hidden = last;
   const el = st.el && st.el();
   if (el && !el.closest(".topbar, .tabbar")) {
     const r = el.getBoundingClientRect();
