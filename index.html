@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>MNQ Homework Tracker</title>
+<title>LockedIn Group</title>
 <meta name="theme-color" content="#17181c" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1007,13 +1007,13 @@ function renderTop() {
   if (profileKey && tab !== "admin") {
     const m = members.find(x => x.key === profileKey);
     top.innerHTML = isWide()
-      ? `<span class="brand">MNQ Homework</span><div class="center"><b>Profile</b></div><div class="end"><button id="profile-back">‹ Back</button></div>`
+      ? `<span class="brand">LockedIn Group</span><div class="center"><b>Profile</b></div><div class="end"><button id="profile-back">‹ Back</button></div>`
       : `<button class="round" id="profile-back" aria-label="Back">‹</button><div class="mid"><b>${esc(m ? m.name : "")}</b></div><span></span>`;
     return;
   }
   if (isWide()) {
     const status = error ? `<span class="err">${esc(error)}</span>` : saving || Object.keys(pending).length ? "Saving…" : "";
-    top.innerHTML = `<span class="brand">MNQ Homework</span>
+    top.innerHTML = `<span class="brand">LockedIn Group</span>
       <div class="center">
         <button class="round" id="prev" aria-label="Previous trading day" ${tab === "admin" ? "disabled" : ""}>‹</button>
         <b>${fmtDay(selected)}</b>
@@ -1350,7 +1350,7 @@ function renderGate() {
   const name = profile ? profile.discord_name : (session && session.user.user_metadata && (session.user.user_metadata.full_name || session.user.user_metadata.name)) || "";
   const avatar = session && session.user.user_metadata && session.user.user_metadata.avatar_url;
   if (screen === "setup") return `<div class="gate card"><h1>Almost there</h1><p>Paste your Supabase address and key into <b>config.js</b>, then reload.</p></div>`;
-  if (screen === "signin") return `<div class="gate"><h1>MNQ Homework</h1><p>Daily homework for the accountability group.</p>
+  if (screen === "signin") return `<div class="gate"><h1>LockedIn Group</h1><p>Daily MNQ homework for the accountability group.</p>
     <button class="btn discord" id="signin">${SVG.discord}Sign in with Discord</button>
     ${error ? `<p class="msg err" style="margin-top:16px">${esc(error)}</p>` : ""}</div>`;
   if (screen === "waiting") return `<div class="gate">${avatar ? `<img class="avatar" src="${esc(avatar)}" alt="">` : ""}
