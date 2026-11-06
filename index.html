@@ -6,6 +6,13 @@
 <title>LockedIn Group</title>
 <meta name="theme-color" content="#17181c" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon-64.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LockedIn">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500;600&display=swap">
@@ -226,11 +233,27 @@
   }
 
   /* full-size screenshot viewer */
-  dialog#viewer { border: 0; padding: 0; background: transparent; max-width: 100vw; max-height: 100vh; overflow: visible; }
-  dialog#viewer::backdrop { background: rgba(0, 0, 0, 0.88); }
-  dialog#viewer img { display: block; max-width: min(1200px, 94vw); max-height: 78vh; border-radius: 12px; margin: 0 auto; background: #111; }
-  dialog#viewer .vbar { display: flex; justify-content: center; gap: 10px; margin-top: 14px; }
-  dialog#viewer .vcap { text-align: center; color: #c9d1d6; font-size: 14px; margin-top: 10px; }
+  /* full-screen picture viewer: swipe or arrows between pictures, pinch / double-tap / wheel to zoom */
+  dialog#viewer { border: 0; padding: 0; margin: 0; width: 100vw; height: 100vh; height: 100dvh; max-width: none; max-height: none;
+                  background: rgba(0, 0, 0, 0.94); color: #fff; overflow: hidden; }
+  dialog#viewer::backdrop { background: rgba(0, 0, 0, 0.94); }
+  dialog#viewer[open] { display: flex; flex-direction: column; }
+  .vtop { display: flex; align-items: center; gap: 10px; padding: calc(8px + env(safe-area-inset-top, 0px)) 12px 8px 18px; }
+  .vtop .vcap { flex: 1; min-width: 0; font-size: 14px; color: #d4d4dc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vtop .vcap b { color: #fff; font-weight: 600; }
+  .vtop .vn { font: 600 13px var(--font-data); color: #a8a8b3; }
+  .vtop .round { color: #fff; background: rgba(255, 255, 255, 0.12); width: 40px; height: 40px; font-size: 18px; }
+  .vstage { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .vstage img { max-width: 100%; max-height: 100%; object-fit: contain; transform-origin: 0 0; will-change: transform; -webkit-user-drag: none; cursor: zoom-in; }
+  .vstage.zoomed img { cursor: grab; }
+  .vnav { position: absolute; top: 50%; margin-top: -24px; width: 48px; height: 48px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, 0.14);
+          color: #fff; font-size: 26px; cursor: pointer; display: grid; place-items: center; z-index: 2; }
+  .vnav.prev { left: 14px; } .vnav.next { right: 14px; }
+  .vnav:hover { background: rgba(255, 255, 255, 0.24); }
+  @media (hover: none) { .vnav { display: none; } }
+  .vbar { display: flex; justify-content: center; align-items: center; gap: 10px; min-height: 30px; padding: 8px 12px calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .vbar .vhint { font-size: 12px; color: #8e8e99; }
+  .vbar .btn.danger { color: #ff8a84; box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.2); }
 
   .grid-wrap { overflow-x: auto; }
   table.grid { width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; min-width: 300px; }
@@ -360,6 +383,33 @@
   .note a, .jentry a, .rentry a { color: var(--accent-text); font-weight: 500; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
   .note a:hover, .jentry a:hover, .rentry a:hover { text-decoration-thickness: 2px; }
 
+  /* ---------- note save status, paste/drop, quick tick, day picker ---------- */
+  .note-status { display: flex; align-items: center; gap: 6px; min-height: 20px; font-size: 12px; color: var(--muted); margin: 6px 2px 0; }
+  .note-status.ok { color: var(--muted); }
+  .note-status.bad { color: var(--crit); font-weight: 600; }
+  .note-status button { border: 0; background: none; color: var(--accent-text); font: 600 12px var(--font-ui); padding: 2px 4px; cursor: pointer; }
+  .addpic small { font-size: 12px; font-weight: 500; color: var(--muted); }
+  .panel.dropping { box-shadow: inset 0 0 0 3px var(--accent), 0 20px 60px var(--glass-shade); }
+  .quick .qgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .q { position: relative; min-height: 64px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--text);
+       display: flex; align-items: center; gap: 10px; padding: 10px 12px; text-align: left; cursor: pointer; }
+  .q.bonus { border-style: dashed; background: transparent; }
+  .q .qc { flex: none; width: 26px; height: 26px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--muted); display: grid; place-items: center; }
+  .q b { display: block; font-size: 15px; font-weight: 600; line-height: 1.15; }
+  .q small { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .q[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .q[aria-pressed="true"] small { color: rgba(255, 255, 255, 0.78); }
+  .q[aria-pressed="true"] .qc { background: #fff; box-shadow: none; color: var(--accent); }
+  .q:active { transform: scale(0.97); }
+  .quick .qnote { width: 100%; margin-top: 8px; min-height: 44px; border-radius: 12px; border: 0; background: transparent; color: var(--accent-text);
+                  font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+  .quick .qnote:active { background: var(--surface-2); }
+  .datepick { position: relative; display: inline-block; max-width: 100%; }
+  .datepick input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; margin: 0; font-size: 16px; }
+  .datepick b { pointer-events: none; }
+  .datepick b::after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 7px; vertical-align: 3px;
+                       border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); }
+
   /* ---------- admin ---------- */
   .cardhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -6px -6px 10px 0; }
   .cardhead h2 { margin: 0; font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; }
@@ -441,14 +491,16 @@
   <div id="app"><div class="card"><p class="msg">Loading…</p></div></div>
 </main>
 <nav class="tabbar glass" id="tabbar" role="tablist" aria-label="View" hidden></nav>
-<input type="file" id="shotinput" accept="image/*" hidden>
+<input type="file" id="shotinput" accept="image/*" multiple hidden>
 <div class="toast glass" id="toast" role="status" aria-live="polite" hidden></div>
 <div class="scrim" id="scrim" hidden></div>
 <aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title" hidden></aside>
-<dialog id="viewer" aria-label="Screenshot">
-  <img id="viewer-img" alt="">
-  <div class="vcap" id="viewer-cap"></div>
-  <div class="vbar"><button class="btn plain small" id="viewer-close">Close</button><button class="btn danger small" id="viewer-delete">Delete</button></div>
+<dialog id="viewer" aria-label="Picture">
+  <div class="vtop"><div class="vcap" id="viewer-cap"></div><span class="vn" id="viewer-n"></span><button class="round" id="viewer-close" aria-label="Close">✕</button></div>
+  <div class="vstage" id="viewer-stage"><img id="viewer-img" alt="" draggable="false"></div>
+  <button class="vnav prev" id="viewer-prev" aria-label="Previous picture">‹</button>
+  <button class="vnav next" id="viewer-next" aria-label="Next picture">›</button>
+  <div class="vbar"><span class="vhint" id="viewer-hint"></span><button class="btn danger small" id="viewer-delete">Delete</button></div>
 </dialog>
 
 <script>
@@ -647,7 +699,7 @@ function editTick(k, key, mutate, quiet) {
   row.rule_breaks = [...(row.rule_breaks || [])];
   const before = statusOf(k, key);
   mutate(row);
-  ticks[id] = row; pending[id] = true;
+  ticks[id] = row; pending[id] = true; noteState[id] = "saving";
   if (key === myKey() && before !== "COMPLETE" && statusOf(k, key) === "COMPLETE") celebrate();
   if (quiet) renderTop(); else render();
   clearTimeout(timers[id]);
@@ -656,18 +708,51 @@ function editTick(k, key, mutate, quiet) {
 async function saveTick(id) {
   const row = ticks[id];
   const body = { day: row.day, member_key: row.member_key, chart: !!row.chart, journal: !!row.journal, review: !!row.review, social: !!row.social, note: row.note || "", images: row.images || [], excused: !!row.excused, no_trade: !!row.no_trade, rule_breaks: row.rule_breaks || [] };
-  saving++; renderTop();
-  const { error: e } = await sb.from("ticks").upsert(body, { onConflict: "day,member_key" });
+  saving++; noteState[id] = "saving"; renderTop();
+  let e;
+  try { ({ error: e } = await sb.from("ticks").upsert(body, { onConflict: "day,member_key" })); }
+  catch (err) { e = { message: "no connection" }; }
   saving--;
   delete pending[id];
   if (e) {
     error = e.code === "42501" || /row-level security/i.test(e.message)
       ? "Not saved: this day is closed or the row isn't yours."
       : "Not saved: " + e.message;
+    noteState[id] = "error";
+    // Reload the real row, but your typed note stays in the box and in the backup on this device.
     const { data } = await sb.from("ticks").select("*").eq("day", row.day).eq("member_key", row.member_key).maybeSingle();
     if (data) ticks[id] = data; else delete ticks[id];
-  } else error = "";
+  } else {
+    error = "";
+    // If you kept typing while this was saving, the next save is already queued.
+    noteState[id] = ticks[id] && (ticks[id].note || "") !== body.note ? "saving" : "saved";
+    const d = getDraft(id);
+    if (d && d.text === body.note) dropDraft(id);
+  }
   render();
+}
+
+// ---------------------------------------------------------------- note backup on this device
+// Every keystroke is also kept in this browser until the database confirms it, so a failed save,
+// a closed tab or a dead battery never loses what you wrote. Reopening the ✎ panel brings it back.
+const noteState = {};   // id -> saving | saved | error
+const draftKey = id => "draft:" + id;
+function getDraft(id) { try { return JSON.parse(localStorage.getItem(draftKey(id)) || "null"); } catch (e) { return null; } }
+function putDraft(id, text) { try { localStorage.setItem(draftKey(id), JSON.stringify({ text, t: Date.now() })); } catch (e) {} }
+function dropDraft(id) { try { localStorage.removeItem(draftKey(id)); } catch (e) {} }
+// Throw away backups older than 10 days.
+try { Object.keys(localStorage).filter(k => k.startsWith("draft:")).forEach(k => {
+  const d = JSON.parse(localStorage.getItem(k) || "null"); if (!d || Date.now() - d.t > 10 * 864e5) localStorage.removeItem(k); }); } catch (e) {}
+
+function renderNoteStatus() {
+  const el = document.getElementById("note-status");
+  if (!el || !editing) return;
+  const id = editing.day + "|" + editing.key, st = noteState[id];
+  el.className = "note-status " + (st === "error" ? "bad" : st === "saved" ? "ok" : "");
+  el.innerHTML = st === "saving" ? "Saving…"
+    : st === "saved" ? `${ic("check", 14)}Saved`
+    : st === "error" ? `Not saved yet. Your text is kept on this device. <button id="note-retry">Try again</button>`
+    : "";
 }
 
 // ---------------------------------------------------------------- rule-break picker (standard + your own)
@@ -768,6 +853,18 @@ function customBreaksListHtml() {
         `<button data-unhide-break="${b}" aria-label="Show ${esc(label)} again">+ ${esc(label)}</button>`).join("")}</div>` : "")
     + `<p class="sub-hint" style="margin-top:10px">Add your own in your note panel. Hiding or removing a tag only changes your list; days where you used it keep the tag.</p>`;
 }
+// ---------------------------------------------------------------- app icon on your home screen
+let installPrompt = null;   // Android / Chrome / Edge give us an "Install" button; iPhone needs Share → Add to Home Screen
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installPrompt = e; });
+const isInstalled = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+function installHtml() {
+  if (isInstalled()) return "";
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const how = installPrompt ? `<button class="btn primary small" id="install-app">Install LockedIn</button>`
+    : ios ? `<p class="sub-hint" style="margin:0">In Safari: tap <b>Share</b> (the square with the arrow) → <b>Add to Home Screen</b> → <b>Add</b>.</p>`
+    : `<p class="sub-hint" style="margin:0">Android (Chrome): tap <b>⋮</b> → <b>Add to Home screen</b>. Computer (Chrome / Edge): the install icon at the right of the address bar.</p>`;
+  return `<h3>App on your phone</h3><p class="sub-hint">Get a LockedIn icon on your home screen. It opens full screen, like a normal app.</p>${how}`;
+}
 function openSettings() {
   editing = null; settingsOpen = true;
   const opt = (v, label) => `<button data-theme-set="${v}" aria-pressed="${settings.theme === v}">${label}</button>`;
@@ -779,6 +876,7 @@ function openSettings() {
     <p class="sub-hint" style="margin-top:8px">Dark is the default. System follows your phone or computer.</p>
     <h3>My rule breaks</h3>
     <div id="settings-breaks">${customBreaksListHtml()}</div>
+    ${installHtml()}
     <h3>Celebrations</h3>
     <label class="switchrow"><span><b>Confetti</b><small>When you complete your day.</small></span>
       <input type="checkbox" id="set-confetti" role="switch" ${settings.confetti !== false ? "checked" : ""}></label>
@@ -869,7 +967,8 @@ async function shrink(file) {
 
 async function uploadShot(day, key, file) {
   if (!canEdit(day, key) || !file) return;
-  if (((tickOf(day, key) || {}).images || []).length >= MAX_SHOTS) { error = `Max ${MAX_SHOTS} screenshots per day.`; return render(); }
+  if (((tickOf(day, key) || {}).images || []).length + (uploading[key] || 0) >= MAX_SHOTS) { error = `Max ${MAX_SHOTS} screenshots per day.`; return render(); }
+  if (file.type && !file.type.startsWith("image/")) { error = "That file isn't a picture."; return render(); }
   uploading[key] = (uploading[key] || 0) + 1; render();
   try {
     const blob = await shrink(file);
@@ -886,16 +985,119 @@ async function uploadShot(day, key, file) {
   }
 }
 
+// ---------------------------------------------------------------- full-screen picture viewer
+// Shows every picture of that person's day. Swipe / arrow keys / ‹ › to move, pinch, double-tap or scroll to zoom.
+const V = { s: 1, x: 0, y: 0 };          // zoom + pan of the current picture
 function openViewer(day, key, path) {
-  viewing = { day, key, path };
-  const m = members.find(x => x.key === key);
-  document.getElementById("viewer-img").src = shotUrls[path] || "";
-  document.getElementById("viewer-cap").textContent = `${m ? m.name : key} · ${fmtDay(day)}`;
-  document.getElementById("viewer-delete").hidden = !canEdit(day, key);
-  document.getElementById("viewer-delete").textContent = "Delete";
-  document.getElementById("viewer-delete").dataset.confirm = "";
-  document.getElementById("viewer").showModal();
+  const list = ((tickOf(day, key) || {}).images || []).slice();
+  if (!list.includes(path)) list.push(path);
+  ensureShotUrls(list);
+  viewing = { day, key, list, i: list.indexOf(path) };
+  showViewerImage();
+  const dlg = document.getElementById("viewer");
+  if (!dlg.open) dlg.showModal();
 }
+function showViewerImage() {
+  if (!viewing) return;
+  const { day, key, list, i } = viewing, path = list[i], m = members.find(x => x.key === key);
+  viewing.path = path;
+  const img = document.getElementById("viewer-img");
+  img.src = shotUrls[path] || "";
+  img.alt = `Picture ${i + 1} from ${m ? m.name : key}`;
+  document.getElementById("viewer-cap").innerHTML = `<b>${esc(m ? m.name : key)}</b> · ${esc(fmtDay(day))}`;
+  document.getElementById("viewer-n").textContent = list.length > 1 ? `${i + 1} / ${list.length}` : "";
+  document.getElementById("viewer-prev").hidden = i === 0;
+  document.getElementById("viewer-next").hidden = i >= list.length - 1;
+  const del = document.getElementById("viewer-delete");
+  del.hidden = !canEdit(day, key); del.textContent = "Delete"; del.dataset.confirm = "";
+  document.getElementById("viewer-hint").textContent = matchMedia("(hover: none)").matches
+    ? (list.length > 1 ? "Swipe for more · pinch to zoom" : "Pinch or double-tap to zoom") : "Click or scroll to zoom";
+  setZoom(1, 0, 0);
+}
+function stepViewer(dir) {
+  if (!viewing) return;
+  const n = viewing.i + dir;
+  if (n < 0 || n >= viewing.list.length) return setZoom(1, 0, 0);
+  viewing.i = n; showViewerImage();
+}
+// Keep the picture from sliding off screen while zoomed.
+function setZoom(s, x, y) {
+  const img = document.getElementById("viewer-img"), stage = document.getElementById("viewer-stage");
+  s = Math.min(5, Math.max(1, s));
+  const w = img.offsetWidth, h = img.offsetHeight;
+  x = Math.min(0, Math.max(w - w * s, x)); y = Math.min(0, Math.max(h - h * s, y));
+  if (s === 1) { x = 0; y = 0; }
+  Object.assign(V, { s, x, y });
+  img.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
+  stage.classList.toggle("zoomed", s > 1);
+}
+// Zoom so the point under (cx, cy) on screen stays put.
+function zoomAt(newS, cx, cy) {
+  const r = document.getElementById("viewer-img").getBoundingClientRect();
+  const left = r.left - V.x, top = r.top - V.y;          // where the unzoomed picture sits
+  const px = (cx - left - V.x) / V.s, py = (cy - top - V.y) / V.s;
+  const s = Math.min(5, Math.max(1, newS));
+  setZoom(s, cx - left - px * s, cy - top - py * s);
+}
+(function viewerGestures() {
+  const stage = document.getElementById("viewer-stage"), pts = new Map();
+  let start = null, pinch = null, lastTap = 0;
+  stage.addEventListener("pointerdown", e => {
+    stage.setPointerCapture(e.pointerId);
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size === 1) start = { x: e.clientX, y: e.clientY, vx: V.x, vy: V.y, t: Date.now(), moved: false };
+    if (pts.size === 2) {
+      const [a, b] = [...pts.values()];
+      pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s: V.s };
+    }
+  });
+  stage.addEventListener("pointermove", e => {
+    if (!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size === 2 && pinch) {
+      const [a, b] = [...pts.values()];
+      zoomAt(pinch.s * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d, (a.x + b.x) / 2, (a.y + b.y) / 2);
+      if (start) start.moved = true;
+      return;
+    }
+    if (!start) return;
+    const dx = e.clientX - start.x, dy = e.clientY - start.y;
+    if (Math.abs(dx) + Math.abs(dy) > 8) start.moved = true;
+    const img = document.getElementById("viewer-img");
+    if (V.s > 1) setZoom(V.s, start.vx + dx, start.vy + dy);              // pan the zoomed picture
+    else img.style.transform = `translateX(${dx}px)`;                      // follow the finger before a swipe
+  });
+  const end = e => {
+    if (!pts.has(e.pointerId)) return;
+    pts.delete(e.pointerId);
+    if (pts.size < 2) pinch = null;
+    if (pts.size > 0 || !start) return;
+    const dx = e.clientX - start.x, dy = e.clientY - start.y, s0 = start;
+    start = null;
+    if (V.s === 1 && s0.moved) {
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) return stepViewer(dx < 0 ? 1 : -1);
+      if (dy > 110 && Math.abs(dy) > Math.abs(dx)) return document.getElementById("viewer").close();   // swipe down to close
+      return setZoom(1, 0, 0);
+    }
+    if (s0.moved || e.type === "pointercancel") return;
+    // A tap: double-tap (or a click with a mouse) zooms in / out; a tap beside the picture closes.
+    const r = document.getElementById("viewer-img").getBoundingClientRect(), now = Date.now();
+    const onImg = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+    if (e.pointerType === "mouse") { if (onImg) zoomAt(V.s > 1 ? 1 : 2.5, e.clientX, e.clientY); else document.getElementById("viewer").close(); return; }
+    if (now - lastTap < 300) { lastTap = 0; zoomAt(V.s > 1 ? 1 : 2.5, e.clientX, e.clientY); return; }
+    lastTap = now;
+    if (!onImg && V.s === 1) setTimeout(() => { if (lastTap === now) document.getElementById("viewer").close(); }, 300);
+  };
+  stage.addEventListener("pointerup", end);
+  stage.addEventListener("pointercancel", end);
+  stage.addEventListener("wheel", e => { e.preventDefault(); zoomAt(V.s * (e.deltaY < 0 ? 1.15 : 1 / 1.15), e.clientX, e.clientY); }, { passive: false });
+  document.getElementById("viewer").addEventListener("close", () => { viewing = null; setZoom(1, 0, 0); });
+  document.addEventListener("keydown", e => {
+    if (!document.getElementById("viewer").open) return;
+    if (e.key === "ArrowRight") stepViewer(1);
+    if (e.key === "ArrowLeft") stepViewer(-1);
+  });
+})();
 
 async function removeShot(day, key, path) {
   if (!canEdit(day, key)) return;
@@ -910,13 +1112,22 @@ function openPanel(day, key) {
   editing = { day, key };
   const m = members.find(x => x.key === key), rec = tickOf(day, key) || {};
   const panel = document.getElementById("panel");
+  // Unsaved text from earlier (failed save, closed tab): bring it back and save it now.
+  const id = day + "|" + key, draft = getDraft(id);
+  let noteText = rec.note || "";
+  if (draft && draft.text !== noteText && !pending[id]) {
+    noteText = draft.text;
+    setTimeout(() => editTick(day, key, row => { row.note = draft.text; }, true), 0);
+  } else if (draft) dropDraft(id);
+  if (noteState[id] === "saved") delete noteState[id];
   panel.innerHTML = `<div class="grab" aria-hidden="true"></div>
     <header><div><b id="panel-title">${esc(m ? m.name : key)}</b><span>${fmtDay(day, { weekday: "long", month: "long" })}</span></div>
       <button class="round" id="panel-close" aria-label="Close">✕</button></header>
     <label class="switchrow"><span><b>No trade today</b><small>Shows the group you sat out on purpose. Chart with executions, journal and HTF are still required.</small></span>
       <input type="checkbox" id="panel-notrade" role="switch" ${rec.no_trade ? "checked" : ""}></label>
     <h3>Note</h3>
-    <textarea id="panel-note" maxlength="10000" placeholder="What did you trade, what did you learn?">${esc(rec.note)}</textarea>
+    <textarea id="panel-note" maxlength="10000" placeholder="What did you trade, what did you learn?">${esc(noteText)}</textarea>
+    <p class="note-status" id="note-status" aria-live="polite"></p>
     <h3>Pictures <span id="panel-pics-count"></span></h3>
     <div class="pics" id="panel-pics"></div>
     <h3>Rule breaks today</h3>
@@ -958,7 +1169,7 @@ function renderPanelPics() {
       <button class="open" data-view-shot="${key}|${esc(p)}" aria-label="Open picture ${i + 1}" style="${shotUrls[p] ? `background-image:url('${shotUrls[p]}')` : ""}"></button>
       <button class="remove" data-remove-shot="${esc(p)}" aria-label="Delete picture ${i + 1}">✕</button></div>`).join("")
     + Array.from({ length: busy }, () => `<div class="pic busy">Uploading…</div>`).join("")
-    + (images.length + busy < MAX_SHOTS ? `<button class="addpic" data-add-shot="${key}">${SVG.camera}Add picture</button>` : "");
+    + (images.length + busy < MAX_SHOTS ? `<button class="addpic" data-add-shot="${key}">${SVG.camera}Add picture${matchMedia("(hover: hover)").matches ? `<small>or paste ⌘V / drop here</small>` : ""}</button>` : "");
   document.getElementById("panel-pics").innerHTML = tiles;
   document.getElementById("panel-pics-count").textContent = `· ${images.length}/${MAX_SHOTS}`;
 }
@@ -1004,7 +1215,20 @@ function statusText() {
   return saving || Object.keys(pending).length ? `<small>Saving…</small>` : "";
 }
 
+// The date in the top bar opens the phone's / browser's own calendar to jump to any day.
+function datePickHtml() {
+  const first = Object.keys(ticks).reduce((a, id) => id.slice(0, 10) < a ? id.slice(0, 10) : a, today);
+  return `<span class="datepick"><b>${fmtDay(selected)}</b><input type="date" id="daypick" value="${selected}" min="${first}" max="${today}" aria-label="Jump to a day"></span>`;
+}
+function goToDay(k) {
+  if (!k) return;
+  if (k > today) k = today;
+  while (!isTradingDay(k)) k = addDays(k, -1);
+  selected = k; weekStart = mondayOf(k);
+  render();
+}
 function renderTop() {
+  renderNoteStatus();
   const top = document.getElementById("topbar");
   top.hidden = screen !== "app";
   if (screen !== "app") return;
@@ -1020,7 +1244,7 @@ function renderTop() {
     top.innerHTML = `<span class="brand">LockedIn Group</span>
       <div class="center">
         <button class="round" id="prev" aria-label="Previous trading day" ${tab === "admin" ? "disabled" : ""}>‹</button>
-        <b>${fmtDay(selected)}</b>
+        ${tab === "admin" ? `<b>${fmtDay(selected)}</b>` : datePickHtml()}
         <button class="round" id="next" aria-label="Next trading day" ${selected >= today || tab === "admin" ? "disabled" : ""}>›</button>
       </div>
       <div class="end"><span>${status}</span>${selected !== today && tab !== "admin" ? `<button id="gotoday">Today</button>` : ""}
@@ -1032,7 +1256,7 @@ function renderTop() {
   if (tab === "day") {
     prev = `<button class="round" id="prev" aria-label="Previous trading day">‹</button>`;
     next = `<button class="round" id="next" aria-label="Next trading day" ${selected >= today ? "disabled" : ""}>›</button>`;
-    mid = `<b>${fmtDay(selected)}</b>${selected !== today ? `<button id="gotoday">Today</button>` : statusText()}`;
+    mid = `${datePickHtml()}${selected !== today ? `<button id="gotoday">Today</button>` : statusText()}`;
   } else if (tab === "week") {
     prev = `<button class="round" id="pw" aria-label="Previous week">‹</button>`;
     next = `<button class="round" id="nw" aria-label="Next week" ${weekStart >= mondayOf(today) ? "disabled" : ""}>›</button>`;
@@ -1076,6 +1300,16 @@ function renderDay() {
   list.forEach(m => { const s = statusOf(k, m.key); counts[s] = (counts[s] || 0) + 1; });
   const stack = STATUS_ORDER.filter(s => counts[s]).map(s => `<i style="flex:${counts[s]};background:${STATUS_COLOR[s]}" title="${LABEL[s]}: ${counts[s]}"></i>`).join("");
 
+  // Phones: big buttons for your own homework at the top (today only).
+  const me = myKey(), quickOn = !isWide() && k === today && me && list.some(m => m.key === me) && canEdit(k, me);
+  let quick = "";
+  if (quickOn) {
+    const rec = tickOf(k, me) || {};
+    quick = `<div class="card quick"><div class="cardhead"><h2>Your homework</h2></div><div class="qgrid">${RULES.map(([r, label, kind]) =>
+      `<button class="q ${kind}" data-tick="${me}:${r}" aria-pressed="${!!rec[r]}"><span class="qc">${rec[r] ? ic("check", 18).replace('<circle cx="12" cy="12" r="9"/>', "") : ""}</span>
+        <span><b>${label}</b><small>${kind === "bonus" ? "Bonus" : "Required"}</small></span></button>`).join("")}</div>
+      <button class="qnote" data-edit="${me}">${SVG.note.replace("<svg ", '<svg width="18" height="18" ')}${rec.note || (rec.images || []).length ? "Edit note & pictures" : "Add note & pictures"}</button></div>`;
+  }
   // Your own row first, so you don't have to look for it.
   const ordered = myKey() ? [...list.filter(m => m.key === myKey()), ...list.filter(m => m.key !== myKey())] : list;
   const allShots = [];
@@ -1091,9 +1325,10 @@ function renderDay() {
     const shots = images.map((p, i) => `<button class="shot" data-view-shot="${m.key}|${esc(p)}" aria-label="Screenshot ${i + 1} from ${esc(m.name)}"
         style="${shotUrls[p] ? `background-image:url('${shotUrls[p]}')` : ""}"></button>`).join("")
       + Array.from({ length: uploading[m.key] || 0 }, () => `<span class="shot busy">Uploading…</span>`).join("");
+    const showToggles = !(quickOn && m.key === me);   // already at the top as big buttons
     return `<div class="member ${editable ? "" : "locked"}">
       <div class="mrow"><span class="name">${avatarHtml(m, 26)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === myKey() ? `<span class="you">YOU</span>` : ""}${rec.no_trade ? `<span class="ntag" title="No trade today: sat out on purpose">${ic("pause", 13)}<span class="ntag-text">No trade</span></span>` : ""}</span>${editBtn}${dot(st, m.name)}</div>
-      <div class="toggles">${toggles}</div>
+      ${showToggles ? `<div class="toggles">${toggles}</div>` : ""}
       ${(rec.rule_breaks || []).length ? `<div class="breaks">${rec.rule_breaks.map(b => `<span class="bchip">${ic("alert", 13)}${esc(BREAK_LABEL[b] || b)}</span>`).join("")}</div>` : ""}
       ${note ? `<div class="note">${note}</div>` : ""}
       ${shots ? `<div class="shots">${shots}</div>` : ""}
@@ -1108,7 +1343,7 @@ function renderDay() {
     ${banner}${nudge}
   </div>`;
   const err = error && !isWide() && error.length > 48 ? `<div class="card"><p class="msg err">${esc(error)}</p></div>` : "";
-  return { summary, list: err + `<div class="card">${rows || `<p class="empty">No members yet.</p>`}</div>` };
+  return { summary: summary + quick, list: err + `<div class="card">${rows || `<p class="empty">No members yet.</p>`}</div>` };
 }
 
 function renderWeek() {
@@ -1379,6 +1614,8 @@ function render() {
   else { const d = renderDay(); app.innerHTML = d.summary + d.list; }
   renderPanelPics();
   checkUnlocks();
+  // A picture's link may arrive after the viewer opened.
+  if (viewing) { const img = document.getElementById("viewer-img"); if (!img.getAttribute("src") && shotUrls[viewing.path]) img.src = shotUrls[viewing.path]; }
 }
 
 function setTab(t) { tab = t; profileKey = null; flash = ""; try { localStorage.setItem("tab", t); } catch (e) {} render(); window.scrollTo(0, 0); }
@@ -1403,6 +1640,7 @@ document.addEventListener("click", async e => {
   if (d.tick) { const [key, r] = d.tick.split(":"); return editTick(selected, key, row => { row[r] = !row[r]; }); }
   if (d.edit) return openPanel(selected, d.edit);
   if (t.id === "open-settings") return openSettings();
+  if (t.id === "install-app" && installPrompt) { installPrompt.prompt(); installPrompt = null; t.remove(); return; }
   if (t.id === "show-add-break") { const row = document.getElementById("add-break-row"); row.hidden = false; document.getElementById("newbreak").focus(); return; }
   if (t.id === "add-break") return addCustomBreak();
   if (d.hideBreak || d.unhideBreak) {
@@ -1436,10 +1674,14 @@ document.addEventListener("click", async e => {
   if (d.addShot) { shotTarget = { day: selected, key: d.addShot }; const inp = document.getElementById("shotinput"); inp.value = ""; inp.click(); return; }
   if (d.viewShot) { const i = d.viewShot.indexOf("|"), path = d.viewShot.slice(i + 1); return openViewer(path.split("/")[0], d.viewShot.slice(0, i), path); }
   if (t.id === "viewer-close") return document.getElementById("viewer").close();
+  if (t.id === "viewer-prev") return stepViewer(-1);
+  if (t.id === "viewer-next") return stepViewer(1);
+  if (t.id === "note-retry" && editing) { const v = document.getElementById("panel-note").value; return editTick(editing.day, editing.key, row => { row.note = v; }, true); }
   if (t.id === "viewer-delete") {
     if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Sure? Tap again"; return; }
+    const v = viewing;
     document.getElementById("viewer").close();
-    return viewing && removeShot(viewing.day, viewing.key, viewing.path);
+    return v && removeShot(v.day, v.key, v.path);
   }
   if (d.day) { selected = d.day; if (isWide()) { if (tab === "admin") tab = "day"; render(); } else setTab("day"); return; }
   if (d.approve) {
@@ -1488,8 +1730,37 @@ document.addEventListener("input", e => {
   if (e.target.id === "panel-excused" && editing) { const on = e.target.checked; return editTick(editing.day, editing.key, row => { row.excused = on; }); }
   if (e.target.id !== "panel-note" || !editing) return;
   const v = e.target.value;
+  putDraft(editing.day + "|" + editing.key, v);
   editTick(editing.day, editing.key, row => { row.note = v; }, true);
 });
+document.addEventListener("change", e => { if (e.target.id === "daypick") goToDay(e.target.value); });
+// Desktop browsers only open the calendar from its small icon; open it from anywhere on the date.
+document.addEventListener("click", e => { if (e.target.id === "daypick" && e.target.showPicker) try { e.target.showPicker(); } catch (err) {} });
+// Phones: swipe left / right on the Day tab for the next / previous day, on the Week tab for weeks.
+(function swipeDays() {
+  let s = null;
+  const app = document.getElementById("app");
+  app.addEventListener("touchstart", e => {
+    s = null;
+    if (isWide() || profileKey || screen !== "app" || (tab !== "day" && tab !== "week") || e.touches.length !== 1) return;
+    if (e.target.closest("input, textarea, select, .grid-wrap, .heat-wrap")) return;
+    s = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() };
+  }, { passive: true });
+  app.addEventListener("touchend", e => {
+    if (!s) return;
+    const dx = e.changedTouches[0].clientX - s.x, dy = e.changedTouches[0].clientY - s.y, quick = Date.now() - s.t < 600;
+    s = null;
+    if (!quick || Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
+    if (tab === "day") {
+      if (dx > 0) goToDay(prevTrading(selected));
+      else if (selected < today) goToDay(nextTrading(selected));
+    } else {
+      if (dx > 0) weekStart = addDays(weekStart, -7);
+      else if (weekStart < mondayOf(today)) weekStart = addDays(weekStart, 7);
+      render();
+    }
+  }, { passive: true });
+})();
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && (editing || settingsOpen) && !document.getElementById("viewer").open) closePanel();
   if (e.key === "Enter" && e.target.id === "newmember") document.getElementById("addmember").click();
@@ -1498,12 +1769,34 @@ document.addEventListener("keydown", e => {
 document.getElementById("scrim").addEventListener("click", closePanel);
 wideQuery.addEventListener("change", () => render());
 document.getElementById("shotinput").addEventListener("change", e => {
-  const file = e.target.files && e.target.files[0];
-  if (file && shotTarget) uploadShot(shotTarget.day, shotTarget.key, file);
+  const files = [...(e.target.files || [])];
+  if (shotTarget) files.forEach(f => uploadShot(shotTarget.day, shotTarget.key, f));
   shotTarget = null;
 });
-// Tapping the dark area around a screenshot closes it.
-document.getElementById("viewer").addEventListener("click", e => { if (e.target.id === "viewer") e.target.close(); });
+// With the ✎ panel open: paste a copied screenshot (⌘V / Ctrl+V) or drop picture files on the panel.
+const imageFiles = list => [...(list || [])].filter(f => f && f.type && f.type.startsWith("image/"));
+document.addEventListener("paste", e => {
+  if (!editing || document.getElementById("viewer").open) return;
+  const files = imageFiles([...(e.clipboardData ? e.clipboardData.items : [])].filter(i => i.kind === "file").map(i => i.getAsFile()));
+  if (!files.length) return;   // normal text paste into the note
+  e.preventDefault();
+  files.forEach(f => uploadShot(editing.day, editing.key, f));
+});
+const panelEl = document.getElementById("panel");
+["dragenter", "dragover"].forEach(ev => panelEl.addEventListener(ev, e => {
+  if (!editing || !e.dataTransfer || ![...e.dataTransfer.types].includes("Files")) return;
+  e.preventDefault(); panelEl.classList.add("dropping");
+}));
+panelEl.addEventListener("dragleave", e => { if (!panelEl.contains(e.relatedTarget)) panelEl.classList.remove("dropping"); });
+panelEl.addEventListener("drop", e => {
+  panelEl.classList.remove("dropping");
+  if (!editing || !e.dataTransfer) return;
+  e.preventDefault();
+  imageFiles(e.dataTransfer.files).forEach(f => uploadShot(editing.day, editing.key, f));
+});
+// Dropping a file anywhere else shouldn't open it in the tab and leave the app.
+window.addEventListener("dragover", e => e.preventDefault());
+window.addEventListener("drop", e => e.preventDefault());
 
 // Keep the time-left bar current, and roll over to the next trading day by itself.
 setInterval(() => {
