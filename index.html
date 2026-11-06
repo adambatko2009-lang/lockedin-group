@@ -532,7 +532,11 @@ const isFinal = k => Date.now() >= closesAt(k).getTime();
 // ---------------------------------------------------------------- state
 const cfg = window.MNQ_CONFIG || {};
 const configured = cfg.supabaseUrl && !cfg.supabaseUrl.startsWith("PASTE") && cfg.supabaseAnonKey && !cfg.supabaseAnonKey.startsWith("PASTE");
-const sb = configured && window.supabase ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey) : null;
+// The login library normally coordinates tabs with a browser lock, which can hang forever ("stuck on Loading")
+// when the site is open twice or opened from Discord. Running without it: worst case someone signs in again.
+const sb = configured && window.supabase ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
+  auth: { lock: async (name, acquireTimeout, fn) => await fn() },
+}) : null;
 
 let screen = "loading";          // loading | setup | signin | waiting | rejected | app
 let session = null, profile = null, isAdmin = false;
@@ -565,7 +569,7 @@ function statusOf(k, key) {
 }
 
 // ---------------------------------------------------------------- data
-let loadStep = "starting";
+let loadStep = "checking your sign-in";
 async function loadAll() {
   loadStep = "your account";
   const [{ data: prof }, { data: adm }] = await Promise.all([
@@ -1513,7 +1517,7 @@ setInterval(() => { if (screen === "waiting" && session) loadAll(); }, 20000);
 // ---------------------------------------------------------------- errors
 // If something breaks, show what went wrong (and a reload button) instead of an endless "Loading…".
 function showCrash(err) {
-  const msg = (err && (err.stack || err.message)) || String(err);
+  const msg = err && err.message ? err.message + (err.stack && !err.stack.includes(err.message) ? "\n\n" + err.stack : "") : String(err);
   console.error(err);
   const app = document.getElementById("app");
   if (!app || app.dataset.crashed) return;
@@ -1524,10 +1528,15 @@ function showCrash(err) {
 }
 window.addEventListener("error", e => showCrash(e.error || e.message));
 window.addEventListener("unhandledrejection", e => showCrash(e.reason));
-setTimeout(() => {
-  if (screen === "loading") showCrash(new Error(`Still loading after 12 seconds (stuck at: ${loadStep}). ` +
-    "Close all other tabs of this site, then reload. If it keeps happening, send Batko this message."));
-}, 12000);
+let loadTimer = null;
+function watchLoading() {
+  clearTimeout(loadTimer);
+  loadTimer = setTimeout(() => {
+    if (screen === "loading") showCrash(new Error(`Still loading after 15 seconds (stuck at: ${loadStep}). ` +
+      "Tap Reload. If it keeps happening, send Batko this message."));
+  }, 15000);
+}
+watchLoading();
 
 // ---------------------------------------------------------------- start
 (async () => {
@@ -1536,7 +1545,7 @@ setTimeout(() => {
     const was = session && session.user.id;
     session = s;
     if (!s) { screen = "signin"; profile = null; isAdmin = false; if (channel) { sb.removeChannel(channel); channel = null; } render(); }
-    else if (s.user.id !== was) { screen = "loading"; render(); setTimeout(loadAll, 0); }
+    else if (s.user.id !== was) { screen = "loading"; render(); watchLoading(); setTimeout(loadAll, 0); }
   });
   const { data } = await sb.auth.getSession();
   if (!data.session) { screen = "signin"; render(); }
