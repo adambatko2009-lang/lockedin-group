@@ -93,6 +93,8 @@
       radial-gradient(var(--dots) 1px, transparent 1.4px) 0 0 / 22px 22px;
   }
   main { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+  /* Same 12px gap between every card on a page (16px on monitors). */
+  #app { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
   [hidden] { display: none !important; }
   button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent; }
   button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
@@ -513,7 +515,7 @@
   .cardhead .nav { display: flex; align-items: center; gap: 2px; font-size: 14px; font-weight: 600; color: var(--text-2); }
   .cardhead .round { width: 36px; height: 36px; font-size: 18px; }
   .person { display: grid; grid-template-columns: 36px 1fr; gap: 4px 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
-  .person:first-of-type { border-top: 0; padding-top: 0; }
+  .person:first-of-type, .cardhead + .person, .cardhead + .mem, .cardhead + .grow { border-top: 0; padding-top: 0; }
   .person img, .person .ph { width: 36px; height: 36px; border-radius: 50%; background: var(--surface-2); grid-row: span 2; }
   .person b { font-size: 16px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .person .sub { font-size: 13px; color: var(--muted); }
@@ -550,10 +552,12 @@
     .topbar .end button { display: inline-flex; align-items: center; gap: 6px; }
     .topbar .end .gearbtn { position: relative; width: 34px; height: 34px; padding: 0; justify-content: center; }
     .topbar .end .gearbtn svg { width: 19px; height: 19px; }
+    .topbar .end .gearbtn .x { font-size: 15px; line-height: 1; }
     .topbar .end .gearbtn .count { position: absolute; top: -4px; right: -6px; }
     .topbar .end .count { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--crit); color: #fff;
                           font-size: 11px; font-weight: 700; display: inline-grid; place-items: center; }
     .round:hover:not(:disabled) { background: var(--glass-pill); }
+    #app { gap: 16px; }
     .desk { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(340px, 1fr); gap: 16px; align-items: start; }
     .desk .maincol, .desk .side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
     .card { padding: 18px 20px; }
@@ -1539,7 +1543,7 @@ function renderTop() {
         <button class="round" id="next" aria-label="Next trading day" ${selected >= today || tab === "admin" || tab === "me" ? "disabled" : ""}>›</button>
       </div>
       <div class="end"><span>${status}</span>${selected !== today && tab !== "admin" && tab !== "me" ? `<button id="gotoday">Today</button>` : ""}
-        ${isAdmin ? `<button id="toggleadmin" class="gearbtn ${tab === "admin" ? "on" : ""}" aria-label="Admin" title="Admin">${SVG.gear}${pendingCount() ? `<span class="count" aria-label="${pendingCount()} waiting">${pendingCount()}</span>` : ""}</button>` : ""}
+        ${isAdmin ? `<button id="toggleadmin" class="gearbtn ${tab === "admin" ? "on" : ""}" aria-label="${tab === "admin" ? "Close Admin" : "Admin"}" title="${tab === "admin" ? "Close Admin" : "Admin"}">${tab === "admin" ? `<span class="x" aria-hidden="true">✕</span>` : SVG.gear}${pendingCount() ? `<span class="count" aria-label="${pendingCount()} waiting">${pendingCount()}</span>` : ""}</button>` : ""}
         <button id="toggleme" class="${tab === "me" ? "on" : ""}">${SVG.me.replace("<svg ", '<svg width="16" height="16" ')}Me</button></div>`;
     return;
   }
@@ -1554,6 +1558,7 @@ function renderTop() {
     mid = `<b>${fmtDay(weekStart, { weekday: undefined })} – ${fmtDay(addDays(weekStart, 4), { weekday: undefined })}</b>${statusText()}`;
   } else {
     mid = `<b>${{ admin: "Admin", board: "Ranking", me: "Me" }[tab] || ""}</b>${statusText()}`;
+    if (tab === "admin") next = `<button class="round" id="close-admin" aria-label="Close Admin">✕</button>`;
   }
   top.innerHTML = prev + `<div class="mid">${groupButton(16)}${mid}</div>` + next;
 }
@@ -2216,6 +2221,7 @@ document.addEventListener("click", async e => {
     }
     case "toggleadmin": return setTab(tab === "admin" ? "day" : "admin");
     case "toggleme": return setTab(tab === "me" ? "day" : "me");
+    case "close-admin": return setTab("day");
     case "start-tour": closePanel(); return startTour();
     case "open-groups": joinMsg = ""; return openGroupsPanel();
     case "join": return joinWithCode();
