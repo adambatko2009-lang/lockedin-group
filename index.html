@@ -27,12 +27,13 @@
     --card: #ffffff; --card-hi: rgba(255, 255, 255, 0);
     --chrome: linear-gradient(180deg, #2a2a31 0%, #0a0a0b 45%, #55555f 72%, #1c1c21 100%);
     --text: #0a0a0b; --text-2: #3a3a42; --muted: #62626d;
-    --accent: #2563eb; --accent-text: #1d4ed8; --on-accent: #ffffff;
+    --acc: #2563eb; --acc-lt: #1d4ed8; --acc-dk: #60a5fa;   /* the group's color (Admin → Group settings) */
+    --accent: var(--acc); --accent-text: var(--acc-lt); --on-accent: #ffffff;
     --good: #28c840; --warn: #febc2e; --crit: #ff5f57; --on-good: #0a0a0b; --on-warn: #0a0a0b; --on-crit: #0a0a0b;
     --discord: #5865f2;
     --glass: rgba(255, 255, 255, 0.6); --glass-edge: rgba(10, 10, 11, 0.10); --glass-shade: rgba(0, 0, 0, 0.08);
     --glass-pill: rgba(10, 10, 11, 0.07); --glass-hi: rgba(255, 255, 255, 0.8);
-    --glow-1: rgba(37, 99, 235, 0.10); --glow-2: rgba(96, 165, 250, 0.08); --dots: rgba(10, 10, 11, 0.06);
+    --glow-1: color-mix(in srgb, var(--acc) 10%, transparent); --glow-2: color-mix(in srgb, var(--acc-dk) 8%, transparent); --dots: rgba(10, 10, 11, 0.06);
     --font-ui: "Geist", -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, sans-serif;
     --font-data: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   }
@@ -43,11 +44,11 @@
       --card: linear-gradient(180deg, #25262c 0%, #1e1f24 100%); --card-hi: rgba(255, 255, 255, 0.06);
       --chrome: linear-gradient(180deg, #ffffff 0%, #ececf1 34%, #9d9da8 58%, #e6e6ec 82%, #c4c4cc 100%);
       --text: #f5f5f7; --text-2: #c9c9d1; --muted: #9a9aa6;
-      --accent: #2563eb; --accent-text: #60a5fa; --on-accent: #ffffff;
+      --accent: var(--acc); --accent-text: var(--acc-dk); --on-accent: #ffffff;
       --good: #28c840; --warn: #febc2e; --crit: #ff5f57; --on-good: #0a0a0b; --on-warn: #0a0a0b; --on-crit: #0a0a0b;
       --glass: rgba(255, 255, 255, 0.08); --glass-edge: rgba(255, 255, 255, 0.18); --glass-shade: rgba(0, 0, 0, 0.35);
       --glass-pill: rgba(255, 255, 255, 0.14); --glass-hi: rgba(255, 255, 255, 0.14);
-      --glow-1: rgba(37, 99, 235, 0.22); --glow-2: rgba(96, 165, 250, 0.12); --dots: rgba(255, 255, 255, 0.05);
+      --glow-1: color-mix(in srgb, var(--acc) 22%, transparent); --glow-2: color-mix(in srgb, var(--acc-dk) 12%, transparent); --dots: rgba(255, 255, 255, 0.05);
       color-scheme: dark;
     }
   }
@@ -56,13 +57,22 @@
       --card: linear-gradient(180deg, #25262c 0%, #1e1f24 100%); --card-hi: rgba(255, 255, 255, 0.06);
       --chrome: linear-gradient(180deg, #ffffff 0%, #ececf1 34%, #9d9da8 58%, #e6e6ec 82%, #c4c4cc 100%);
       --text: #f5f5f7; --text-2: #c9c9d1; --muted: #9a9aa6;
-      --accent: #2563eb; --accent-text: #60a5fa; --on-accent: #ffffff;
+      --accent: var(--acc); --accent-text: var(--acc-dk); --on-accent: #ffffff;
       --good: #28c840; --warn: #febc2e; --crit: #ff5f57; --on-good: #0a0a0b; --on-warn: #0a0a0b; --on-crit: #0a0a0b;
       --glass: rgba(255, 255, 255, 0.08); --glass-edge: rgba(255, 255, 255, 0.18); --glass-shade: rgba(0, 0, 0, 0.35);
       --glass-pill: rgba(255, 255, 255, 0.14); --glass-hi: rgba(255, 255, 255, 0.14);
-      --glow-1: rgba(37, 99, 235, 0.22); --glow-2: rgba(96, 165, 250, 0.12); --dots: rgba(255, 255, 255, 0.05);
+      --glow-1: color-mix(in srgb, var(--acc) 22%, transparent); --glow-2: color-mix(in srgb, var(--acc-dk) 12%, transparent); --dots: rgba(255, 255, 255, 0.05);
       color-scheme: dark;
   }
+  /* Group colors. Each passes 4.5:1: white on the button color, and the text color on light and dark backgrounds. */
+  :root[data-accent="violet"], .acc-violet { --acc: #7c3aed; --acc-lt: #6d28d9; --acc-dk: #a78bfa; }
+  :root[data-accent="green"],  .acc-green  { --acc: #15803d; --acc-lt: #15803d; --acc-dk: #4ade80; }
+  :root[data-accent="orange"], .acc-orange { --acc: #c2410c; --acc-lt: #c2410c; --acc-dk: #fb923c; }
+  :root[data-accent="red"],    .acc-red    { --acc: #dc2626; --acc-lt: #b91c1c; --acc-dk: #f87171; }
+  :root[data-accent="teal"],   .acc-teal   { --acc: #0f766e; --acc-lt: #0f766e; --acc-dk: #2dd4bf; }
+  :root[data-accent="pink"],   .acc-pink   { --acc: #be185d; --acc-lt: #be185d; --acc-dk: #f472b6; }
+  :root[data-accent="gold"],   .acc-gold   { --acc: #a16207; --acc-lt: #a16207; --acc-dk: #facc15; }
+  .acc-blue { --acc: #2563eb; --acc-lt: #1d4ed8; --acc-dk: #60a5fa; }
   * { box-sizing: border-box; }
   html { min-height: 100%; }
   body {
@@ -162,8 +172,8 @@
   .icon svg { width: 19px; height: 19px; }
   .icon.has { color: var(--accent-text); }
   .icon:active { background: var(--surface-2); }
-  .toggles { display: grid; grid-template-columns: repeat(3, 1fr) 1fr; gap: 6px; }
-  .toggles .t:nth-child(4) { margin-left: 6px; }
+  .toggles { display: grid; grid-template-columns: var(--pcols, repeat(4, 1fr)); gap: 6px; }
+  .toggles .t.req + .t.bonus { margin-left: 6px; }
   .t { min-height: 48px; border-radius: 10px; border: 1px solid var(--line-strong); background: transparent; color: var(--text-2);
        font-size: 13px; font-weight: 600; line-height: 1.15; padding: 6px 4px; cursor: pointer; text-align: center; }
   .t.bonus { border-style: dashed; }
@@ -410,6 +420,56 @@
   .datepick b::after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 7px; vertical-align: 3px;
                        border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); }
 
+  /* ---------- groups ---------- */
+  .glogo { position: relative; flex: none; display: inline-grid; place-items: center; border-radius: 28%; overflow: hidden; background: var(--acc); color: #fff; font-weight: 700; line-height: 1; }
+  .glogo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .gname { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; border: 0; background: none; color: var(--text-2); cursor: pointer; padding: 0; min-width: 0; }
+  .gname span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  .gname .chev { flex: none; color: var(--muted); }
+  .gname .gdot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--crit); }
+  .topbar .mid .gname { display: flex; width: fit-content; max-width: 100%; font-size: 12px; line-height: 16px; margin: 1px auto 0; padding: 0; min-height: 0; color: var(--text-2); font-weight: 600; }
+  .topbar .mid .gname .glogo { border-radius: 30%; }
+  .gate.lobby { max-width: 420px; }
+  .lobby-line { font-size: 14px; color: var(--text-2); margin: 10px 0 0; text-align: left; }
+  .lobby-line .ic { margin-right: 6px; color: var(--muted); }
+  .panel .joinbox label { display: none; }
+  .joinbox .sub-hint, .reqbox .sub-hint { font-size: 13px; color: var(--muted); text-align: left; }
+  .joinbox .sub-hint:empty { display: none; }
+  .joinbox label, .flabel { display: block; font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin: 16px 0 6px; }
+  .joinbox label { margin-top: 0; }
+  .field.code { font: 600 17px var(--font-data); letter-spacing: 0.08em; text-transform: uppercase; }
+  .reqbox { text-align: left; }
+  .reqbox textarea.field { font: 15px/1.4 var(--font-ui); resize: vertical; }
+  .rolechip { display: inline-block; font-size: 11px; font-weight: 700; color: var(--accent-text); border: 1px solid currentColor; border-radius: 6px; padding: 0 5px; margin-left: 8px; vertical-align: 2px; }
+  .codebox { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .codebox code { font: 600 24px var(--font-data); letter-spacing: 0.08em; margin-right: auto; user-select: all; -webkit-user-select: all; }
+  .field.wide { width: 100%; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+  .swatch { width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--acc); cursor: pointer; }
+  .swatch[aria-checked="true"] { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--text); }
+  .logorow { display: flex; align-items: center; gap: 10px; }
+  .boxrow { display: grid; grid-template-columns: minmax(0, 1fr) 118px; gap: 8px; margin-bottom: 8px; }
+  .pointsrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .pointsrow label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+  .pointsrow input { width: 100%; }
+  .pointsrow.tzrow { grid-template-columns: 100px minmax(0, 1fr); }
+  .grow { padding: 12px 0; border-top: 1px solid var(--line); }
+  .grow:first-of-type { border-top: 0; padding-top: 0; }
+  .grow.paused .ghead { opacity: 0.6; }
+  .ghead { display: flex; align-items: center; gap: 12px; }
+  .ghead b { display: block; font-size: 16px; font-weight: 600; }
+  .ghead .sub { font-size: 13px; color: var(--muted); }
+  .grow .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0 48px; }
+  .glist { display: flex; flex-direction: column; gap: 6px; }
+  .gitem { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2); text-align: left; cursor: pointer; }
+  .gitem[aria-current="true"] { border-color: var(--accent); }
+  .gitem > span:not(.glogo) { flex: 1; min-width: 0; }
+  .gitem b { display: block; font-size: 16px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gitem small { font-size: 13px; color: var(--muted); }
+  .gitem .ic { color: var(--accent-text); }
+  .adminseg { grid-template-columns: 1fr 1fr; }
+  .adminseg .count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--crit); color: #fff; font-size: 11px; font-weight: 700; margin-left: 4px; }
+
   /* ---------- admin ---------- */
   .cardhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -6px -6px 10px 0; }
   .cardhead h2 { margin: 0; font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; }
@@ -443,6 +503,8 @@
     .tabbar { display: none; }
     .topbar { grid-template-columns: 1fr auto 1fr; padding: 6px 8px 6px 20px; }
     .topbar .brand { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+    .topbar > .gname { font-size: 17px; justify-self: start; color: var(--text); }
+    .topbar > .gname span { font-weight: 700; letter-spacing: -0.01em; }
     .topbar .center { display: flex; align-items: center; gap: 6px; }
     .topbar .center b { font-size: 17px; font-weight: 600; min-width: 132px; text-align: center; }
     .topbar .end { justify-self: end; display: flex; align-items: center; gap: 10px; padding-right: 8px; font-size: 13px; color: var(--muted); }
@@ -468,7 +530,7 @@
     .member .icon:hover { background: var(--surface-2); }
     .member .nb-space { grid-area: nb; }
     .member .dot { grid-area: st; }
-    .member .toggles { grid-area: tg; grid-template-columns: 1.6fr 1fr 1fr 1fr; }
+    .member .toggles { grid-area: tg; grid-template-columns: var(--cols, 1.6fr 1fr 1fr 1fr); }
     .member .note { grid-area: note; margin-top: 6px; }
     .t { min-height: 40px; }
     .t:hover:not(:disabled):not([aria-pressed="true"]) { border-color: var(--muted); color: var(--text); }
@@ -492,6 +554,7 @@
 </main>
 <nav class="tabbar glass" id="tabbar" role="tablist" aria-label="View" hidden></nav>
 <input type="file" id="shotinput" accept="image/*" multiple hidden>
+<input type="file" id="logoinput" accept="image/*" hidden>
 <div class="toast glass" id="toast" role="status" aria-live="polite" hidden></div>
 <div class="scrim" id="scrim" hidden></div>
 <aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title" hidden></aside>
@@ -505,14 +568,32 @@
 
 <script>
 // ---------------------------------------------------------------- rules (change these here, on GitHub)
-const RULES = [["chart", "Chart with execution", "req"], ["journal", "Journal", "req"], ["review", "HTF", "req"], ["social", "Social", "bonus"]];
-const REQUIRED = RULES.filter(r => r[2] === "req").map(r => r[0]);
+// Each group sets its own homework boxes, points, cutoff hour and time zone (Admin → Group settings).
+// There are six box slots in the database; a group names them and makes each required, bonus or off.
+const SLOTS = ["chart", "journal", "review", "social", "box5", "box6"];
+const DEFAULT_BOXES = { chart: { label: "Chart with execution", kind: "req" }, journal: { label: "Journal", kind: "req" },
+  review: { label: "HTF", kind: "req" }, social: { label: "Social", kind: "bonus" }, box5: { label: "Extra 1", kind: "off" }, box6: { label: "Extra 2", kind: "off" } };
+let RULES = [], REQUIRED = [];
 // Rule breaks members can tag on their day (honest self-reporting, never costs points). Must match update-6 SQL.
 const BREAKS = [["moved_stop", "Moved stop"], ["revenge", "Revenge trade"], ["oversized", "Oversized"], ["fomo", "FOMO entry"],
                 ["no_plan", "No plan"], ["overtraded", "Overtraded"], ["early_exit", "Cut winner early"], ["ignored_htf", "Ignored HTF"]];
 const BREAK_LABEL = Object.fromEntries(BREAKS);
-const POINTS = { COMPLETE: 2, PARTIAL: 1, MISSING: 0, bonus: 1 };
-const CUTOFF_HOUR = 9;  // New York time; must match current_trading_day() in supabase/setup.sql
+let POINTS = { COMPLETE: 2, PARTIAL: 1, MISSING: 0, bonus: 1 };
+let CUTOFF_HOUR = 9, TZ = "America/New_York";   // the group's own; must match current_trading_day(group) in the database
+function applyGroupRules(g) {
+  const b = (g && g.boxes) || DEFAULT_BOXES;
+  const on = SLOTS.filter(k => b[k] && b[k].kind !== "off").map(k => [k, b[k].label, b[k].kind]);
+  RULES = [...on.filter(r => r[2] === "req"), ...on.filter(r => r[2] === "bonus")];
+  REQUIRED = RULES.filter(r => r[2] === "req").map(r => r[0]);
+  const p = (g && g.points) || { complete: 2, partial: 1, bonus: 1 };
+  POINTS = { COMPLETE: p.complete, PARTIAL: p.partial, MISSING: 0, bonus: p.bonus };
+  CUTOFF_HOUR = g ? g.cutoff_hour : 9;
+  TZ = g ? g.timezone : "America/New_York";
+  document.documentElement.dataset.accent = g ? g.color : "blue";
+}
+applyGroupRules(null);
+const tzCity = tz => tz.split("/").pop().replace(/_/g, " ");
+const hh = h => String(h).padStart(2, "0") + ":00";
 
 const ICON = { COMPLETE: "✓", PARTIAL: "◐", MISSING: "✕", WAITING: "", UNLOGGED: "?", EXCUSED: "E" };
 const LABEL = { COMPLETE: "Complete", PARTIAL: "Partial", MISSING: "Missing", WAITING: "Waiting", UNLOGGED: "Not logged", EXCUSED: "Excused" };
@@ -558,7 +639,7 @@ const mondayOf = k => addDays(k, -((parse(k).getUTCDay() + 6) % 7));
 const fmtDay = (k, o) => parse(k).toLocaleDateString("en-GB", Object.assign({ weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }, o));
 
 function nyParts(ms) {
-  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hourCycle: "h23",
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: TZ, hourCycle: "h23",
     year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
     .formatToParts(new Date(ms)).map(x => [x.type, x.value]));
   return { key: `${p.year}-${p.month}-${p.day}`, hour: +p.hour, minute: +p.minute };
@@ -591,10 +672,15 @@ const sb = configured && window.supabase ? window.supabase.createClient(cfg.supa
 }) : null;
 
 let screen = "loading";          // loading | setup | signin | waiting | rejected | app
-let session = null, profile = null, isAdmin = false;
+let session = null, profile = null;
+let isAdmin = false;             // can manage the open group: its owner, a group admin, or the app owner
+let isAppOwner = false;          // you (the "admins" table): every group, every setting
+let groups = [], myMemberships = [], requests = [], gid = null;
+let allMemberships = [], allProfiles = [];   // app owner only: for the All groups list
+try { gid = localStorage.getItem("group"); } catch (e) {}
 let members = [];                // [{key, name, sort, active}]
 let ticks = {};                  // "day|member" -> row
-let people = [];                 // admin only: all profiles
+let people = [];                 // managers only: everyone in (or waiting for) the open group
 let today = currentTradingDay();
 let selected = today, weekStart = mondayOf(today), editing = null;   // editing = {day, key} while the edit panel is open
 let tab = "day";
@@ -603,11 +689,23 @@ try { const t = localStorage.getItem("tab"); if (t) tab = t; } catch (e) {}
 let error = "", saving = 0, loaded = false, channel = null;
 let reflections = {};           // "monday|member" -> {week_start, member_key, went_well, to_fix}
 
-const myKey = () => (profile && profile.status === "approved" ? profile.member_key : null);
+const group = () => groups.find(g => g.id === gid) || null;
+const myMembership = (g = gid) => myMemberships.find(m => m.group_id === g) || null;
+const myKey = () => { const m = myMembership(); return m && m.status === "approved" ? m.member_key : null; };
+const isGroupOwner = (g = group()) => !!g && !!session && (isAppOwner || (g.owner_id === session.user.id && g.status === "active"));
+function canManageGroup(g = group()) {
+  if (!g) return false;
+  if (isGroupOwner(g)) return true;
+  const m = myMembership(g.id);
+  return g.status === "active" && !!m && m.status === "approved" && m.role === "admin";
+}
+const canOpen = g => isAppOwner || (session && g.owner_id === session.user.id) || (myMembership(g.id) || {}).status === "approved";
+const roleOf = (g = group()) => !g ? "" : session && g.owner_id === session.user.id ? "Owner"
+  : (myMembership(g.id) || {}).role === "admin" ? "Admin" : (myMembership(g.id) || {}).status === "approved" ? "Member" : isAppOwner ? "App owner" : "";
 const activeMembers = () => members.filter(m => m.active).sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name));
 const tickOf = (k, key) => ticks[k + "|" + key] || null;
 const dayHasAny = k => Object.entries(ticks).some(([id, r]) => id.startsWith(k + "|") && !r.excused);
-const canEdit = (k, key) => isAdmin || (key === myKey() && k === today && !isFinal(k));
+const canEdit = (k, key) => isAdmin || (key === myKey() && k === today && !isFinal(k) && !!group() && group().status === "active");
 
 function statusOf(k, key) {
   const rec = tickOf(k, key);
@@ -628,16 +726,40 @@ async function loadAll() {
     sb.from("profiles").select("*").eq("user_id", session.user.id).maybeSingle(),
     sb.from("admins").select("user_id").eq("user_id", session.user.id),
   ]);
-  profile = prof; isAdmin = !!(adm && adm.length);
+  profile = prof; isAppOwner = !!(adm && adm.length);
   loadSettings();
-  if (!isAdmin && (!profile || profile.status === "pending")) { screen = "waiting"; return render(); }
-  if (!isAdmin && profile.status === "rejected") { screen = "rejected"; return render(); }
+  await loadGroups();
+  const usable = groups.filter(canOpen);
+  if (!usable.length) { screen = "lobby"; loaded = false; return render(); }
+  if (!usable.some(g => g.id === gid)) gid = (usable.find(g => (myMembership(g.id) || {}).status === "approved") || usable[0]).id;
+  await openGroup(gid);
+}
 
+// Your groups, your memberships, and group requests (yours; the app owner sees all).
+async function loadGroups() {
+  loadStep = "your groups";
+  const [g, m, r] = await Promise.all([
+    sb.from("groups").select("*").order("created_at"),
+    sb.from("memberships").select("*").eq("user_id", session.user.id),
+    sb.from("group_requests").select("*").order("created_at", { ascending: false }),
+  ]);
+  if (g.error) throw new Error("Couldn't load groups: " + g.error.message + ". Has database update 9 been run?");
+  groups = g.data || []; myMemberships = m.data || []; requests = r.data || [];
+}
+
+// Load one group's names, ticks and reflections, and switch the app to it.
+async function openGroup(id) {
+  const changed = id !== gid || !loaded;
+  gid = id;
+  try { localStorage.setItem("group", id); } catch (e) {}
+  const g = group();
+  applyGroupRules(g);
+  isAdmin = canManageGroup(g);
   loadStep = "members and ticks";
   const [m, h, t] = await Promise.all([
-    sb.from("members").select("*"),
+    sb.from("members").select("*").eq("group_id", id),
     sb.from("holidays").select("day"),
-    sb.from("ticks").select("*").order("day", { ascending: false }).limit(5000),
+    sb.from("ticks").select("*").eq("group_id", id).order("day", { ascending: false }).limit(5000),
   ]);
   const failed = [m, h, t].find(r => r.error);
   if (failed) { error = "Couldn't load data: " + failed.error.message; }
@@ -646,45 +768,74 @@ async function loadAll() {
   ticks = {};
   (t.data || []).forEach(r => { ticks[r.day + "|" + r.member_key] = r; });
   today = currentTradingDay();
-  if (selected > today || !isTradingDay(selected)) selected = today;
+  if (changed || selected > today || !isTradingDay(selected)) selected = today;
   weekStart = mondayOf(selected);
-  // Weekly reflections (update 5). If that update isn't installed yet, the rest still works.
   loadStep = "weekly reflections";
-  const rf = await sb.from("reflections").select("*").order("week_start", { ascending: false }).limit(3000);
+  const rf = await sb.from("reflections").select("*").eq("group_id", id).order("week_start", { ascending: false }).limit(3000);
   reflections = {};
   if (!rf.error) (rf.data || []).forEach(r => { reflections[r.week_start + "|" + r.member_key] = r; });
   loadStep = "admin list";
+  people = [];
   if (isAdmin) await loadPeople();
+  if (isAppOwner) await loadOwnerData();
   loadStep = "done";
+  if (changed) profileKey = null;
   if (!isAdmin && tab === "admin") tab = "day";
   loaded = true; screen = "app";
   subscribe();
   render();
 }
 
-async function loadPeople() {
-  const { data, error: e } = await sb.from("profiles").select("*").order("created_at");
-  if (e) error = e.message; else people = data || [];
+async function switchGroup(id) {
+  if (id === gid) return closePanel();
+  closePanel();
+  screen = "loading"; render(); watchLoading();
+  await openGroup(id);
+  window.scrollTo(0, 0);
 }
 
+// Everyone in (or waiting for) the open group, with their Discord name and picture.
+async function loadPeople() {
+  const { data, error: e } = await sb.from("memberships").select("*").eq("group_id", gid).order("created_at");
+  if (e) { error = e.message; return; }
+  const ids = (data || []).map(x => x.user_id);
+  const pr = ids.length ? await sb.from("profiles").select("user_id, discord_name, avatar_url").in("user_id", ids) : { data: [] };
+  people = (data || []).map(x => Object.assign({ discord_name: "Unknown", avatar_url: null }, (pr.data || []).find(p => p.user_id === x.user_id) || {}, x));
+}
+
+// App owner: everybody's memberships and Discord names, for the All groups list.
+async function loadOwnerData() {
+  const [m, p] = await Promise.all([
+    sb.from("memberships").select("group_id, user_id, status, role, member_key"),
+    sb.from("profiles").select("user_id, discord_name, avatar_url"),
+  ]);
+  allMemberships = m.data || []; allProfiles = p.data || [];
+}
+const profileName = uid => ((allProfiles.find(p => p.user_id === uid) || people.find(p => p.user_id === uid) || {}).discord_name) || "Unknown";
+
 function subscribe() {
-  if (channel) return;
-  channel = sb.channel("ticks-live")
-    .on("postgres_changes", { event: "*", schema: "public", table: "ticks" }, payload => {
+  if (channel) { sb.removeChannel(channel); channel = null; }
+  const filter = `group_id=eq.${gid}`, here = gid;
+  channel = sb.channel("group-" + gid)
+    .on("postgres_changes", { event: "*", schema: "public", table: "ticks", filter }, payload => {
       const row = payload.new && payload.new.day ? payload.new : payload.old;
-      if (!row || !row.day) return;
+      if (!row || !row.day || here !== gid || (row.group_id && row.group_id !== gid)) return;
       const id = row.day + "|" + row.member_key;
       if (payload.eventType === "DELETE") delete ticks[id];
       else if (!pending[id]) ticks[id] = payload.new;   // don't overwrite a tick you're still saving
       render();
     })
-    .on("postgres_changes", { event: "*", schema: "public", table: "reflections" }, payload => {
+    .on("postgres_changes", { event: "*", schema: "public", table: "reflections", filter }, payload => {
       const row = payload.new && payload.new.week_start ? payload.new : payload.old;
-      if (!row || !row.week_start) return;
+      if (!row || !row.week_start || here !== gid || (row.group_id && row.group_id !== gid)) return;
       const id = row.week_start + "|" + row.member_key;
       if (payload.eventType === "DELETE") delete reflections[id];
       else if (!pendingRefl[id]) reflections[id] = payload.new;
       render();
+    })
+    .on("postgres_changes", { event: "*", schema: "public", table: "memberships", filter }, () => {
+      // Someone typed the join code (managers see them appear in Admin right away).
+      if (isAdmin && here === gid) loadPeople().then(render);
     })
     .subscribe();
 }
@@ -694,7 +845,7 @@ const pending = {}, timers = {};
 function editTick(k, key, mutate, quiet) {
   if (!canEdit(k, key)) return;
   const id = k + "|" + key;
-  const row = Object.assign({ day: k, member_key: key, chart: false, journal: false, review: false, social: false, note: "", images: [], no_trade: false, rule_breaks: [] }, tickOf(k, key));
+  const row = Object.assign({ day: k, member_key: key, chart: false, journal: false, review: false, social: false, box5: false, box6: false, note: "", images: [], no_trade: false, rule_breaks: [] }, tickOf(k, key));
   row.images = [...(row.images || [])];
   row.rule_breaks = [...(row.rule_breaks || [])];
   const before = statusOf(k, key);
@@ -707,7 +858,7 @@ function editTick(k, key, mutate, quiet) {
 }
 async function saveTick(id) {
   const row = ticks[id];
-  const body = { day: row.day, member_key: row.member_key, chart: !!row.chart, journal: !!row.journal, review: !!row.review, social: !!row.social, note: row.note || "", images: row.images || [], excused: !!row.excused, no_trade: !!row.no_trade, rule_breaks: row.rule_breaks || [] };
+  const body = { day: row.day, member_key: row.member_key, chart: !!row.chart, journal: !!row.journal, review: !!row.review, social: !!row.social, box5: !!row.box5, box6: !!row.box6, note: row.note || "", images: row.images || [], excused: !!row.excused, no_trade: !!row.no_trade, rule_breaks: row.rule_breaks || [] };
   saving++; noteState[id] = "saving"; renderTop();
   let e;
   try { ({ error: e } = await sb.from("ticks").upsert(body, { onConflict: "day,member_key" })); }
@@ -1176,20 +1327,89 @@ function renderPanelPics() {
 
 // ---------------------------------------------------------------- admin actions
 async function adminDo(promise, okMsg) {
-  const { error: e } = await promise;
+  const res = await promise;
+  const e = res.error;
   error = e ? e.message : "";
-  if (!e && okMsg) flash = okMsg;
-  await loadPeople();
-  const m = await sb.from("members").select("*");
-  if (!m.error) members = m.data;
+  flash = !e && okMsg ? okMsg : "";
+  await refreshAfterAdmin();
   render();
+  return res;
+}
+// Re-read groups, people and names after a change (and leave a group that no longer exists).
+async function refreshAfterAdmin() {
+  await loadGroups();
+  if (!group() || !canOpen(group())) { loaded = false; return loadAll(); }
+  applyGroupRules(group());
+  isAdmin = canManageGroup();
+  if (isAdmin) await loadPeople();
+  const m = await sb.from("members").select("*").eq("group_id", gid);
+  if (!m.error) members = m.data;
+  if (isAppOwner) await loadOwnerData();
+  today = currentTradingDay();
 }
 let flash = "";
-function slug(name) {
-  const base = name.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 24) || "member";
-  let key = base, i = 2;
-  while (members.some(m => m.key === key)) key = base + "-" + i++;
-  return key;
+
+// ---------------------------------------------------------------- groups: join, request, settings, logo
+const memberQ = (patch, uid) => sb.from("memberships").update(patch).eq("group_id", gid).eq("user_id", uid);
+
+async function joinWithCode() {
+  const el = document.getElementById("joincode"), code = el ? el.value.trim() : "";
+  if (!code) return;
+  const { data, error: e } = await sb.rpc("join_group", { code });
+  joinMsg = e ? e.message : data.status === "approved" ? `You're already in ${data.name}.` : data.status === "pending" ? `Sent! Waiting for the owner of ${data.name} to approve you.` : `${data.name} didn't accept you.`;
+  await loadGroups();
+  if (screen === "app" && settingsOpen) openGroupsPanel(); else render();
+}
+
+async function sendGroupRequest() {
+  const name = (document.getElementById("req-name").value || "").replace(/[<>]/g, "").trim(), note = (document.getElementById("req-note").value || "").trim();
+  if (!name) { joinMsg = "Give your group a name first."; requestOpen = true; }
+  else {
+    const { error: e } = await sb.from("group_requests").insert({ name, note });
+    joinMsg = e ? (/row-level security/i.test(e.message) ? "You already have 3 requests waiting." : e.message) : `Request sent for ${name}. You'll get it as soon as it's approved.`;
+    requestOpen = !!e;
+    await loadGroups();
+  }
+  if (screen === "app" && settingsOpen) openGroupsPanel(); else render();
+}
+
+async function saveGroupSettings() {
+  const msg = document.getElementById("save-group-msg"), val = id => document.getElementById(id).value;
+  const boxes = {};
+  for (const k of SLOTS) {
+    const label = val("box-label-" + k).replace(/[<>]/g, "").trim().slice(0, 30) || DEFAULT_BOXES[k].label;
+    boxes[k] = { label, kind: val("box-kind-" + k) };
+  }
+  if (!SLOTS.some(k => boxes[k].kind === "req")) { msg.textContent = "At least one box has to be Required."; return; }
+  const num = id => Math.max(0, Math.min(10, Math.round(+val(id) || 0)));
+  const patch = {
+    name: val("g-name").replace(/[<>]/g, "").trim().slice(0, 40) || group().name,
+    color: (document.querySelector('[data-color][aria-checked="true"]') || {}).dataset?.color || group().color,
+    boxes, points: { complete: num("pt-complete"), partial: num("pt-partial"), bonus: num("pt-bonus") },
+    cutoff_hour: +val("g-cutoff"), timezone: val("g-tz"),
+  };
+  msg.textContent = "Saving…";
+  await adminDo(sb.from("groups").update(patch).eq("id", gid), "Group settings saved.");
+  window.scrollTo(0, 0);
+}
+
+// Square, 256px, JPEG: small and quick for everyone.
+async function uploadLogo(file) {
+  if (!file || !isGroupOwner()) return;
+  try {
+    const src = URL.createObjectURL(file), img = new Image();
+    await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error("couldn't read this image")); img.src = src; });
+    const c = document.createElement("canvas"), side = Math.min(img.naturalWidth, img.naturalHeight);
+    c.width = c.height = 256;
+    c.getContext("2d").drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, 256, 256);
+    URL.revokeObjectURL(src);
+    const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.86));
+    const path = `${gid}/${Date.now()}.jpg`, old = group().logo_path;
+    const { error: e } = await sb.storage.from("logos").upload(path, blob, { contentType: "image/jpeg", upsert: false });
+    if (e) throw e;
+    await adminDo(sb.from("groups").update({ logo_path: path }).eq("id", gid), "Logo updated.");
+    if (old) sb.storage.from("logos").remove([old]);
+  } catch (e) { error = "Logo not saved: " + (e.message || e); render(); }
 }
 
 // ---------------------------------------------------------------- rendering helpers
@@ -1206,7 +1426,7 @@ function linkify(text) {
 const dot = (st, name) => `<span class="dot ${st}" role="img" aria-label="${name ? esc(name) + ": " : ""}${LABEL[st]}" title="${LABEL[st]}">${ICON[st]}</span>`;
 const wideQuery = window.matchMedia("(min-width: 960px)");
 const isWide = () => wideQuery.matches;
-const pendingCount = () => people.filter(p => p.status === "pending").length;
+const pendingCount = () => people.filter(p => p.status === "pending").length + (isAppOwner ? requests.filter(r => r.status === "pending").length : 0);
 
 function tabsList() { return isAdmin ? ["day", "week", "board", "admin"] : ["day", "week", "board"]; }
 
@@ -1227,6 +1447,18 @@ function goToDay(k) {
   selected = k; weekStart = mondayOf(k);
   render();
 }
+// Group logo (or a colored initial) and the group-name button that opens the Groups sheet.
+function logoUrl(g) { return g && g.logo_path ? sb.storage.from("logos").getPublicUrl(g.logo_path).data.publicUrl : ""; }
+function groupLogo(g, px) {
+  const url = logoUrl(g);
+  return `<span class="glogo acc-${esc(g ? g.color : "blue")}" style="width:${px}px;height:${px}px;font-size:${Math.round(px * 0.48)}px" aria-hidden="true">${esc(((g && g.name) || "?").trim()[0].toUpperCase())}${url ? `<img src="${esc(url)}" alt="" onerror="this.remove()">` : ""}</span>`;
+}
+function groupButton(px) {
+  const g = group();
+  return `<button class="gname" id="open-groups" aria-label="Groups: ${esc(g ? g.name : "")}">${groupLogo(g, px)}<span>${esc(g ? g.name : "Groups")}</span>${pendingElsewhere() ? `<i class="gdot" aria-hidden="true"></i>` : ""}<svg class="chev" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
+}
+// App owner: group requests waiting. (People waiting in the open group show on the Admin tab.)
+const pendingElsewhere = () => isAppOwner && requests.some(r => r.status === "pending") && tab !== "admin" ? 1 : 0;
 function renderTop() {
   renderNoteStatus();
   const top = document.getElementById("topbar");
@@ -1235,13 +1467,13 @@ function renderTop() {
   if (profileKey && tab !== "admin") {
     const m = members.find(x => x.key === profileKey);
     top.innerHTML = isWide()
-      ? `<span class="brand">LockedIn Group</span><div class="center"><b>Profile</b></div><div class="end"><button id="profile-back">‹ Back</button></div>`
+      ? `${groupButton(24)}<div class="center"><b>Profile</b></div><div class="end"><button id="profile-back">‹ Back</button></div>`
       : `<button class="round" id="profile-back" aria-label="Back">‹</button><div class="mid"><b>${esc(m ? m.name : "")}</b></div><span></span>`;
     return;
   }
   if (isWide()) {
     const status = error ? `<span class="err">${esc(error)}</span>` : saving || Object.keys(pending).length ? "Saving…" : "";
-    top.innerHTML = `<span class="brand">LockedIn Group</span>
+    top.innerHTML = `${groupButton(24)}
       <div class="center">
         <button class="round" id="prev" aria-label="Previous trading day" ${tab === "admin" ? "disabled" : ""}>‹</button>
         ${tab === "admin" ? `<b>${fmtDay(selected)}</b>` : datePickHtml()}
@@ -1265,7 +1497,7 @@ function renderTop() {
     mid = `<b>${tab === "admin" ? "Admin" : "Ranking"}</b>${statusText()}`;
     if (tab === "board") prev = `<button class="round" id="open-settings" aria-label="Settings">${SVG.gear}</button>`;
   }
-  top.innerHTML = prev + `<div class="mid">${mid}</div>` + next;
+  top.innerHTML = prev + `<div class="mid">${groupButton(16)}${mid}</div>` + next;
 }
 
 function renderTabbar() {
@@ -1279,6 +1511,12 @@ function renderTabbar() {
       ${t === "admin" && pendingCount() ? `<i class="badge">${pendingCount()}</i>` : ""}</button>`).join("");
 }
 
+// The row of boxes adapts to the group's boxes: long names get more room; more than 4 wrap on phones.
+function togglesStyle() {
+  const cols = RULES.map(r => r[1].length > 12 ? "1.6fr" : "1fr").join(" ");
+  const n = RULES.length, phone = n <= 4 ? `repeat(${n}, 1fr)` : "repeat(3, 1fr)";
+  return `--cols:${cols};--pcols:${phone}`;
+}
 // ---------------------------------------------------------------- views
 function renderDay() {
   const k = selected, now = Date.now(), list = activeMembers();
@@ -1328,7 +1566,7 @@ function renderDay() {
     const showToggles = !(quickOn && m.key === me);   // already at the top as big buttons
     return `<div class="member ${editable ? "" : "locked"}">
       <div class="mrow"><span class="name">${avatarHtml(m, 26)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === myKey() ? `<span class="you">YOU</span>` : ""}${rec.no_trade ? `<span class="ntag" title="No trade today: sat out on purpose">${ic("pause", 13)}<span class="ntag-text">No trade</span></span>` : ""}</span>${editBtn}${dot(st, m.name)}</div>
-      ${showToggles ? `<div class="toggles">${toggles}</div>` : ""}
+      ${showToggles ? `<div class="toggles" style="${togglesStyle()}">${toggles}</div>` : ""}
       ${(rec.rule_breaks || []).length ? `<div class="breaks">${rec.rule_breaks.map(b => `<span class="bchip">${ic("alert", 13)}${esc(BREAK_LABEL[b] || b)}</span>`).join("")}</div>` : ""}
       ${note ? `<div class="note">${note}</div>` : ""}
       ${shots ? `<div class="shots">${shots}</div>` : ""}
@@ -1375,8 +1613,9 @@ function stats(key) {
     pics += (rec.images || []).length;
     if (st === "EXCUSED") { w.ex++; continue; }   // no points, no streak change, not counted in %
     if (raw && !since) since = k;
-    if (rec.social) social++;
-    points += (POINTS[st] || 0) + POINTS.bonus * (rec.social ? 1 : 0);
+    const bonusTicks = RULES.filter(r => r[2] === "bonus" && rec[r[0]]).length;   // the group's bonus boxes
+    social += bonusTicks;
+    points += (POINTS[st] || 0) + POINTS.bonus * bonusTicks;
     if (st === "COMPLETE") { run++; best = Math.max(best, run); completeDays++; if (prevSt === "MISSING") comebacks++; if (rec.no_trade) noTrades++; }
     else if (isFinal(k)) run = 0;
     if (isFinal(k)) { closed++; if (st === "COMPLETE") complete++; prevSt = st; w.n++; if (st !== "COMPLETE") w.ok = false; }
@@ -1398,7 +1637,9 @@ const ACHIEVEMENTS = [
   { id: "week",     icon: "calendar", unit: "perfect weeks",     metric: s => s.perfectWeeks, goals: [1, 4, 12], one: "Perfect week" },
   { id: "shots",    icon: "camera", unit: "screenshots",       metric: s => s.pics,         goals: [1, 25, 100], one: "First screenshot" },
   { id: "notes",    icon: "pen", unit: "journal notes",     metric: s => s.notes,        goals: [10, 50, 150] },
-  { id: "social",   icon: "megaphone", unit: "social posts",      metric: s => s.social,       goals: [5, 25, 100] },
+  { id: "social",   icon: "megaphone", get unit() { const b = RULES.filter(r => r[2] === "bonus");
+      return b.length === 1 ? (b[0][1].toLowerCase() === "social" ? "social posts" : b[0][1] + " days") : "bonus ticks"; },
+    metric: s => s.social, goals: [5, 25, 100] },
   { id: "points",   icon: "diamond", unit: "points",            metric: s => s.points,       goals: [100, 500, 1000] },
   { id: "comeback", icon: "repeat", unit: "comebacks",         metric: s => s.comebacks,    goals: [1, 5], one: "Back on track" },
   { id: "patience", icon: "pause", unit: "no-trade days",     metric: s => s.noTrades,     goals: [1, 10, 25], one: "Sat out" },
@@ -1515,6 +1756,11 @@ function checkUnlocks() {
   toastTimer = setTimeout(() => { t.hidden = true; }, 4500);
 }
 
+function scoringText() {
+  const req = RULES.filter(r => r[2] === "req").map(r => r[1]), bonus = RULES.filter(r => r[2] === "bonus").map(r => r[1]);
+  return `Complete (${esc(req.join(", "))}) ${POINTS.COMPLETE} pts · Partial ${POINTS.PARTIAL}${bonus.length ? ` · ${esc(bonus.join(", "))} +${POINTS.bonus}` : ""}. `
+    + `Streak = Complete days in a row. Excused (E) days don't count. You can tick your own boxes until ${hh(CUTOFF_HOUR)} ${esc(tzCity(TZ))} time on the next trading day.`;
+}
 function renderBoard() {
   const rows = activeMembers().map(m => ({ name: m.name, key: m.key, m, ...stats(m.key) }))
     .sort((a, b) => b.points - a.points || b.run - a.run || a.name.localeCompare(b.name));
@@ -1533,35 +1779,47 @@ function renderBoard() {
     <ol class="lb">${items}</ol>
     <details>
       <summary>Scoring</summary>
-      <p>Complete (chart, journal, HTF) 2 pts · Partial 1 · Social +1. Streak = Complete days in a row. Excused (E) days don't count. You can tick your own boxes until 09:00 New York time on the next trading day.</p>
+      <p>${scoringText()}</p>
     </details>
-    <div class="account"><span>${esc(me ? me.name : profile ? profile.discord_name : "")}${isAdmin ? " · admin" : ""}</span>
+    <div class="account"><span>${esc(me ? me.name : profile ? profile.discord_name : "")}${roleOf() && roleOf() !== "Member" ? " · " + roleOf().toLowerCase() : ""}</span>
       <span>${me ? `<button class="linkbtn" data-profile="${me.key}">My profile</button>` : ""}<button class="linkbtn" id="signout">Sign out</button></span></div>
   </div>`;
 }
 
+const COLORS = [["blue", "Blue"], ["violet", "Violet"], ["green", "Green"], ["orange", "Orange"], ["red", "Red"], ["teal", "Teal"], ["pink", "Pink"], ["gold", "Gold"]];
+const COMMON_TZ = ["America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "America/Toronto", "America/Sao_Paulo",
+  "Europe/London", "Europe/Oslo", "Europe/Stockholm", "Europe/Berlin", "Europe/Paris", "Europe/Amsterdam", "Europe/Madrid", "Europe/Warsaw",
+  "Africa/Lagos", "Africa/Johannesburg", "Asia/Dubai", "Asia/Kolkata", "Asia/Singapore", "Asia/Hong_Kong", "Asia/Tokyo", "Australia/Sydney"];
+
 function renderAdmin() {
+  const g = group(), me = session.user.id;
   const free = activeMembers().filter(m => !people.some(p => p.member_key === m.key && p.status === "approved"));
   const avatar = p => p.avatar_url ? `<img src="${esc(p.avatar_url)}" alt="">` : `<span class="ph"></span>`;
   const memberOptions = (current) => `<option value="">Choose name…</option>` +
     activeMembers().filter(m => m.key === current || free.includes(m)).map(m => `<option value="${m.key}" ${m.key === current ? "selected" : ""}>${esc(m.name)}</option>`).join("");
+  const isOwnerHere = isGroupOwner(g);
 
   const waiting = people.filter(p => p.status === "pending");
-  const approved = people.filter(p => p.status === "approved" && p.user_id !== session.user.id);
+  const approved = people.filter(p => p.status === "approved");
   const rejected = people.filter(p => p.status === "rejected");
 
   const waitingHtml = waiting.length ? waiting.map(p => `<div class="person">${avatar(p)}<b>${esc(p.discord_name)}</b>
-      <span class="sub">Signed in ${new Date(p.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
+      <span class="sub">Joined with the code ${new Date(p.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
       <div class="actions"><select id="pick-${p.user_id}" aria-label="Name for ${esc(p.discord_name)}">${memberOptions(null)}</select>
         <button class="btn primary small" data-approve="${p.user_id}">Approve</button>
         <button class="btn danger small" data-reject="${p.user_id}">Reject</button></div></div>`).join("")
-    : `<p class="empty">Nobody is waiting.</p>`;
+    : `<p class="empty">Nobody is waiting. Share the join code to invite people.</p>`;
 
   const approvedHtml = approved.length ? approved.map(p => {
-    const m = members.find(x => x.key === p.member_key);
-    return `<div class="person">${avatar(p)}<b>${esc(m ? m.name : "No name")}</b>
+    const m = members.find(x => x.key === p.member_key), isOwner = g && p.user_id === g.owner_id, self = p.user_id === me;
+    const badge = isOwner ? `<span class="rolechip">Owner</span>` : p.role === "admin" ? `<span class="rolechip">Admin</span>` : "";
+    const adminBtn = isOwnerHere && !isOwner ? (p.role === "admin"
+        ? `<button class="btn plain small" data-unadmin="${p.user_id}">Remove admin</button>`
+        : `<button class="btn plain small" data-makeadmin="${p.user_id}">Make admin</button>`) : "";
+    const removeBtn = !isOwner && !self && (isOwnerHere || p.role !== "admin") ? `<button class="btn danger small" data-revoke="${p.user_id}">Remove access</button>` : "";
+    return `<div class="person">${avatar(p)}<b>${esc(m ? m.name : "No name")}${badge}</b>
       <span class="sub">Discord: ${esc(p.discord_name)}</span>
-      <div class="actions"><button class="btn danger small" data-revoke="${p.user_id}">Remove access</button></div></div>`;
+      ${adminBtn || removeBtn ? `<div class="actions">${adminBtn}${removeBtn}</div>` : ""}</div>`;
   }).join("") : `<p class="empty">No one approved yet.</p>`;
 
   const rejectedHtml = rejected.length ? `<div class="card"><div class="cardhead"><h2>Rejected</h2></div>` + rejected.map(p => `<div class="person">${avatar(p)}<b>${esc(p.discord_name)}</b>
@@ -1573,30 +1831,160 @@ function renderAdmin() {
       <button class="btn plain small" data-rename="${m.key}">Save</button>
       <button class="btn danger small" data-hide="${m.key}">Remove</button></div>`).join("");
 
+  const codeCard = g ? `<div class="card"><div class="cardhead"><h2>Join code</h2></div>
+      <div class="codebox"><code>${esc(g.join_code)}</code>
+        <button class="btn plain small" id="copy-code">Copy</button>
+        ${isOwnerHere ? `<button class="btn danger small" id="new-code">New code</button>` : ""}</div>
+      <p class="empty" style="margin-top:10px">Share it in your Discord. People who type it land in "Waiting for approval" below.${isOwnerHere ? " A new code makes the old one stop working." : ""}</p></div>` : "";
+
   const cols = [
-    `<div class="card"><div class="cardhead"><h2>Waiting for approval</h2></div>${waitingHtml}</div>
+    `${codeCard}<div class="card"><div class="cardhead"><h2>Waiting for approval</h2></div>${waitingHtml}</div>
      <div class="card"><div class="cardhead"><h2>Approved</h2></div>${approvedHtml}</div>${rejectedHtml}`,
-    `<div class="card"><div class="cardhead"><h2>Members</h2></div>${membersHtml}
+    `${isOwnerHere ? groupSettingsHtml(g) : ""}<div class="card"><div class="cardhead"><h2>Members</h2></div>${membersHtml}
       <div class="addrow"><input class="field" id="newmember" placeholder="New member name" maxlength="40" aria-label="New member name">
       <button class="btn primary small" id="addmember">Add</button></div>
       <p class="empty" style="margin-top:10px">Removing a member hides them; their history is kept.</p></div>`,
   ];
   const note = flash ? `<div class="card"><p class="msg">${esc(flash)}</p></div>` : error ? `<div class="card"><p class="msg err">${esc(error)}</p></div>` : "";
-  return note + (isWide() ? `<div class="admin-grid"><div>${cols[0]}</div><div>${cols[1]}</div></div>` : cols.join(""));
+  const paused = g && g.status === "paused" ? `<div class="card"><p class="msg err">This group is paused by the app owner. Nobody can tick or change anything until it's resumed.</p></div>` : "";
+  const owner = isAppOwner ? ownerDashboardHtml() : "";
+  const segs = isAppOwner ? `<div class="segset adminseg" role="group" aria-label="Admin view">
+      <button data-admin-view="group" aria-pressed="${adminView === "group"}">${esc(g ? g.name : "Group")}</button>
+      <button data-admin-view="all" aria-pressed="${adminView === "all"}">All groups${requests.some(r => r.status === "pending") ? ` <span class="count">${requests.filter(r => r.status === "pending").length}</span>` : ""}</button></div>` : "";
+  if (isAppOwner && adminView === "all") return segs + note + owner;
+  return segs + note + paused + (isWide() ? `<div class="admin-grid"><div>${cols[0]}</div><div>${cols[1]}</div></div>` : cols.join(""));
 }
+let adminView = "group";
+
+// Group owner: everything about how the group works. Saved together with one button.
+function groupSettingsHtml(g) {
+  const b = Object.assign({}, DEFAULT_BOXES, g.boxes || {}), p = g.points || {};
+  const zones = (Intl.supportedValuesOf ? Intl.supportedValuesOf("timeZone") : COMMON_TZ);
+  const zoneList = [...new Set([g.timezone, ...COMMON_TZ, ...zones])];
+  const boxRows = SLOTS.map((k, i) => `<div class="boxrow">
+      <input class="field" id="box-label-${k}" value="${esc(b[k].label)}" maxlength="30" aria-label="Box ${i + 1} name">
+      <select id="box-kind-${k}" aria-label="Box ${i + 1}">${[["req", "Required"], ["bonus", "Bonus"], ["off", "Off"]].map(([v, l]) =>
+        `<option value="${v}" ${b[k].kind === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("");
+  const logo = logoUrl(g);
+  return `<div class="card gsettings"><div class="cardhead"><h2>Group settings</h2></div>
+    <label class="flabel" for="g-name">Name</label>
+    <input class="field wide" id="g-name" value="${esc(g.name)}" maxlength="40">
+    <span class="flabel">Color</span>
+    <div class="swatches" role="radiogroup" aria-label="Color">${COLORS.map(([c, l]) =>
+      `<button class="swatch acc-${c}" role="radio" data-color="${c}" aria-checked="${g.color === c}" aria-label="${l}" title="${l}"></button>`).join("")}</div>
+    <span class="flabel">Logo</span>
+    <div class="logorow">${groupLogo(g, 52)}
+      <button class="btn plain small" id="logo-pick">${logo ? "Change" : "Upload"}</button>
+      ${logo ? `<button class="btn danger small" id="logo-remove">Remove</button>` : ""}</div>
+    <span class="flabel">Homework boxes</span>
+    <p class="empty" style="margin:-2px 0 8px">Complete = all required boxes ticked. Bonus boxes give extra points.</p>
+    ${boxRows}
+    <span class="flabel">Points</span>
+    <div class="pointsrow">
+      <label>Complete<input class="field" type="number" id="pt-complete" min="0" max="10" value="${p.complete ?? 2}"></label>
+      <label>Partial<input class="field" type="number" id="pt-partial" min="0" max="10" value="${p.partial ?? 1}"></label>
+      <label>Each bonus<input class="field" type="number" id="pt-bonus" min="0" max="10" value="${p.bonus ?? 1}"></label></div>
+    <span class="flabel">The trading day ends at</span>
+    <div class="pointsrow tzrow">
+      <select id="g-cutoff" aria-label="Hour">${Array.from({ length: 24 }, (_, h) => `<option value="${h}" ${g.cutoff_hour === h ? "selected" : ""}>${hh(h)}</option>`).join("")}</select>
+      <select id="g-tz" aria-label="Time zone">${zoneList.map(z => `<option value="${esc(z)}" ${g.timezone === z ? "selected" : ""}>${esc(z.replace(/_/g, " "))}</option>`).join("")}</select></div>
+    <p class="empty" style="margin-top:6px">Members can tick their boxes until this time on the next trading day.</p>
+    <button class="btn primary small" id="save-group" style="margin-top:14px">Save settings</button>
+    <p class="sub-hint" id="save-group-msg" style="margin:8px 0 0"></p>
+  </div>`;
+}
+
+// App owner: every group, requests to start one, and the big switches.
+function ownerDashboardHtml() {
+  const open = requests.filter(r => r.status === "pending");
+  const reqHtml = open.length ? open.map(r => `<div class="person"><span class="ph"></span><b>${esc(r.name)}</b>
+      <span class="sub">From ${esc(profileName(r.user_id))} · ${new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}${r.note ? ` · “${esc(r.note)}”` : ""}</span>
+      <div class="actions"><button class="btn primary small" data-approve-req="${r.id}">Approve</button>
+        <button class="btn danger small" data-reject-req="${r.id}">Reject</button></div></div>`).join("")
+    : `<p class="empty">No requests.</p>`;
+  const groupRows = groups.map(x => {
+    const inGroup = allMemberships.filter(m => m.group_id === x.id && m.status === "approved");
+    const waiting = allMemberships.filter(m => m.group_id === x.id && m.status === "pending").length;
+    const ownerOpts = inGroup.map(m => `<option value="${m.user_id}" ${m.user_id === x.owner_id ? "selected" : ""}>${esc(profileName(m.user_id))}</option>`).join("");
+    return `<div class="grow ${x.status}">
+      <div class="ghead">${groupLogo(x, 36)}<div><b>${esc(x.name)}${x.status === "paused" ? `<span class="rolechip">Paused</span>` : ""}</b>
+        <span class="sub">Owner: ${esc(profileName(x.owner_id))} · ${inGroup.length} in group${waiting ? ` · ${waiting} waiting` : ""} · code ${esc(x.join_code)}</span></div></div>
+      <div class="actions">
+        <button class="btn plain small" data-open-group="${x.id}">Open</button>
+        <button class="btn plain small" data-pause-group="${x.id}">${x.status === "paused" ? "Resume" : "Pause"}</button>
+        ${inGroup.length > 1 ? `<select id="owner-${x.id}" aria-label="New owner for ${esc(x.name)}">${ownerOpts}</select>
+          <button class="btn plain small" data-set-owner="${x.id}">Make owner</button>` : ""}
+        <button class="btn danger small" data-delete-group="${x.id}">Delete</button></div></div>`;
+  }).join("");
+  return `<div class="card"><div class="cardhead"><h2>Requests for a group</h2></div>${reqHtml}</div>
+    <div class="card"><div class="cardhead"><h2>All groups · ${groups.length}</h2></div>${groupRows}
+      <div class="addrow"><input class="field" id="new-group" placeholder="New group name" maxlength="40" aria-label="New group name">
+        <button class="btn primary small" id="create-group">Create</button></div>
+      <p class="empty" style="margin-top:10px">Groups you create are owned by you. Hand one to someone with "Make owner" once they're in it.
+      Deleting a group removes all its names, ticks, notes and reflections for good.</p></div>`;
+}
+
+// The Groups sheet: switch group, join another, ask for your own, leave.
+function openGroupsPanel() {
+  editing = null; settingsOpen = true;
+  const list = groups.filter(canOpen);
+  const row = x => `<button class="gitem" data-switch-group="${x.id}" aria-current="${x.id === gid}">${groupLogo(x, 36)}
+      <span><b>${esc(x.name)}</b><small>${esc(roleOf(x))}${x.status === "paused" ? " · paused" : ""}</small></span>${x.id === gid ? ic("check", 18) : ""}</button>`;
+  const mine = list.filter(x => (myMembership(x.id) || {}).status === "approved" || x.owner_id === session.user.id);
+  const others = list.filter(x => !mine.includes(x));
+  const m = myMembership(), g = group();
+  const canLeave = m && g && g.owner_id !== session.user.id;
+  document.getElementById("panel").innerHTML = `<div class="grab" aria-hidden="true"></div>
+    <header><div><b id="panel-title">Groups</b><span>Switch, join or start one</span></div>
+      <button class="round" id="panel-close" aria-label="Close">✕</button></header>
+    <div class="glist">${mine.map(row).join("") || `<p class="empty">You're not in a group yet.</p>`}</div>
+    ${others.length ? `<h3>Other groups (app owner)</h3><div class="glist">${others.map(row).join("")}</div>` : ""}
+    <h3>Join another group</h3>
+    ${joinHtml()}
+    ${canLeave ? `<h3>${esc(g.name)}</h3><button class="btn danger small" id="leave-group">Leave this group</button>` : ""}
+    <button class="btn primary done" id="panel-done">Done</button>`;
+  document.getElementById("scrim").hidden = false;
+  document.getElementById("panel").hidden = false;
+  document.body.style.overflow = "hidden";
+}
+
+// Join a group with a code, or ask for your own. Shown when you're in no group yet, and in the Groups sheet.
+function joinHtml() {
+  const waiting = myMemberships.filter(m => m.status !== "approved").map(m => {
+    const g = groups.find(x => x.id === m.group_id);
+    return `<p class="lobby-line">${m.status === "pending" ? ic("clock", 15) + `Waiting for approval in <b>${esc(g ? g.name : m.group_id)}</b>`
+      : ic("alert", 15) + `Not accepted in <b>${esc(g ? g.name : m.group_id)}</b>`}</p>`;
+  }).join("");
+  const mine = requests.filter(r => session && r.user_id === session.user.id && r.status !== "approved");
+  const reqs = mine.map(r => `<p class="lobby-line">${r.status === "pending" ? ic("clock", 15) + `Your request for <b>${esc(r.name)}</b> is waiting for the app owner`
+      : ic("alert", 15) + `Your request for <b>${esc(r.name)}</b> wasn't accepted`}</p>`).join("");
+  return `<div class="joinbox">
+      <label for="joincode">Join code</label>
+      <div class="addrow" style="margin-top:6px"><input class="field code" id="joincode" placeholder="ABCD-1234" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <button class="btn primary small" id="join">Join</button></div>
+      <p class="sub-hint" id="join-msg" style="margin:8px 0 0">${esc(joinMsg)}</p>
+      ${waiting}${reqs}
+    </div>
+    <details class="reqbox" ${requestOpen ? "open" : ""}><summary>Start your own group</summary>
+      <p class="sub-hint" style="margin:8px 0 10px">Ask for a group of your own. Once it's approved you're its owner: you get a join code to share and your own settings.</p>
+      <input class="field" id="req-name" maxlength="40" placeholder="Group name" aria-label="Group name" style="width:100%">
+      <textarea class="field" id="req-note" maxlength="300" placeholder="Who is it for? (optional)" aria-label="Note" style="width:100%;margin-top:8px;min-height:70px;padding:8px 10px"></textarea>
+      <button class="btn plain small" id="send-request" style="margin-top:8px">Send request</button>
+    </details>`;
+}
+let joinMsg = "", requestOpen = false;
 
 function renderGate() {
   const name = profile ? profile.discord_name : (session && session.user.user_metadata && (session.user.user_metadata.full_name || session.user.user_metadata.name)) || "";
   const avatar = session && session.user.user_metadata && session.user.user_metadata.avatar_url;
   if (screen === "setup") return `<div class="gate card"><h1>Almost there</h1><p>Paste your Supabase address and key into <b>config.js</b>, then reload.</p></div>`;
-  if (screen === "signin") return `<div class="gate"><h1>LockedIn Group</h1><p>Daily MNQ homework for the accountability group.</p>
+  if (screen === "signin") return `<div class="gate"><h1>LockedIn Group</h1><p>Daily trading homework for accountability groups.</p>
     <button class="btn discord" id="signin">${SVG.discord}Sign in with Discord</button>
     ${error ? `<p class="msg err" style="margin-top:16px">${esc(error)}</p>` : ""}</div>`;
-  if (screen === "waiting") return `<div class="gate">${avatar ? `<img class="avatar" src="${esc(avatar)}" alt="">` : ""}
-    <h1>Waiting for approval</h1><p>Signed in as <b>${esc(name)}</b>. Batko will approve you soon; this page updates by itself.</p>
-    <button class="btn plain" id="signout">Sign out</button></div>`;
-  if (screen === "rejected") return `<div class="gate"><h1>No access</h1><p>This account (${esc(name)}) wasn't approved.</p>
-    <button class="btn plain" id="signout">Sign out</button></div>`;
+  if (screen === "lobby") return `<div class="gate lobby">${avatar ? `<img class="avatar" src="${esc(avatar)}" alt="">` : ""}
+    <h1>Join a group</h1><p>Signed in as <b>${esc(name)}</b>. Type the join code you got from your group's owner.</p>
+    <div class="card" style="text-align:left">${joinHtml()}</div>
+    <button class="btn plain" id="signout" style="margin-top:18px">Sign out</button></div>`;
   return `<div class="card"><p class="msg">Loading…</p></div>`;
 }
 
@@ -1687,11 +2075,40 @@ document.addEventListener("click", async e => {
   if (d.approve) {
     const key = document.getElementById("pick-" + d.approve).value;
     if (!key) { flash = ""; error = "Choose a name first."; return render(); }
-    return adminDo(sb.from("profiles").update({ status: "approved", member_key: key }).eq("user_id", d.approve), "Approved.");
+    return adminDo(memberQ({ status: "approved", member_key: key }, d.approve), "Approved.");
   }
-  if (d.reject) return adminDo(sb.from("profiles").update({ status: "rejected", member_key: null }).eq("user_id", d.reject), "Rejected.");
-  if (d.revoke) return adminDo(sb.from("profiles").update({ status: "rejected", member_key: null }).eq("user_id", d.revoke), "Access removed.");
-  if (d.reconsider) return adminDo(sb.from("profiles").update({ status: "pending" }).eq("user_id", d.reconsider), "");
+  if (d.reject) return adminDo(memberQ({ status: "rejected", member_key: null }, d.reject), "Rejected.");
+  if (d.revoke) {
+    if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Sure? Tap again"; return; }
+    return adminDo(memberQ({ status: "rejected", member_key: null, role: "member" }, d.revoke), "Access removed.");
+  }
+  if (d.reconsider) return adminDo(memberQ({ status: "pending" }, d.reconsider), "");
+  if (d.makeadmin) return adminDo(memberQ({ role: "admin" }, d.makeadmin), "They're a group admin now: they can approve people, add names and excuse days.");
+  if (d.unadmin) return adminDo(memberQ({ role: "member" }, d.unadmin), "Admin removed.");
+  if (d.adminView) { adminView = d.adminView; flash = ""; error = ""; return render(); }
+  if (d.approveReq) return adminDo(sb.rpc("approve_group_request", { request_id: +d.approveReq }), "Group created. Its owner can open it now and share the join code.");
+  if (d.rejectReq) return adminDo(sb.from("group_requests").update({ status: "rejected" }).eq("id", +d.rejectReq), "Request rejected.");
+  if (d.openGroup) { adminView = "group"; return switchGroup(d.openGroup); }
+  if (d.pauseGroup) {
+    const x = groups.find(y => y.id === d.pauseGroup);
+    return adminDo(sb.from("groups").update({ status: x.status === "paused" ? "active" : "paused" }).eq("id", x.id), x.status === "paused" ? `${x.name} is active again.` : `${x.name} is paused.`);
+  }
+  if (d.setOwner) {
+    const uid = document.getElementById("owner-" + d.setOwner).value;
+    return adminDo(sb.from("groups").update({ owner_id: uid }).eq("id", d.setOwner), `${profileName(uid)} owns this group now.`);
+  }
+  if (d.deleteGroup) {
+    const x = groups.find(y => y.id === d.deleteGroup);
+    if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Delete everything?"; return; }
+    if (t.dataset.confirm2 !== "1") { t.dataset.confirm2 = "1"; t.textContent = `Really delete ${x.name}? Tap again`; return; }
+    return adminDo(sb.from("groups").delete().eq("id", x.id), `${x.name} was deleted.`);
+  }
+  if (d.color) {
+    document.querySelectorAll("[data-color]").forEach(b => b.setAttribute("aria-checked", String(b === t)));
+    document.documentElement.dataset.accent = d.color;   // preview; Save settings keeps it
+    return;
+  }
+  if (d.switchGroup) return switchGroup(d.switchGroup);
   if (d.rename) {
     const name = document.getElementById("mname-" + d.rename).value.trim();
     if (!name) return;
@@ -1699,7 +2116,7 @@ document.addEventListener("click", async e => {
   }
   if (d.hide) {
     if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Sure? Tap again"; return; }
-    await sb.from("profiles").update({ status: "rejected", member_key: null }).eq("member_key", d.hide);
+    await sb.from("memberships").update({ status: "rejected", member_key: null, role: "member" }).eq("group_id", gid).eq("member_key", d.hide);
     return adminDo(sb.from("members").update({ active: false }).eq("key", d.hide), "Member removed.");
   }
   switch (t.id) {
@@ -1712,10 +2129,35 @@ document.addEventListener("click", async e => {
     case "addmember": {
       const el = document.getElementById("newmember"), name = el.value.trim();
       if (!name) return;
-      const sort = Math.max(0, ...members.map(m => m.sort)) + 1;
-      return adminDo(sb.from("members").insert({ key: slug(name), name, sort }), `Added ${name}.`);
+      return adminDo(sb.rpc("add_member", { g: gid, member_name: name }), `Added ${name}.`);
     }
     case "toggleadmin": return setTab(tab === "admin" ? "day" : "admin");
+    case "open-groups": joinMsg = ""; return openGroupsPanel();
+    case "join": return joinWithCode();
+    case "send-request": return sendGroupRequest();
+    case "leave-group": {
+      if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Sure? Tap again"; return; }
+      const { error: e } = await sb.from("memberships").delete().eq("group_id", gid).eq("user_id", session.user.id);
+      if (e) { error = e.message; return render(); }
+      closePanel(); loaded = false; screen = "loading"; render(); return loadAll();
+    }
+    case "copy-code": {
+      try { await navigator.clipboard.writeText(group().join_code); t.textContent = "Copied"; } catch (err) { t.textContent = "Select and copy"; }
+      return setTimeout(() => { t.textContent = "Copy"; }, 1500);
+    }
+    case "new-code": {
+      if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Old code stops working. Sure?"; return; }
+      return adminDo(sb.rpc("new_join_code", { g: gid }), "New join code made. Share the new one; the old one no longer works.");
+    }
+    case "save-group": return saveGroupSettings();
+    case "logo-pick": { const inp = document.getElementById("logoinput"); inp.value = ""; return inp.click(); }
+    case "logo-remove": return adminDo(sb.from("groups").update({ logo_path: null }).eq("id", gid), "Logo removed.");
+    case "create-group": {
+      const el = document.getElementById("new-group"), name = el.value.trim();
+      if (!name) return;
+      const res = await adminDo(sb.rpc("create_group", { group_name: name }), `Created ${name}. Open it to set it up and get its join code.`);
+      return res;
+    }
     case "prev": selected = prevTrading(selected); weekStart = mondayOf(selected); return render();
     case "next": selected = nextTrading(selected); weekStart = mondayOf(selected); return render();
     case "gotoday": selected = today; weekStart = mondayOf(today); return render();
@@ -1764,6 +2206,7 @@ document.addEventListener("click", e => { if (e.target.id === "daypick" && e.tar
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && (editing || settingsOpen) && !document.getElementById("viewer").open) closePanel();
   if (e.key === "Enter" && e.target.id === "newmember") document.getElementById("addmember").click();
+  if (e.key === "Enter" && e.target.id === "joincode") { e.preventDefault(); joinWithCode(); }
   if (e.key === "Enter" && e.target.id === "newbreak") { e.preventDefault(); addCustomBreak(); }
 });
 document.getElementById("scrim").addEventListener("click", closePanel);
@@ -1773,6 +2216,7 @@ document.getElementById("shotinput").addEventListener("change", e => {
   if (shotTarget) files.forEach(f => uploadShot(shotTarget.day, shotTarget.key, f));
   shotTarget = null;
 });
+document.getElementById("logoinput").addEventListener("change", e => uploadLogo(e.target.files && e.target.files[0]));
 // With the ✎ panel open: paste a copied screenshot (⌘V / Ctrl+V) or drop picture files on the panel.
 const imageFiles = list => [...(list || [])].filter(f => f && f.type && f.type.startsWith("image/"));
 document.addEventListener("paste", e => {
@@ -1804,8 +2248,8 @@ setInterval(() => {
   if (t !== today) { if (selected === today) selected = t; today = t; weekStart = mondayOf(selected); }
   if (screen === "app" && tab !== "admin") render();
 }, 60000);
-// While waiting for approval, check every 20 seconds so the page opens as soon as you're approved.
-setInterval(() => { if (screen === "waiting" && session) loadAll(); }, 20000);
+// While waiting for approval in a group, check every 20 seconds so the page opens as soon as you're approved.
+setInterval(() => { if (screen === "lobby" && session && myMemberships.some(m => m.status === "pending")) loadAll(); }, 20000);
 
 // ---------------------------------------------------------------- errors
 // If something breaks, show what went wrong (and a reload button) instead of an endless "Loading…".
@@ -1815,7 +2259,7 @@ function showCrash(err) {
   const app = document.getElementById("app");
   if (!app || app.dataset.crashed) return;
   app.dataset.crashed = "1";
-  app.innerHTML = `<div class="card"><p class="msg err"><b>Something went wrong.</b> Send Batko a screenshot of this box.</p>
+  app.innerHTML = `<div class="card"><p class="msg err"><b>Something went wrong.</b> Send your group owner a screenshot of this box.</p>
     <pre style="white-space:pre-wrap;font:12px/1.4 var(--font-data);color:var(--text-2);margin:10px 0">${esc(msg).slice(0, 1200)}</pre>
     <button class="btn plain small" onclick="location.reload()">Reload</button></div>`;
 }
@@ -1826,7 +2270,7 @@ function watchLoading() {
   clearTimeout(loadTimer);
   loadTimer = setTimeout(() => {
     if (screen === "loading") showCrash(new Error(`Still loading after 15 seconds (stuck at: ${loadStep}). ` +
-      "Tap Reload. If it keeps happening, send Batko this message."));
+      "Tap Reload. If it keeps happening, send your group owner this message."));
   }, 15000);
 }
 watchLoading();
