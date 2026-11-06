@@ -124,7 +124,7 @@
   .tabbar {
     position: fixed; z-index: 6; left: 50%; transform: translateX(-50%);
     bottom: calc(14px + env(safe-area-inset-bottom, 0px));
-    width: min(380px, calc(100% - 32px));
+    width: min(420px, calc(100% - 32px));
     display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; padding: 5px; border-radius: 999px;
   }
   .tabbar .pill { position: absolute; top: 5px; bottom: 5px; left: 5px; border-radius: 999px; background: var(--glass-pill); }
@@ -470,6 +470,39 @@
   .adminseg { grid-template-columns: 1fr 1fr; }
   .adminseg .count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--crit); color: #fff; font-size: 11px; font-weight: 700; margin-left: 4px; }
 
+  /* ---------- Me tab ---------- */
+  .melist { display: flex; flex-direction: column; }
+  .merow { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 2px; border: 0; border-top: 1px solid var(--line); background: none; text-align: left; cursor: pointer; color: var(--text); }
+  .merow:first-child { border-top: 0; padding-top: 0; }
+  .merow > span:not(.glogo):not(.meicon) { flex: 1; min-width: 0; }
+  .merow b { display: block; font-size: 16px; font-weight: 600; }
+  .merow small { display: block; font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .merow .chev { flex: none; color: var(--muted); }
+  .merow:active { opacity: 0.7; }
+  .meicon { flex: none; width: 34px; height: 34px; border-radius: 28%; display: grid; place-items: center; background: var(--surface-2); color: var(--accent-text); }
+
+  /* ---------- pull to refresh ---------- */
+  .ptr { position: fixed; z-index: 7; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 66px); transform: translate(-50%, var(--pull, 0px));
+         display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--text-2); pointer-events: none; }
+  .ptr.ready { color: var(--accent-text); }
+  @media (prefers-reduced-motion: no-preference) { .ptr.spin .ic { animation: spin 0.9s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } } }
+
+  /* ---------- tutorial ---------- */
+  .tour { position: fixed; inset: 0; z-index: 50; }
+  .tour.center { background: rgba(0, 0, 0, 0.62); }
+  .tour-hole { position: fixed; border-radius: 16px; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.62), 0 0 0 2px var(--accent-text); pointer-events: none; }
+  @media (prefers-reduced-motion: no-preference) { .tour-hole { transition: left .3s, top .3s, width .3s, height .3s; } .tour-card { transition: top .3s, left .3s; } }
+  .tour-card { position: fixed; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 18px; padding: 16px 18px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45); }
+  .tour-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .tour-n { font: 600 12px var(--font-data); color: var(--muted); }
+  .tour-skip { border: 0; background: none; color: var(--muted); font: 600 13px var(--font-ui); cursor: pointer; padding: 6px 0 6px 10px; text-decoration: underline; text-underline-offset: 3px; }
+  .tour-card h3 { margin: 0 0 6px; font-size: 18px; letter-spacing: -0.01em; }
+  .tour-card p { margin: 0; font-size: 15px; line-height: 1.45; color: var(--text-2); }
+  .tour-dots { display: flex; gap: 5px; margin: 14px 0 12px; }
+  .tour-dots i { width: 6px; height: 6px; border-radius: 3px; background: var(--line-strong); }
+  .tour-dots i.on { width: 18px; background: var(--accent-text); }
+  .tour-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
   /* ---------- admin ---------- */
   .cardhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -6px -6px 10px 0; }
   .cardhead h2 { margin: 0; font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; }
@@ -557,6 +590,16 @@
 <input type="file" id="logoinput" accept="image/*" hidden>
 <div class="toast glass" id="toast" role="status" aria-live="polite" hidden></div>
 <div class="scrim" id="scrim" hidden></div>
+<div class="ptr glass" id="ptr" aria-live="polite" hidden></div>
+<div class="tour" id="tour" hidden>
+  <div class="tour-hole" id="tour-hole"></div>
+  <div class="tour-card" id="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-title">
+    <div class="tour-top"><span class="tour-n" id="tour-n"></span><button class="tour-skip" id="tour-skip">Skip tutorial</button></div>
+    <h3 id="tour-title"></h3><p id="tour-text"></p>
+    <div class="tour-dots" id="tour-dots" aria-hidden="true"></div>
+    <div class="tour-actions"><button class="btn plain small" id="tour-back">Back</button><button class="btn primary small" id="tour-next">Next</button></div>
+  </div>
+</div>
 <aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title" hidden></aside>
 <dialog id="viewer" aria-label="Picture">
   <div class="vtop"><div class="vcap" id="viewer-cap"></div><span class="vn" id="viewer-n"></span><button class="round" id="viewer-close" aria-label="Close">✕</button></div>
@@ -621,6 +664,7 @@ const SVG = {
   day: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>`,
   week: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>`,
   board: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 20V11M12 20V5M18 20v-6"/></svg>`,
+  me: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="10" r="3.2"/><path d="M6.2 18.6c1.4-2.2 3.4-3.3 5.8-3.3s4.4 1.1 5.8 3.3"/></svg>`,
   admin: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M17 11l2 2 4-4"/></svg>`,
   gear: `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>`,
   camera: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>`,
@@ -784,6 +828,7 @@ async function openGroup(id) {
   loaded = true; screen = "app";
   subscribe();
   render();
+  maybeStartTour();
 }
 
 async function switchGroup(id) {
@@ -968,7 +1013,7 @@ function celebrate() {
 
 // ---------------------------------------------------------------- personal settings
 // Saved to your account (user_settings table) and cached in this browser so the right colors show instantly.
-const DEFAULT_SETTINGS = { theme: "dark", confetti: true, customBreaks: [], hiddenBreaks: [] };
+const DEFAULT_SETTINGS = { theme: "dark", confetti: true, customBreaks: [], hiddenBreaks: [], tutorialDone: false };
 const MAX_CUSTOM_BREAKS = 12;
 let settings = { ...DEFAULT_SETTINGS }, settingsOpen = false;
 try { settings = { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem("mnq-settings") || "{}") }; } catch (e) {}
@@ -983,11 +1028,16 @@ applyTheme();
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
 async function loadSettings() {
   const { data, error: e } = await sb.from("user_settings").select("settings").eq("user_id", session.user.id).maybeSingle();
-  if (e || !data) return;
-  settings = { ...DEFAULT_SETTINGS, ...data.settings };
-  try { localStorage.setItem("mnq-settings", JSON.stringify(settings)); } catch (err) {}
-  applyTheme();
+  if (e) return;
+  if (data) {
+    settings = { ...DEFAULT_SETTINGS, ...data.settings };
+    try { localStorage.setItem("mnq-settings", JSON.stringify(settings)); } catch (err) {}
+    applyTheme();
+  }
+  settingsLoaded = true;
+  maybeStartTour();
 }
+let settingsLoaded = false;
 async function saveSettings() {
   try { localStorage.setItem("mnq-settings", JSON.stringify(settings)); } catch (e) {}
   applyTheme();
@@ -1028,6 +1078,8 @@ function openSettings() {
     <h3>My rule breaks</h3>
     <div id="settings-breaks">${customBreaksListHtml()}</div>
     ${installHtml()}
+    <h3>Tutorial</h3>
+    <button class="btn plain small" id="start-tour">Show the tutorial again</button>
     <h3>Celebrations</h3>
     <label class="switchrow"><span><b>Confetti</b><small>When you complete your day.</small></span>
       <input type="checkbox" id="set-confetti" role="switch" ${settings.confetti !== false ? "checked" : ""}></label>
@@ -1428,7 +1480,7 @@ const wideQuery = window.matchMedia("(min-width: 960px)");
 const isWide = () => wideQuery.matches;
 const pendingCount = () => people.filter(p => p.status === "pending").length + (isAppOwner ? requests.filter(r => r.status === "pending").length : 0);
 
-function tabsList() { return isAdmin ? ["day", "week", "board", "admin"] : ["day", "week", "board"]; }
+function tabsList() { return isAdmin ? ["day", "week", "board", "admin", "me"] : ["day", "week", "board", "me"]; }
 
 function statusText() {
   if (error) return `<small class="err">${esc(error.length > 48 ? "Not saved" : error)}</small>`;
@@ -1475,13 +1527,13 @@ function renderTop() {
     const status = error ? `<span class="err">${esc(error)}</span>` : saving || Object.keys(pending).length ? "Saving…" : "";
     top.innerHTML = `${groupButton(24)}
       <div class="center">
-        <button class="round" id="prev" aria-label="Previous trading day" ${tab === "admin" ? "disabled" : ""}>‹</button>
-        ${tab === "admin" ? `<b>${fmtDay(selected)}</b>` : datePickHtml()}
-        <button class="round" id="next" aria-label="Next trading day" ${selected >= today || tab === "admin" ? "disabled" : ""}>›</button>
+        <button class="round" id="prev" aria-label="Previous trading day" ${tab === "admin" || tab === "me" ? "disabled" : ""}>‹</button>
+        ${tab === "admin" || tab === "me" ? `<b>${tab === "me" ? "Me" : fmtDay(selected)}</b>` : datePickHtml()}
+        <button class="round" id="next" aria-label="Next trading day" ${selected >= today || tab === "admin" || tab === "me" ? "disabled" : ""}>›</button>
       </div>
-      <div class="end"><span>${status}</span>${selected !== today && tab !== "admin" ? `<button id="gotoday">Today</button>` : ""}
-        <button id="open-settings" aria-label="Settings">${SVG.gear}</button>
-        ${isAdmin ? `<button id="toggleadmin" class="${tab === "admin" ? "on" : ""}">Admin${pendingCount() ? `<span class="count" aria-label="${pendingCount()} waiting">${pendingCount()}</span>` : ""}</button>` : ""}</div>`;
+      <div class="end"><span>${status}</span>${selected !== today && tab !== "admin" && tab !== "me" ? `<button id="gotoday">Today</button>` : ""}
+        ${isAdmin ? `<button id="toggleadmin" class="${tab === "admin" ? "on" : ""}">Admin${pendingCount() ? `<span class="count" aria-label="${pendingCount()} waiting">${pendingCount()}</span>` : ""}</button>` : ""}
+        <button id="toggleme" class="${tab === "me" ? "on" : ""}">${SVG.me.replace("<svg ", '<svg width="16" height="16" ')}Me</button></div>`;
     return;
   }
   let prev = `<span></span>`, next = `<span></span>`, mid;
@@ -1494,8 +1546,7 @@ function renderTop() {
     next = `<button class="round" id="nw" aria-label="Next week" ${weekStart >= mondayOf(today) ? "disabled" : ""}>›</button>`;
     mid = `<b>${fmtDay(weekStart, { weekday: undefined })} – ${fmtDay(addDays(weekStart, 4), { weekday: undefined })}</b>${statusText()}`;
   } else {
-    mid = `<b>${tab === "admin" ? "Admin" : "Ranking"}</b>${statusText()}`;
-    if (tab === "board") prev = `<button class="round" id="open-settings" aria-label="Settings">${SVG.gear}</button>`;
+    mid = `<b>${{ admin: "Admin", board: "Ranking", me: "Me" }[tab] || ""}</b>${statusText()}`;
   }
   top.innerHTML = prev + `<div class="mid">${groupButton(16)}${mid}</div>` + next;
 }
@@ -1504,7 +1555,7 @@ function renderTabbar() {
   const bar = document.getElementById("tabbar");
   bar.hidden = screen !== "app";
   if (screen !== "app") return;
-  const list = tabsList(), labels = { day: "Day", week: "Week", board: "Ranking", admin: "Admin" };
+  const list = tabsList(), labels = { day: "Day", week: "Week", board: "Ranking", admin: "Admin", me: "Me" };
   const i = Math.max(0, list.indexOf(tab));
   bar.innerHTML = `<div class="pill" style="width:calc((100% - 10px) / ${list.length});transform:translateX(${i * 100}%)" aria-hidden="true"></div>` +
     list.map(t => `<button role="tab" data-tab="${t}" aria-selected="${t === tab}" aria-label="${labels[t]}">${SVG[t]}<span>${labels[t]}</span>
@@ -1681,7 +1732,7 @@ function renderProfile(key) {
 
   const head = `<div class="card">
     <div class="phead">${avatarHtml(m, 64)}
-      <div><h1>${esc(m.name)}${key === myKey() ? `<span class="you">YOU</span>` : ""}</h1><p>Rank #${rankOf(key) || "–"} · since ${since}</p>${key === myKey() ? `<button class="linkbtn" id="open-settings" style="padding:0;display:inline-flex;align-items:center;gap:6px">${ic("gear", 15)}Settings</button>` : ""}</div></div>
+      <div><h1>${esc(m.name)}${key === myKey() ? `<span class="you">YOU</span>` : ""}</h1><p>Rank #${rankOf(key) || "–"} · since ${since}</p></div></div>
     <div class="tiles">
       <div class="tile"><b>${s.run}</b><span>Streak</span></div>
       <div class="tile"><b>${s.best}</b><span>Best streak</span></div>
@@ -1773,7 +1824,6 @@ function renderBoard() {
       <div class="who2"><b><button class="namebtn" data-profile="${r.key}">${esc(r.name)}</button>${(b => b ? `<span class="mini-badge tier-${b.tier}" title="${esc(b.title)}">${ic(b.icon, 13)}</span>` : "")(topStreakBadge(r))}${r.key === myKey() ? `<span class="you">YOU</span>` : ""}</b><span>${detail}</span></div>
       <span class="pts" aria-label="${r.points} points">${r.points}</span></li>`;
   }).join("");
-  const me = members.find(m => m.key === myKey());
   return `<div class="card">
     ${isWide() ? `<div class="cardhead"><h2>Ranking</h2></div>` : ""}
     <ol class="lb">${items}</ol>
@@ -1781,8 +1831,6 @@ function renderBoard() {
       <summary>Scoring</summary>
       <p>${scoringText()}</p>
     </details>
-    <div class="account"><span>${esc(me ? me.name : profile ? profile.discord_name : "")}${roleOf() && roleOf() !== "Member" ? " · " + roleOf().toLowerCase() : ""}</span>
-      <span>${me ? `<button class="linkbtn" data-profile="${me.key}">My profile</button>` : ""}<button class="linkbtn" id="signout">Sign out</button></span></div>
   </div>`;
 }
 
@@ -1988,11 +2036,29 @@ function renderGate() {
   return `<div class="card"><p class="msg">Loading…</p></div>`;
 }
 
+// The Me tab: your account (groups, settings, tutorial, sign out) and your own profile with badges.
+function renderMe() {
+  const g = group(), m = members.find(x => x.key === myKey());
+  const chev = `<svg class="chev" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M4.5 2.5 8 6l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const tile = name => `<span class="meicon">${ic(name, 18)}</span>`;
+  const row = (id, icon, title, sub) => `<button class="merow" id="${id}">${icon}<span><b>${title}</b><small>${sub}</small></span>${chev}</button>`;
+  const who = profile ? profile.discord_name : "";
+  const account = `<div class="card"><div class="cardhead"><h2>Account</h2></div><div class="melist">
+      ${row("open-groups", groupLogo(g, 34), "Groups", `${esc(g ? g.name : "")}${roleOf() ? " · " + esc(roleOf()) : ""} · switch, join or start one`)}
+      ${row("open-settings", tile("gear"), "Settings", "Light / dark mode, confetti, rule-break tags, app icon")}
+      ${row("start-tour", tile("target"), "Tutorial", "A one-minute tour of the app")}
+    </div>
+    <div class="account"><span>Signed in as <b>${esc(who)}</b></span><button class="linkbtn" id="signout">Sign out</button></div></div>`;
+  const prof = m ? renderProfile(m.key) : `<div class="card"><p class="msg">You don't have a name in ${esc(g ? g.name : "this group")}, so there's no profile here.</p></div>`;
+  return account + prof;
+}
+
 function render() {
   renderTop(); renderTabbar();
   const app = document.getElementById("app");
   if (screen !== "app") { app.innerHTML = renderGate(); return; }
   if (tab === "admin" && isAdmin) app.innerHTML = renderAdmin();
+  else if (tab === "me" && !profileKey) app.innerHTML = renderMe();
   else if (profileKey) app.innerHTML = renderProfile(profileKey);
   else if (isWide()) {
     const d = renderDay();
@@ -2004,6 +2070,7 @@ function render() {
   checkUnlocks();
   // A picture's link may arrive after the viewer opened.
   if (viewing) { const img = document.getElementById("viewer-img"); if (!img.getAttribute("src") && shotUrls[viewing.path]) img.src = shotUrls[viewing.path]; }
+  if (tour) requestAnimationFrame(placeTour);
 }
 
 function setTab(t) { tab = t; profileKey = null; flash = ""; try { localStorage.setItem("tab", t); } catch (e) {} render(); window.scrollTo(0, 0); }
@@ -2132,6 +2199,8 @@ document.addEventListener("click", async e => {
       return adminDo(sb.rpc("add_member", { g: gid, member_name: name }), `Added ${name}.`);
     }
     case "toggleadmin": return setTab(tab === "admin" ? "day" : "admin");
+    case "toggleme": return setTab(tab === "me" ? "day" : "me");
+    case "start-tour": closePanel(); return startTour();
     case "open-groups": joinMsg = ""; return openGroupsPanel();
     case "join": return joinWithCode();
     case "send-request": return sendGroupRequest();
@@ -2250,6 +2319,150 @@ setInterval(() => {
 }, 60000);
 // While waiting for approval in a group, check every 20 seconds so the page opens as soon as you're approved.
 setInterval(() => { if (screen === "lobby" && session && myMemberships.some(m => m.status === "pending")) loadAll(); }, 20000);
+
+// ---------------------------------------------------------------- pull down to refresh (phones)
+async function refreshNow() {
+  await loadGroups();
+  if (!group() || !canOpen(group())) { loaded = false; return loadAll(); }
+  await openGroup(gid);
+}
+(function pullToRefresh() {
+  const pill = document.getElementById("ptr"), PULL = 80;
+  let y0 = null, dy = 0, busy = false;
+  const show = (icon, text, ready) => { pill.hidden = false; pill.innerHTML = ic(icon, 15) + text; pill.classList.toggle("ready", !!ready); };
+  document.addEventListener("touchstart", e => {
+    y0 = null;
+    if (busy || screen !== "app" || isWide() || window.scrollY > 0 || e.touches.length !== 1) return;
+    if (editing || settingsOpen || tour || document.getElementById("viewer").open) return;
+    if (e.target.closest("textarea, input, select, .panel, .tabbar")) return;
+    y0 = e.touches[0].clientY; dy = 0;
+  }, { passive: true });
+  document.addEventListener("touchmove", e => {
+    if (y0 === null) return;
+    dy = e.touches[0].clientY - y0;
+    if (dy < 14 || window.scrollY > 0) { pill.hidden = true; return; }
+    show("repeat", dy > PULL ? "Release to refresh" : "Pull to refresh", dy > PULL);
+    pill.style.setProperty("--pull", Math.min(dy, 140) / 2.2 + "px");
+  }, { passive: true });
+  document.addEventListener("touchend", async () => {
+    if (y0 === null) return;
+    y0 = null;
+    if (dy <= PULL || window.scrollY > 0) { pill.hidden = true; return; }
+    busy = true;
+    show("repeat", "Refreshing…", true); pill.classList.add("spin");
+    try { await refreshNow(); show("check", "Up to date", true); } catch (err) { show("alert", "Couldn't refresh", true); }
+    pill.classList.remove("spin");
+    setTimeout(() => { pill.hidden = true; pill.style.removeProperty("--pull"); busy = false; }, 900);
+  });
+})();
+
+// ---------------------------------------------------------------- tutorial
+// A short tour that points at the real buttons. Starts by itself the first time; "Skip tutorial" ends it for good.
+// Replay it from Me → Tutorial or Settings. Remembered in your settings, so it doesn't come back on another device.
+let tour = null;   // { i, steps }
+function listText(a) { return a.length > 1 ? a.slice(0, -1).join(", ") + " and " + a[a.length - 1] : a[0] || ""; }
+function tourSteps() {
+  const wide = isWide(), g = group(), me = myKey(), mine = me && canEdit(today, me);
+  const req = RULES.filter(r => r[2] === "req").map(r => r[1]), bonus = RULES.filter(r => r[2] === "bonus").map(r => r[1]);
+  const q = sel => () => document.querySelector(sel);
+  const tabEl = t => wide ? null : q(`.tabbar [data-tab="${t}"]`);
+  const myRow = () => { const b = document.querySelector(`.member [data-tick^="${me}:"]`) || document.querySelector(`[data-edit="${me}"]`); return b && b.closest(".member"); };
+  const steps = [
+    { title: `Welcome to ${g ? g.name : "LockedIn"}`, text: "Here's a quick tour of everything: about a minute. You can skip it now and replay it any time from the Me tab." },
+    mine && { el: wide ? myRow : q(".quick .qgrid"), title: "Tick your homework",
+      text: `Tap a box when it's done. Required: ${esc(listText(req))}. All required ticked = Complete (green circle).`
+        + (bonus.length ? ` ${esc(listText(bonus))} ${bonus.length > 1 ? "are bonus boxes" : "is a bonus box"}: extra points.` : "")
+        + ` You can tick until ${hh(CUTOFF_HOUR)} ${esc(tzCity(TZ))} time on the next trading day.` },
+    mine && { el: wide ? q(`[data-edit="${me}"]`) : q(".quick .qnote"), title: "Note & pictures",
+      text: "Write your note, add chart screenshots" + (wide ? " (you can paste them with ⌘V / Ctrl+V)" : "") + ", tag rule breaks, mark a no-trade day and write your weekly reflection. Everything saves by itself." },
+    { el: () => { const t = document.querySelector("#app .track"); return t && t.closest(".card"); }, title: "Time left today",
+      text: "How many of you are done and how much time is left. In the last hour the timer turns red, and you get a reminder if you're not done yet." },
+    { el: () => { const m = [...document.querySelectorAll("#app .member")].find(x => !x.querySelector(`[data-edit="${me}"]`)); return m; }, title: "Everyone's day",
+      text: "The circle shows each person's status: green complete, yellow partial, red missing. Tap a name for their profile and badges, tap a picture to see it full screen." },
+    { el: q(".topbar .datepick"), title: "Change the day",
+      text: "Tap the date to jump to any day." + (wide ? " Or use the ‹ › arrows." : " Or use ‹ ›, or swipe left and right on the page.") },
+    { el: q("#open-groups"), title: "Your groups", text: "Tap the group name to switch groups, join another one with a code, or start your own group." },
+    { el: wide ? () => { const c = document.querySelector(".side .grid"); return c && c.closest(".card"); } : tabEl("week"), title: "Week",
+      text: "The whole week at a glance. Tap any square to open that day. Everyone's weekly reflections are there too." },
+    { el: wide ? () => { const c = document.querySelector(".side .lb"); return c && c.closest(".card"); } : tabEl("board"), title: "Ranking",
+      text: `Points: Complete ${POINTS.COMPLETE}, Partial ${POINTS.PARTIAL}${bonus.length ? `, +${POINTS.bonus} for each bonus box` : ""}. Your streak is Complete days in a row. Earn badges for streaks, notes, pictures and more.` },
+    { el: wide ? q("#toggleme") : tabEl("me"), title: "Me",
+      text: "Your profile and badges, Settings (light or dark mode, confetti, your own rule-break tags, the app icon for your phone), sign out, and this tutorial again." },
+    isAdmin && { el: wide ? q("#toggleadmin") : tabEl("admin"), title: "Admin",
+      text: `You help run ${esc(g ? g.name : "this group")}: share the join code, approve people and give them a name, excuse days${isGroupOwner() ? ", and change the group's settings (boxes, points, time, color, logo)" : ""}.` },
+    { title: "You're all set", text: (wide ? "" : "Tip: pull down at the top of the page to refresh. ") + "Good luck today, and stay locked in." },
+  ];
+  return steps.filter(Boolean);
+}
+function maybeStartTour() {
+  if (tour || !settingsLoaded || settings.tutorialDone || screen !== "app" || !loaded || !(myKey() || isAdmin)) return;
+  if (editing || settingsOpen) return;
+  startTour();
+}
+function startTour() {
+  if (screen !== "app") return;
+  tab = "day"; profileKey = null; selected = today; weekStart = mondayOf(today);
+  render();
+  tour = { i: 0, steps: tourSteps() };
+  document.getElementById("tour").hidden = false;
+  document.body.style.overflow = "hidden";
+  showTourStep();
+}
+function endTour() {
+  if (!tour) return;
+  tour = null;
+  document.getElementById("tour").hidden = true;
+  document.body.style.overflow = "";
+  window.scrollTo(0, 0);
+  if (!settings.tutorialDone) { settings.tutorialDone = true; saveSettings(); }
+}
+function showTourStep() {
+  const st = tour.steps[tour.i], n = tour.steps.length, last = tour.i === n - 1;
+  document.getElementById("tour-n").textContent = `${tour.i + 1} / ${n}`;
+  document.getElementById("tour-title").textContent = st.title;
+  document.getElementById("tour-text").innerHTML = st.text;
+  document.getElementById("tour-dots").innerHTML = tour.steps.map((_, j) => `<i class="${j === tour.i ? "on" : ""}"></i>`).join("");
+  document.getElementById("tour-back").hidden = tour.i === 0;
+  document.getElementById("tour-next").textContent = tour.i === 0 ? "Start tour" : last ? "Finish" : "Next";
+  document.getElementById("tour-skip").hidden = last;
+  const el = st.el && st.el();
+  if (el && !el.closest(".topbar, .tabbar")) {
+    const r = el.getBoundingClientRect();
+    if (r.top < 90 || r.bottom > innerHeight - 220) window.scrollTo(0, Math.max(0, window.scrollY + r.top - Math.max(90, (innerHeight - r.height) / 2 - 80)));
+  }
+  placeTour();
+  document.getElementById("tour-next").focus({ preventScroll: true });
+}
+function placeTour() {
+  if (!tour) return;
+  const st = tour.steps[tour.i], el = st.el && st.el();
+  const hole = document.getElementById("tour-hole"), card = document.getElementById("tour-card"), wrap = document.getElementById("tour");
+  const cw = Math.min(360, innerWidth - 32);
+  card.style.width = cw + "px";
+  if (!el || !el.getClientRects().length) {
+    wrap.classList.add("center"); hole.hidden = true;
+    card.style.left = (innerWidth - cw) / 2 + "px"; card.style.top = Math.max(16, (innerHeight - card.offsetHeight) / 2) + "px";
+    return;
+  }
+  wrap.classList.remove("center"); hole.hidden = false;
+  const r = el.getBoundingClientRect(), pad = 6;
+  Object.assign(hole.style, { left: r.left - pad + "px", top: r.top - pad + "px", width: r.width + pad * 2 + "px", height: r.height + pad * 2 + "px" });
+  const ch = card.offsetHeight, below = r.bottom + pad + 12, above = r.top - pad - 12 - ch;
+  const top = below + ch < innerHeight - 12 ? below : above > 12 ? above : Math.max(12, innerHeight - ch - 12);
+  card.style.top = top + "px";
+  card.style.left = Math.min(innerWidth - cw - 16, Math.max(16, r.left + r.width / 2 - cw / 2)) + "px";
+}
+document.getElementById("tour-next").addEventListener("click", () => { if (tour.i === tour.steps.length - 1) return endTour(); tour.i++; showTourStep(); });
+document.getElementById("tour-back").addEventListener("click", () => { if (tour.i > 0) { tour.i--; showTourStep(); } });
+document.getElementById("tour-skip").addEventListener("click", endTour);
+document.addEventListener("keydown", e => {
+  if (!tour) return;
+  if (e.key === "Escape") { e.stopImmediatePropagation(); endTour(); }
+  if (e.key === "ArrowRight") document.getElementById("tour-next").click();
+  if (e.key === "ArrowLeft") document.getElementById("tour-back").click();
+}, true);
+addEventListener("resize", () => tour && placeTour());
+addEventListener("scroll", () => tour && placeTour(), { passive: true });
 
 // ---------------------------------------------------------------- errors
 // If something breaks, show what went wrong (and a reload button) instead of an endless "Loading…".
