@@ -3397,6 +3397,16 @@ function watchLoading() {
 watchLoading();
 
 // ---------------------------------------------------------------- start
+// After "Sign in with Discord" you come back with the sign-in details (or an error) after a # in the address.
+// Show a sign-in error in plain words, and never leave a stray "#" in the address bar.
+const authHash = new URLSearchParams(location.hash.replace(/^#/, ""));
+if (authHash.get("error_description")) {
+  error = "Sign-in didn't work: " + authHash.get("error_description").replace(/\+/g, " ") + ". Try again.";
+  history.replaceState(null, "", location.pathname + location.search);
+}
+function tidyAddress() {
+  if (location.href.endsWith("#") || (location.hash && !/access_token|error/.test(location.hash))) history.replaceState(null, "", location.pathname + location.search);
+}
 (async () => {
   if (!sb) { screen = "setup"; return render(); }
   sb.auth.onAuthStateChange((event, s) => {
@@ -3406,6 +3416,7 @@ watchLoading();
     else if (s.user.id !== was) { screen = "loading"; render(); watchLoading(); setTimeout(startLoad, 0); }
   });
   const { data } = await sb.auth.getSession();
+  setTimeout(tidyAddress, 0);
   if (!data.session) { screen = "signin"; render(); }
 })();
 </script>
