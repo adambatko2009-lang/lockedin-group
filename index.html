@@ -1805,6 +1805,43 @@ function groupButton(px) {
 const XMARK = `<span class="x" aria-hidden="true">✕</span>`;
 // App owner: group requests waiting. (People waiting in the open group show on the Admin tab.)
 const pendingElsewhere = () => isAppOwner && requests.some(r => r.status === "pending") && tab !== "admin" ? 1 : 0;
+// ---------------------------------------------------------------- updating the page in place
+// Instead of rebuilding the page (which made every profile picture flicker when you ticked a box),
+// compare the new page with what's on screen and change only what's different.
+function morph(el, html) {
+  const next = document.createElement(el.tagName === "MAIN" ? "div" : el.tagName);
+  next.innerHTML = html;
+  morphKids(el, next);
+}
+const sameKind = (a, b) => a.nodeType === b.nodeType && a.nodeName === b.nodeName && (a.nodeType !== 1 || (a.id || "") === (b.id || ""));
+function morphKids(from, to) {
+  let a = from.firstChild, b = to.firstChild;
+  while (b) {
+    const nb = b.nextSibling;
+    if (!a) from.appendChild(b);
+    else if (sameKind(a, b)) { morphNode(a, b); a = a.nextSibling; }
+    else { const na = a.nextSibling; from.replaceChild(b, a); a = na; }
+    b = nb;
+  }
+  while (a) { const na = a.nextSibling; from.removeChild(a); a = na; }
+}
+function morphNode(a, b) {
+  if (a.nodeType !== 1) { if (a.nodeValue !== b.nodeValue) a.nodeValue = b.nodeValue; return; }
+  // a picture whose address changed is swapped whole, so it never shows the old picture
+  if (a.tagName === "IMG" && a.getAttribute("src") !== b.getAttribute("src")) { a.replaceWith(b); return; }
+  for (const { name } of [...a.attributes]) if (!b.hasAttribute(name) && !(name === "open" && a.tagName === "DETAILS")) a.removeAttribute(name);
+  for (const { name, value } of [...b.attributes]) if (a.getAttribute(name) !== value) a.setAttribute(name, value);
+  const field = /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName), typing = field && document.activeElement === a;
+  if (a.tagName === "INPUT") {
+    if (!typing && a.value !== b.value) a.value = b.value;
+    if (a.checked !== b.checked) a.checked = b.checked;
+    return;
+  }
+  if (a.tagName === "TEXTAREA") { if (!typing && a.value !== b.value) a.value = b.value; return; }
+  morphKids(a, b);
+  if (a.tagName === "SELECT" && !typing) a.value = b.value;
+}
+
 function renderTop() {
   renderNoteStatus();
   const top = document.getElementById("topbar");
@@ -1812,14 +1849,14 @@ function renderTop() {
   if (screen !== "app") return;
   if (profileKey && tab !== "admin") {
     const m = members.find(x => x.key === profileKey);
-    top.innerHTML = isWide()
+    morph(top, isWide()
       ? `${groupButton(24)}<div class="center"><b>${esc(m ? m.name : "Profile")}</b></div><div class="end"><button id="profile-back" class="gearbtn" aria-label="Close profile" title="Close">${XMARK}</button></div>`
-      : `<span></span><div class="mid"><b>${esc(m ? m.name : "")}</b></div><button class="round" id="profile-back" aria-label="Close profile">✕</button>`;
+      : `<span></span><div class="mid"><b>${esc(m ? m.name : "")}</b></div><button class="round" id="profile-back" aria-label="Close profile">✕</button>`);
     return;
   }
   if (isWide()) {
     const status = error ? `<span class="err">${esc(error)}</span>` : saving || Object.keys(pending).length ? "Saving…" : "";
-    top.innerHTML = `${groupButton(24)}
+    morph(top, `${groupButton(24)}
       <div class="center">${tab === "admin" || tab === "me" ? `<b>${tab === "me" ? "Me" : "Admin"}</b>` : `
         <button class="round" id="prev" aria-label="Previous trading day">‹</button>
         ${datePickHtml()}
@@ -1828,7 +1865,7 @@ function renderTop() {
       <div class="end"><span>${status}</span>${selected !== today && tab !== "admin" && tab !== "me" ? `<button id="gotoday">Today</button>` : ""}
         ${isAdmin ? `<button id="toggleadmin" class="gearbtn ${tab === "admin" ? "on" : ""}" aria-label="${tab === "admin" ? "Close Admin" : "Admin"}" title="${tab === "admin" ? "Close Admin" : "Admin"}">${tab === "admin" ? `${XMARK}` : SVG.gear}${pendingCount() ? `<span class="count" aria-label="${pendingCount()} waiting">${pendingCount()}</span>` : ""}</button>` : ""}
         ${tab === "me" ? `<button id="toggleme" class="gearbtn on" aria-label="Close Me" title="Close">${XMARK}</button>`
-          : `<button id="toggleme">${SVG.me.replace("<svg ", '<svg width="16" height="16" ')}Me</button>`}</div>`;
+          : `<button id="toggleme">${SVG.me.replace("<svg ", '<svg width="16" height="16" ')}Me</button>`}</div>`);
     return;
   }
   let prev = `<span></span>`, next = `<span></span>`, mid;
@@ -1844,7 +1881,7 @@ function renderTop() {
     mid = `<b>${{ admin: "Admin", board: "Ranking", me: "Me" }[tab] || ""}</b>${statusText()}`;
     if (tab === "admin" || tab === "me") next = `<button class="round" id="close-admin" aria-label="Close ${tab === "me" ? "Me" : "Admin"}">✕</button>`;
   }
-  top.innerHTML = prev + `<div class="mid">${groupButton(16)}${mid}</div>` + next;
+  morph(top, prev + `<div class="mid">${groupButton(16)}${mid}</div>` + next);
 }
 
 function renderTabbar() {
@@ -1853,9 +1890,9 @@ function renderTabbar() {
   if (screen !== "app") return;
   const list = tabsList(), labels = { day: "Day", week: "Week", board: "Ranking", admin: "Admin", me: "Me" };
   const i = Math.max(0, list.indexOf(tab));
-  bar.innerHTML = `<div class="pill" style="width:calc((100% - 10px) / ${list.length});transform:translateX(${i * 100}%)" aria-hidden="true"></div>` +
+  morph(bar, `<div class="pill" style="width:calc((100% - 10px) / ${list.length});transform:translateX(${i * 100}%)" aria-hidden="true"></div>` +
     list.map(t => `<button role="tab" data-tab="${t}" aria-selected="${t === tab}" aria-label="${labels[t]}">${t === "admin" ? SVG.gear : SVG[t]}<span>${labels[t]}</span>
-      ${t === "admin" && pendingCount() ? `<i class="badge">${pendingCount()}</i>` : ""}</button>`).join("");
+      ${t === "admin" && pendingCount() ? `<i class="badge">${pendingCount()}</i>` : ""}</button>`).join(""));
 }
 
 // The row of boxes adapts to the group's boxes: long names get more room; more than 4 wrap on phones.
@@ -2517,16 +2554,17 @@ function render() {
   const app = document.getElementById("app");
   document.body.classList.toggle("landing", screen === "signin");
   if (screen !== "app") { app.innerHTML = renderGate(); if (screen === "signin") revealLanding(); return; }
-  if (tab === "admin" && isAdmin) app.innerHTML = renderAdmin();
-  else if (tab === "me" && !profileKey) app.innerHTML = renderMe();
-  else if (profileKey) app.innerHTML = renderProfile(profileKey);
+  let html;
+  if (tab === "admin" && isAdmin) html = renderAdmin();
+  else if (tab === "me" && !profileKey) html = renderMe();
+  else if (profileKey) html = renderProfile(profileKey);
   else if (isWide()) {
     const d = renderDay();
-    app.innerHTML = `<div class="desk"><div class="maincol">${d.summary}${d.list}</div><div class="side">${renderWeek()}${renderReflections()}${renderBoard()}</div></div>`;
-  } else if (tab === "week") app.innerHTML = renderWeek() + renderReflections();
-  else if (tab === "board") app.innerHTML = renderBoard();
-  else { const d = renderDay(); app.innerHTML = d.summary + d.list; }
-  app.insertAdjacentHTML("afterbegin", offlineBar());
+    html = `<div class="desk"><div class="maincol">${d.summary}${d.list}</div><div class="side">${renderWeek()}${renderReflections()}${renderBoard()}</div></div>`;
+  } else if (tab === "week") html = renderWeek() + renderReflections();
+  else if (tab === "board") html = renderBoard();
+  else { const d = renderDay(); html = d.summary + d.list; }
+  morph(app, offlineBar() + html);
   renderPanelPics();
   checkUnlocks();
   // A picture's link may arrive after the viewer opened.
