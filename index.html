@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-title" content="LockedIn">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500;600&family=Instrument+Serif:ital@0;1&display=swap">
 <style>
   /* Layout: content cards scroll under floating glass bars (date bar on top, tab bar at the bottom on phones).
      Glass is only on those bars, never on content. Monitors get a two-column dashboard and no tab bar.
@@ -439,49 +439,151 @@
   .offline-bar .ic { flex: none; color: var(--warn); }
   .offline-bar span { flex: 1; }
   .sub-hint.bad { color: var(--crit); }
-  /* Front page (signed out) */
-  .land { max-width: 920px; width: 100%; margin: 0 auto; padding: 4vh 0 40px; display: flex; flex-direction: column; gap: 44px; }
-  .land-hero { display: grid; gap: 28px; align-items: center; }
-  .land-hero .appicon { width: 64px; height: 64px; border-radius: 28%; display: block; margin-bottom: 18px; box-shadow: 0 8px 24px var(--glass-shade); }
-  .land h1 { font-size: clamp(32px, 7vw, 48px); line-height: 1.05; letter-spacing: -0.03em; margin: 0 0 14px; text-wrap: balance; }
-  .land h1 em { font-style: normal; color: var(--accent-text); }
-  .land .lead { font-size: 17px; line-height: 1.55; color: var(--text-2); margin: 0 0 24px; max-width: 46ch; }
-  .land .fine { font-size: 13px; color: var(--muted); margin: 12px 0 0; }
-  .land h2 { font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px; }
-  .mock { padding: 18px; display: flex; flex-direction: column; gap: 14px; transform: rotate(-1.2deg); box-shadow: 0 24px 60px var(--glass-shade); }
-  .mock-top { display: flex; justify-content: space-between; align-items: baseline; font: 600 14px var(--font-data); color: var(--text-2); }
-  .mock-top b { font-size: 26px; color: var(--text); }
-  .mock-bar { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
-  .mock-bar i { display: block; height: 100%; width: 60%; background: var(--good); border-radius: 3px; }
-  .mock-row { display: flex; align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
-  .mock-row .av { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #fff; flex: none; }
-  .mock-row b { flex: 1; font-size: 15px; }
-  .mock-row .chips { display: flex; gap: 4px; }
-  .mock-row .chips i { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid var(--line-strong); }
-  .mock-row .chips i.on { background: var(--good); border-color: var(--good); }
-  .mock-row .st { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #0a0a0b; flex: none; }
-  .feats { display: grid; grid-template-columns: 1fr; gap: 12px; }
-  .feat { display: flex; gap: 14px; align-items: flex-start; }
-  .feat .fi { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex: none; background: color-mix(in srgb, var(--acc) 16%, transparent); color: var(--accent-text); }
-  .feat b { display: block; font-size: 16px; margin: 1px 0 3px; }
-  .feat p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--text-2); }
-  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; counter-reset: s; }
-  .steps li { counter-increment: s; display: flex; gap: 14px; align-items: center; font-size: 15px; line-height: 1.45; }
-  .steps li::before { content: counter(s); width: 32px; height: 32px; border-radius: 50%; flex: none; display: grid; place-items: center;
-    background: var(--accent); color: var(--on-accent); font: 700 14px var(--font-data); }
-  .land-own { display: flex; flex-direction: column; gap: 6px; }
-  .land-own > b { font-size: 17px; }
-  .land-own p, .land-priv { margin: 0; font-size: 14px; line-height: 1.55; color: var(--text-2); }
-  .land-end { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-  .land-end h2 { font-size: 24px; letter-spacing: -0.02em; text-transform: none; color: var(--text); margin: 0; }
+  /* Front page (signed out): its own always-dark, cinematic look */
+  body.landing { background: #000; padding: 0; }
+  body.landing::after { display: none; }
+  body.landing main { max-width: none; gap: 0; }
+  .lp { --lp-text: #f5f5f7; --lp-2: #a3a3ad; --lp-line: rgba(255, 255, 255, 0.09); --lp-green: #4ade80; --lp-blue: #60a5fa;
+    position: relative; overflow: clip; color: var(--lp-text); background: #000; }
+  .lp :focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+  .lp .serif { font-family: "Instrument Serif", Georgia, "Times New Roman", serif; font-style: italic; font-weight: 400; letter-spacing: -0.01em; }
+  .lp .mono { font: 500 11px/1.4 var(--font-data); letter-spacing: 0.22em; text-transform: uppercase; color: var(--lp-2); margin: 0; }
+  .lp-nav { position: fixed; z-index: 20; top: max(12px, env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
+    width: min(1120px, calc(100% - 24px)); display: flex; align-items: center; justify-content: space-between; padding: 6px 6px 6px 16px;
+    border-radius: 999px; background: rgba(18, 18, 22, 0.55); border: 1px solid rgba(255, 255, 255, 0.08);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4); }
+  .lp-nav .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
+  .lp-nav .brand img { width: 26px; height: 26px; border-radius: 28%; }
+  .lp-nav .links { display: none; gap: 26px; }
+  .lp-nav .links a { color: var(--lp-2); text-decoration: none; font: 500 11px var(--font-data); letter-spacing: 0.18em; text-transform: uppercase; }
+  .lp-nav .links a:hover { color: #fff; }
+  .lp-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 0 26px; border-radius: 999px;
+    border: 0; font: 600 16px var(--font-ui); cursor: pointer; text-decoration: none; transition: transform .2s, box-shadow .2s, background .2s; }
+  .lp-btn.white { background: #fff; color: #000; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3), 0 12px 48px rgba(96, 165, 250, 0.35); }
+  .lp-btn.white:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px #fff, 0 16px 60px rgba(96, 165, 250, 0.5); }
+  .lp-btn.ghost { background: rgba(255, 255, 255, 0.06); color: #fff; border: 1px solid rgba(255, 255, 255, 0.14); }
+  .lp-btn.ghost:hover { background: rgba(255, 255, 255, 0.12); }
+  .lp-btn.small { min-height: 40px; padding: 0 16px; font-size: 14px; box-shadow: none; }
+  .lp-btn svg { width: 20px; height: 20px; }
+  /* moving smoke: soft colored clouds, blurred together, with film grain on top */
+  .smoke { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+  .smoke i { position: absolute; border-radius: 50%; filter: blur(70px); mix-blend-mode: screen; will-change: transform; }
+  .smoke i:nth-child(1) { width: 70vmax; height: 50vmax; left: -15%; top: 10%; background: radial-gradient(closest-side, rgba(96, 165, 250, 0.55), transparent); animation: drift-a 26s ease-in-out infinite alternate; }
+  .smoke i:nth-child(2) { width: 55vmax; height: 55vmax; right: -20%; top: -15%; background: radial-gradient(closest-side, rgba(99, 102, 241, 0.5), transparent); animation: drift-b 32s ease-in-out infinite alternate; }
+  .smoke i:nth-child(3) { width: 60vmax; height: 30vmax; left: 15%; bottom: -10%; background: radial-gradient(closest-side, rgba(230, 236, 255, 0.24), transparent); animation: drift-c 24s ease-in-out infinite alternate; }
+  .smoke i:nth-child(4) { width: 30vmax; height: 30vmax; left: 45%; top: 35%; background: radial-gradient(closest-side, rgba(74, 222, 128, 0.18), transparent); animation: drift-b 20s ease-in-out infinite alternate-reverse; }
+  .smoke::before { content: ""; position: absolute; inset: 0; z-index: 2; opacity: 0.09; mix-blend-mode: overlay;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  .smoke::after { content: ""; position: absolute; inset: 0; z-index: 3; background: radial-gradient(120% 90% at 50% 45%, transparent 35%, #000 85%); }
+  .lp-hero .smoke { -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent); }
+  .lp-final .smoke { -webkit-mask-image: linear-gradient(transparent, #000 35%, #000 75%, transparent); mask-image: linear-gradient(transparent, #000 35%, #000 75%, transparent); }
+  @keyframes drift-a { to { transform: translate(18vw, -6vh) rotate(25deg) scale(1.15); } }
+  @keyframes drift-b { to { transform: translate(-14vw, 12vh) rotate(-30deg) scale(0.9); } }
+  @keyframes drift-c { to { transform: translate(-10vw, -14vh) scale(1.25); } }
+  .lp-hero { position: relative; isolation: isolate; min-height: 100svh; display: grid; place-items: center; text-align: center; padding: 110px 20px 90px; }
+  .lp-hero h1 { font-size: clamp(46px, 10.5vw, 120px); line-height: 0.92; letter-spacing: -0.05em; font-weight: 600; margin: 22px 0 22px; text-wrap: balance; }
+  .lp-hero h1 .serif { display: block; font-size: 1.1em; letter-spacing: -0.03em; color: #e8ecff; }
+  .lp-hero .lead { max-width: 36ch; margin: 0 auto 34px; color: rgba(245, 245, 247, 0.74); font-size: clamp(16px, 2.1vw, 19px); line-height: 1.55; }
+  .lp-cta { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+  .lp .fine { font-size: 13px; color: var(--lp-2); margin: 16px 0 0; }
+  .cue { position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .cue i { width: 1px; height: 38px; background: linear-gradient(#fff, transparent); transform-origin: top; animation: cue 2.2s ease-in-out infinite; }
+  @keyframes cue { 0% { transform: scaleY(0); opacity: 1; } 70% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1); opacity: 0; } }
+  .lp-sec { scroll-margin-top: 40px; position: relative; max-width: 1120px; margin: 0 auto; padding: 96px 20px; }
+  .lp-sec.center { text-align: center; }
+  .lp h2 { font-size: clamp(34px, 6.4vw, 72px); line-height: 1; letter-spacing: -0.045em; font-weight: 600; margin: 18px 0 18px; text-wrap: balance; }
+  .lp h2 .serif { font-size: 1.08em; color: #e8ecff; }
+  .lp .sub { color: rgba(245, 245, 247, 0.7); font-size: 18px; line-height: 1.55; max-width: 48ch; margin: 0 auto; }
+  /* you alone vs your group */
+  .versus { position: relative; display: grid; gap: 12px; margin-top: 48px; text-align: left; }
+  .vcol { border-radius: 22px; padding: 26px; border: 1px solid var(--lp-line); background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)); }
+  .vcol.us { border-color: rgba(96, 165, 250, 0.35); background: linear-gradient(180deg, rgba(96, 165, 250, 0.14), rgba(96, 165, 250, 0.03)); box-shadow: 0 30px 80px -30px rgba(96, 165, 250, 0.45); }
+  .vcol h3 { font-size: 26px; letter-spacing: -0.03em; margin: 12px 0 18px; font-weight: 600; }
+  .vcol ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .vcol li { display: flex; gap: 12px; align-items: flex-start; font-size: 15.5px; line-height: 1.45; color: rgba(245, 245, 247, 0.82); }
+  .vcol li b { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; margin-top: 1px; }
+  .vcol.them li b { background: rgba(255, 95, 87, 0.16); color: #ff8a84; }
+  .vcol.us li b { background: rgba(74, 222, 128, 0.18); color: var(--lp-green); }
+  .vs { justify-self: center; font: 600 11px var(--font-data); letter-spacing: 0.2em; color: var(--lp-2); padding: 8px 12px; border-radius: 999px; border: 1px solid var(--lp-line); background: #000; }
+  /* the daily card, floating */
+  .ritual { display: grid; gap: 48px; align-items: center; }
+  .stage { position: relative; perspective: 1400px; display: grid; place-items: center; padding: 20px 0; }
+  .stage::before { content: ""; position: absolute; width: 80%; height: 70%; border-radius: 50%; background: radial-gradient(closest-side, rgba(96, 165, 250, 0.35), transparent); filter: blur(40px); }
+  .lp .mock { position: relative; width: min(420px, 100%); padding: 22px; border-radius: 24px; display: flex; flex-direction: column; gap: 14px; text-align: left;
+    background: linear-gradient(180deg, rgba(40, 42, 50, 0.92), rgba(22, 23, 28, 0.92)); border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 40px 100px -20px rgba(0, 0, 0, 0.9); transform: rotateX(10deg) rotateY(-14deg) rotateZ(1deg); transition: transform 1.2s cubic-bezier(.2, .8, .2, 1); }
+  .stage:hover .mock { transform: rotateX(4deg) rotateY(-6deg); }
+  .mock-top { display: flex; justify-content: space-between; align-items: baseline; font: 600 14px var(--font-data); color: var(--lp-2); }
+  .mock-top b { font-size: 30px; color: #fff; display: inline-grid; }
+  .mock-top b > span { grid-area: 1 / 1; }
+  .mock-bar { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+  .mock-bar i { display: block; height: 100%; width: 80%; background: var(--lp-green); border-radius: 3px; }
+  .mock-row { display: flex; align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.07); }
+  .mock-row .av { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #fff; flex: none; }
+  .mock-row > b { flex: 1; font-size: 15px; }
+  .mock-row .chips { display: flex; gap: 5px; }
+  .mock-row .chips i { width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid rgba(255, 255, 255, 0.2); }
+  .mock-row .chips i.on { background: var(--lp-green); border-color: var(--lp-green); }
+  .mock-row .st { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #0a0a0b; flex: none; position: relative; }
+  .mock-row .st > span { position: absolute; inset: 0; border-radius: 50%; display: grid; place-items: center; }
+  .st .good, .good-bg { background: var(--lp-green); }
+  .st .warn { background: #febc2e; }
+  /* the last box gets ticked: 4/5 -> 5/5 */
+  .in .late-box { animation: tick-on .35s 1.6s both; }
+  .in .st .warn { animation: fade-out .3s 1.75s both; }
+  .in .st .late-st { animation: pop-in .45s 1.75s both cubic-bezier(.3, 1.6, .5, 1); }
+  .in .count-old { animation: fade-out .3s 1.75s both; }
+  .in .count-new { animation: fade-in .3s 1.75s both; }
+  .in .mock-bar i { animation: bar-grow .6s 1.75s both cubic-bezier(.2, .8, .2, 1); }
+  @keyframes tick-on { from { background: transparent; border-color: rgba(255, 255, 255, 0.2); } to { background: var(--lp-green); border-color: var(--lp-green); } }
+  @keyframes fade-out { to { opacity: 0; } }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes pop-in { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: none; } }
+  @keyframes bar-grow { from { width: 80%; } to { width: 100%; } }
+  .count-new, .st .good.late-st { opacity: 0; }
+  .steps3 { display: grid; gap: 22px; margin-top: 30px; }
+  .steps3 > div { border-top: 1px solid var(--lp-line); padding-top: 16px; }
+  .steps3 b { display: block; font-size: 19px; letter-spacing: -0.02em; margin: 8px 0 6px; }
+  .steps3 p { margin: 0; color: rgba(245, 245, 247, 0.68); font-size: 15px; line-height: 1.5; }
+  /* big chrome number */
+  .chrome { font-size: clamp(110px, 26vw, 300px); font-weight: 700; letter-spacing: -0.06em; line-height: 0.9; margin: 10px 0 6px;
+    background: linear-gradient(180deg, #ffffff 0%, #d9dbe3 30%, #6b6f7c 58%, #e9ebf2 78%, #9a9eaa 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  /* features: editorial list */
+  .flist { display: grid; margin-top: 44px; border-top: 1px solid var(--lp-line); text-align: left; }
+  .frow { display: grid; grid-template-columns: 44px 1fr; gap: 6px 16px; padding: 24px 0; border-bottom: 1px solid var(--lp-line); }
+  .frow .mono { padding-top: 6px; }
+  .frow b { font-size: 21px; letter-spacing: -0.02em; font-weight: 600; }
+  .frow p { grid-column: 2; margin: 0; color: rgba(245, 245, 247, 0.68); font-size: 15.5px; line-height: 1.55; max-width: 52ch; }
+  .lp-own { margin-top: 56px; border-radius: 24px; padding: 30px 26px; text-align: left; border: 1px solid var(--lp-line);
+    background: radial-gradient(120% 140% at 100% 0%, rgba(99, 102, 241, 0.22), transparent 55%), rgba(255, 255, 255, 0.03); }
+  .lp-own h3 { font-size: clamp(26px, 4vw, 36px); letter-spacing: -0.035em; font-weight: 600; margin: 12px 0 10px; }
+  .lp-own p { color: rgba(245, 245, 247, 0.72); margin: 0 0 20px; line-height: 1.55; max-width: 56ch; }
+  .lp-final { position: relative; isolation: isolate; text-align: center; padding: 140px 20px 80px; overflow: hidden; }
+  .lp-final h2 { font-size: clamp(46px, 10vw, 120px); line-height: 0.95; }
+  .lp-foot { border-top: 1px solid var(--lp-line); max-width: 1120px; margin: 0 auto; padding: 26px 20px calc(30px + env(safe-area-inset-bottom, 0px));
+    display: flex; flex-wrap: wrap; gap: 10px 24px; justify-content: space-between; color: var(--lp-2); font-size: 13px; line-height: 1.5; }
+  .lp-foot p { margin: 0; max-width: 60ch; }
+  /* scroll reveal */
+  .rv { opacity: 0; transform: translateY(28px); transition: opacity 1s cubic-bezier(.2, .8, .2, 1), transform 1s cubic-bezier(.2, .8, .2, 1); }
+  .rv.in { opacity: 1; transform: none; }
+  .rv.d1 { transition-delay: .1s; } .rv.d2 { transition-delay: .2s; } .rv.d3 { transition-delay: .3s; }
   @media (min-width: 760px) {
-    .land { padding-top: 8vh; gap: 64px; }
-    .land-hero { grid-template-columns: 1.1fr 0.9fr; gap: 56px; }
-    .feats { grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
-    .feat { flex-direction: column; }
-    .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .lp-nav .links { display: flex; }
+    .lp-sec { padding: 140px 32px; }
+    .versus { grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; }
+    .vcol { padding: 32px; }
+    .ritual { grid-template-columns: 1fr 1fr; gap: 64px; }
+    .steps3 { grid-template-columns: repeat(3, 1fr); }
+    .flist { grid-template-columns: 1fr 1fr; column-gap: 56px; }
+    .lp-own { padding: 44px; display: grid; grid-template-columns: 1.4fr auto; gap: 24px; align-items: end; }
+    .lp-own p { margin: 0; }
   }
-  .twocol { display: grid; gap: 12px; }
+  @media (prefers-reduced-motion: reduce) {
+    .smoke i, .cue i { animation: none; }
+    .rv { opacity: 1; transform: none; transition: none; }
+    .lp .mock { transform: none; transition: none; }
+    .in .late-box, .in .st .warn, .in .st .late-st, .in .count-old, .in .count-new, .in .mock-bar i { animation-duration: 0s; animation-delay: 0s; }
+  }
   .lobby-line { font-size: 14px; color: var(--text-2); margin: 10px 0 0; text-align: left; }
   .lobby-line .ic { margin-right: 6px; color: var(--muted); }
   .panel .joinbox label { display: none; }
@@ -2128,44 +2230,104 @@ function renderGate() {
   return `<div class="card"><p class="msg">Loading…</p></div>`;
 }
 
-// The front page for people who aren't signed in: what the app is, how to join, then the sign-in button.
+// The front page for people who aren't signed in: one dark, moving page that sells the idea, then the sign-in button.
 function renderLanding() {
-  const signin = (id = "signin") => `<button class="btn discord" id="${id}">${SVG.discord}Sign in with Discord</button>`;
-  const person = (name, color, chips, st) => `<div class="mock-row"><span class="av" style="background:${color}">${name[0]}</span><b>${name}</b>
-    <span class="chips">${chips.map(c => `<i class="${c ? "on" : ""}"></i>`).join("")}</span>
-    <span class="st" style="background:var(--${st})">${st === "good" ? "✓" : st === "warn" ? "◐" : ""}</span></div>`;
-  const feat = (icon, title, text) => `<div class="card feat"><span class="fi">${ic(icon, 20)}</span><div><b>${title}</b><p>${text}</p></div></div>`;
-  return `<div class="land">
-    <section class="land-hero">
-      <div><img class="appicon" src="icons/icon-192.png" alt="">
-        <h1>Stay <em>locked in</em>, every trading day.</h1>
-        <p class="lead">A daily homework tracker for trading accountability groups on Discord. Tick off your chart, journal and HTF, see who's done, and keep each other honest.</p>
-        ${signin()}
+  const signin = (id = "signin", label = "Sign in with Discord") => `<button class="lp-btn white" id="${id}">${SVG.discord}${label}</button>`;
+  const smoke = `<div class="smoke" aria-hidden="true"><i></i><i></i><i></i><i></i></div>`;
+  const person = (name, color, chips, last) => `<div class="mock-row${last ? " late" : ""}"><span class="av" style="background:${color}">${name[0]}</span><b>${name}</b>
+    <span class="chips">${chips.map((c, i) => `<i class="${c ? "on" : ""}${last && i === 1 ? " late-box" : ""}"></i>`).join("")}</span>
+    <span class="st">${last ? `<span class="warn">◐</span><span class="good late-st">✓</span>` : `<span class="good">✓</span>`}</span></div>`;
+  const row = (n, title, text) => `<div class="frow rv"><span class="mono">${n}</span><b>${title}</b><p>${text}</p></div>`;
+  const li = (mark, text) => `<li><b aria-hidden="true">${mark}</b><span>${text}</span></li>`;
+  return `<div class="lp">
+    <nav class="lp-nav" aria-label="LockedIn">
+      <span class="brand"><img src="icons/icon-192.png" alt="">LockedIn</span>
+      <span class="links"><a href="#why">Why</a><a href="#ritual">How it works</a><a href="#features">Features</a></span>
+      ${signin("signin-nav", "Sign in").replace("lp-btn white", "lp-btn white small")}
+    </nav>
+    <header class="lp-hero">${smoke}
+      <div>
+        <p class="mono rv in">For trading groups on Discord</p>
+        <h1 class="rv in d1">Discipline is a <span class="serif">group sport.</span></h1>
+        <p class="lead rv in d2">Tick off your chart, journal and HTF every trading day, and see who in your group actually did theirs.</p>
+        <div class="lp-cta rv in d3">${signin()}<a class="lp-btn ghost" href="#ritual">See how it works</a></div>
         ${error ? `<p class="msg err" style="margin-top:16px">${esc(error)}</p>` : ""}
-        <p class="fine">Free. You'll need a join code from your group's owner.</p></div>
-      <div class="card mock" aria-hidden="true">
-        <div class="mock-top"><span><b>3</b>/5 done</span><span>2h 14m left</span></div>
-        <div class="mock-bar"><i></i></div>
-        ${person("Alex", "#2563eb", [1, 1, 1], "good")}${person("Sam", "#7c3aed", [1, 1, 1], "good")}${person("Jordan", "#db2777", [1, 0, 1], "warn")}${person("Riley", "#0d9488", [1, 1, 1], "good")}
+        <p class="fine rv in d3">Free. You'll need a join code from your group's owner.</p>
+      </div>
+      <div class="cue" aria-hidden="true"><span class="mono">Scroll</span><i></i></div>
+    </header>
+
+    <section class="lp-sec center" id="why">
+      <p class="mono rv">The problem</p>
+      <h2 class="rv d1">Everyone says they'll journal. <span class="serif">Nobody checks.</span></h2>
+      <p class="sub rv d2">Homework done alone quietly stops by Wednesday. A red circle next to your name, in front of your group, doesn't let it.</p>
+      <div class="versus">
+        <div class="vcol them rv"><p class="mono">On your own</p><h3>Good intentions</h3><ul>
+          ${li("✕", "Skip the journal \"just today\"")}${li("✕", "Nobody notices the missed days")}${li("✕", "Repeat the same revenge trade next week")}${li("✕", "Motivation gone by midweek")}</ul></div>
+        <span class="vs rv d1">VS</span>
+        <div class="vcol us rv d2"><p class="mono">In a LockedIn group</p><h3>Proof, every day</h3><ul>
+          ${li("✓", "Everyone sees who's done before the cutoff")}${li("✓", "Streaks you really don't want to break")}${li("✓", "Notes and charts your group learns from")}${li("✓", "A reminder before the day closes")}</ul></div>
       </div>
     </section>
-    <section><h2>What you get</h2><div class="feats">
-      ${feat("check", "Daily homework", "One tap per box. Your group decides the boxes: chart with execution, journal, HTF, or your own.")}
-      ${feat("camera", "Notes &amp; chart pictures", "Write what happened and add screenshots of your trades. Everyone in the group can learn from them.")}
-      ${feat("flame", "Streaks, points &amp; badges", "A ranking for the group, streaks for days in a row, and badges to unlock.")}
-      ${feat("bell", "Reminders", "A notification on your phone before the day closes, if your homework isn't done yet.")}
-      ${feat("phone", "Works like an app", "Add it to your home screen. It opens full screen and still works with bad signal.")}
-      ${feat("lock", "Private to your group", "Only your group sees your ticks, notes and pictures. Nobody else, not even other groups.")}
+
+    <section class="lp-sec" id="ritual"><div class="ritual">
+      <div>
+        <p class="mono rv">The daily ritual</p>
+        <h2 class="rv d1">Three boxes. <span class="serif">One tap each.</span></h2>
+        <p class="sub rv d2" style="margin:0">Your group picks the homework. You tick it off after your session, before the day closes.</p>
+        <div class="steps3">
+          <div class="rv"><span class="mono">01</span><b>Trade your session</b><p>Take your setups. Or sit out on purpose: that counts too.</p></div>
+          <div class="rv d1"><span class="mono">02</span><b>Do the homework</b><p>Chart with execution, journal, HTF. Add a note and screenshots.</p></div>
+          <div class="rv d2"><span class="mono">03</span><b>Beat the cutoff</b><p>All boxes ticked = green. Your streak grows. The group sees it.</p></div>
+        </div>
+      </div>
+      <div class="stage rv d1" aria-hidden="true"><div class="mock">
+        <div class="mock-top"><span><b><span class="count-old">4</span><span class="count-new">5</span></b>/5 done</span><span>1h 12m left</span></div>
+        <div class="mock-bar"><i></i></div>
+        ${person("Alex", "#2563eb", [1, 1, 1])}${person("Sam", "#7c3aed", [1, 1, 1])}${person("Riley", "#0d9488", [1, 1, 1])}${person("Morgan", "#ea580c", [1, 1, 1])}${person("Jordan", "#db2777", [1, 0, 1], true)}
+      </div></div>
     </div></section>
-    <section class="twocol">
-      <div class="card"><h2>How to join</h2><ol class="steps">
-        <li>Sign in with Discord.</li><li>Type the join code from your group's owner.</li><li>The owner approves you. Then tick your boxes every day.</li></ol></div>
-      <div class="card land-own"><h2>Run a trading group?</h2><b>Start your own group</b>
-        <p>Sign in and tap <b>Start your own group</b>. Once approved you get your own join code, homework boxes, points, time zone, color and logo. You decide who gets in.</p></div>
+
+    <section class="lp-sec center">
+      <p class="mono rv">The only score that matters</p>
+      <div class="chrome rv d1" aria-label="5 out of 5">5/5</div>
+      <p class="sub rv d2">Every member, every box, every trading day.</p>
     </section>
-    <p class="land-priv">${ic("lock", 14)} Signing in with Discord only shares your Discord name, profile picture and email address with LockedIn. We never see your messages, servers or password.</p>
-    <section class="land-end"><h2>Ready to lock in?</h2>${signin("signin-end")}</section>
+
+    <section class="lp-sec" id="features">
+      <p class="mono rv">Everything in it</p>
+      <h2 class="rv d1">Built for traders <span class="serif">who show up.</span></h2>
+      <div class="flist">
+        ${row("01", "Daily homework", "One tap per box. Your group decides the boxes: chart with execution, journal, HTF, or your own.")}
+        ${row("02", "Notes &amp; chart pictures", "Write what happened and paste screenshots of your trades. Tap any picture to zoom in.")}
+        ${row("03", "Streaks, points &amp; badges", "A ranking for your group, streaks for days in a row, and 31 badges to unlock.")}
+        ${row("04", "Reminders", "A notification on your phone before the day closes, only if your homework isn't done yet.")}
+        ${row("05", "Works like an app", "Add it to your home screen. It opens full screen and keeps working with bad signal.")}
+        ${row("06", "Private to your group", "Only your group sees your ticks, notes and pictures. Not other groups, not anyone else.")}
+      </div>
+      <div class="lp-own rv">
+        <div><p class="mono">Run a trading group?</p><h3>Start your <span class="serif">own</span> group.</h3>
+          <p>Sign in and tap <b>Start your own group</b>. Once approved you get your own join code, homework boxes, points, time zone, color and logo. You decide who gets in.</p></div>
+        ${signin("signin-own", "Sign in to start")}
+      </div>
+    </section>
+
+    <section class="lp-final">${smoke}
+      <p class="mono rv">Ready?</p>
+      <h2 class="rv d1">Stop trading <span class="serif">alone.</span></h2>
+      <div class="lp-cta rv d2" style="margin-top:30px">${signin("signin-end")}</div>
+      <p class="fine rv d3">Sign in, type your group's join code, and the owner lets you in.</p>
+    </section>
+    <footer class="lp-foot"><span class="mono">LockedIn</span>
+      <p>Signing in with Discord only shares your Discord name, profile picture and email address with LockedIn. We never see your messages, servers or password.</p></footer>
   </div>`;
+}
+// Fade sections in as they scroll into view (everything shows at once if motion is reduced).
+function revealLanding() {
+  const els = document.querySelectorAll(".lp .rv:not(.in), .lp .stage:not(.in)");
+  if (!("IntersectionObserver" in window) || matchMedia("(prefers-reduced-motion: reduce)").matches) { els.forEach(el => el.classList.add("in")); return; }
+  const io = new IntersectionObserver(list => list.forEach(x => { if (x.isIntersecting) { x.target.classList.add("in"); io.unobserve(x.target); } }), { threshold: 0.18 });
+  els.forEach(el => io.observe(el));
 }
 
 // The Me tab: your own profile with badges, then your account (groups, settings, tutorial, sign out) at the bottom.
@@ -2188,7 +2350,8 @@ function renderMe() {
 function render() {
   renderTop(); renderTabbar();
   const app = document.getElementById("app");
-  if (screen !== "app") { app.innerHTML = renderGate(); return; }
+  document.body.classList.toggle("landing", screen === "signin");
+  if (screen !== "app") { app.innerHTML = renderGate(); if (screen === "signin") revealLanding(); return; }
   if (tab === "admin" && isAdmin) app.innerHTML = renderAdmin();
   else if (tab === "me" && !profileKey) app.innerHTML = renderMe();
   else if (profileKey) app.innerHTML = renderProfile(profileKey);
@@ -2330,6 +2493,8 @@ document.addEventListener("click", async e => {
   }
   switch (t.id) {
     case "signin-end":
+    case "signin-nav":
+    case "signin-own":
     case "signin": {
       const { error: er } = await sb.auth.signInWithOAuth({ provider: "discord", options: { redirectTo: location.origin + location.pathname } });
       if (er) { error = er.message; render(); }
