@@ -1,7 +1,7 @@
 // Security test for supabase/*.sql. Run:  cd tests && npm install --no-save @electric-sql/pglite@0.2.17 http_ece@1.2.0 && node security-test.mjs
 // Loads setup.sql + every update into an in-memory Postgres that mimics Supabase, then tries to break the rules.
 // Updates 2-8 are tested first (one group), then update 9 (groups) is loaded on top of that data and tested,
-// then update 10 (reminders; everything above its SCHEDULE part, which needs Supabase's pg_cron), then update 11 (your data).
+// then update 10 (reminders; everything above its SCHEDULE part, which needs Supabase's pg_cron), then update 11 (your data), then update 12 (helpers locked).
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -485,6 +485,23 @@ ok((await one(`select count(*)::int n from public.push_subscriptions where user_
 ok((await one(`select count(*)::int n from public.profiles where user_id = $1`, [U.eddie])).n === 0, "their profile is gone");
 ok((await one(`select count(*)::int n from public.ticks where member_key = 'sid'`)).n === sidBefore, "everyone else's ticks are untouched");
 ok(!!(await as("anon", `select public.delete_my_account()`)).error, "signed-out visitors can't delete anything");
+
+// ================================================================ update 12: helper functions locked
+await db.exec(readFileSync(dir + "update-12-lockdown.sql", "utf8"));
+console.log("\nloaded: update-12-lockdown.sql");
+section("helpers locked for signed-out visitors");
+for (const call of [`public.member_group('sid')`, `public.group_open('lockedin')`, `public.is_admin()`, `public.in_group('lockedin')`, `public.current_trading_day('lockedin')`])
+  ok(!!(await as("anon", `select ${call}`)).error, `signed-out visitors can't call ${call.replace(/\(.*/, "")}`);
+r = await as("sid", `insert into public.ticks (day, member_key, chart) values ($1, 'sid', true) on conflict (day, member_key) do update set chart = true`, [d10]);
+ok(!r.error, "members can still tick after the lockdown");
+r = await as("sid", `select count(*)::int n from public.ticks where group_id = 'lockedin'`);
+ok(!r.error && r.rows[0].n > 0, "members can still see their group's ticks");
+r = await as("stranger", `select count(*)::int n from public.ticks`);
+ok(!r.error && r.rows[0].n === 0, "people outside the group still see nothing");
+const exposed = await db.query(`select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public' and p.prosecdef and has_function_privilege('anon', p.oid, 'execute')`);
+ok(exposed.rows.length === 0, "no database function with special rights can be called by signed-out visitors" + (exposed.rows.length ? ": " + exposed.rows.map(x => x.proname).join(", ") : ""));
+ok((await db.query(`select tablename from pg_tables where schemaname = 'public' and not rowsecurity`)).rows.length === 0, "every table has access rules switched on");
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

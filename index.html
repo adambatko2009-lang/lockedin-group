@@ -14,6 +14,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="LockedIn">
+<!-- Security: the page may only load from and talk to our own site, our Supabase project and Discord's picture server.
+     If you ever move to a different Supabase project, change the two awpyovkucwteyzsqcazl addresses below. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://awpyovkucwteyzsqcazl.supabase.co https://cdn.discordapp.com; connect-src 'self' https://awpyovkucwteyzsqcazl.supabase.co wss://awpyovkucwteyzsqcazl.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="stylesheet" href="vendor/fonts.css">
 <style>
   /* Layout: content cards scroll under floating glass bars (date bar on top, tab bar at the bottom on phones).
@@ -445,7 +449,10 @@
   .gname span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
   .gname .chev { flex: none; color: var(--muted); }
   .gname .gdot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--crit); }
-  .topbar .mid .gname { display: flex; width: fit-content; max-width: 100%; font-size: 12px; line-height: 16px; margin: 1px auto 0; padding: 0; min-height: 0; color: var(--text-2); font-weight: 600; }
+  /* phones: the group button is its own tappable chip, with space between it and the date */
+  .topbar .mid .gname { display: flex; align-items: center; width: fit-content; max-width: 100%; font-size: 13px; line-height: 18px; margin: 2px auto 6px;
+    padding: 4px 10px 4px 5px; min-height: 30px; border-radius: 9px; background: var(--glass-pill); color: var(--text); font-weight: 600; }
+  .topbar .mid .datepick { padding: 4px 8px; }
   .topbar .mid .gname .glogo { border-radius: 30%; }
   .gate.lobby { max-width: 420px; }
   .offline-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4;
@@ -938,6 +945,14 @@ function currentTradingDay() {
 const opensAt = k => nyMoment(k, CUTOFF_HOUR);
 const closesAt = k => nyMoment(nextTrading(k), CUTOFF_HOUR);
 const isFinal = k => Date.now() >= closesAt(k).getTime();
+
+// Never run inside another website's frame (stops "clickjacking": a fake page tricking you into clicking).
+if (window.top !== window.self) {
+  const link = document.createElement("a");
+  link.href = location.href; link.target = "_top"; link.textContent = "Open LockedIn directly";
+  document.body.replaceChildren(link);
+  throw new Error("LockedIn won't run inside another website");
+}
 
 // ---------------------------------------------------------------- state
 const cfg = window.MNQ_CONFIG || {};
@@ -2578,7 +2593,7 @@ function renderLanding() {
         <li><b>Other groups</b> can't see anything of yours.</li>
       </ul>`)}
       ${sec("Services that handle data for us", `<ul>
-        <li><b>Supabase</b> (database, sign-in, screenshot storage, sending reminders): ${ext("https://supabase.com/privacy", "Supabase privacy policy")}</li>
+        <li><b>Supabase</b> (database, sign-in, screenshot storage, sending reminders). Your data is stored in Ireland, in the EU. ${ext("https://supabase.com/privacy", "Supabase privacy policy")}</li>
         <li><b>Discord</b> (sign-in): ${ext("https://discord.com/privacy", "Discord privacy policy")}</li>
         <li><b>GitHub Pages</b> (hosts the website; receives your IP address when the page loads): ${ext("https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement", "GitHub privacy statement")}</li>
         <li><b>Your browser's push service</b> (delivers reminders, only if you turn them on).</li>
@@ -2590,7 +2605,7 @@ function renderLanding() {
         <li><b>Backups of notes you're typing</b>, so a closed tab doesn't lose them.</li>
         <li><b>Your choices</b>, such as light or dark mode, your last tab and group, reminder timing and which badges you've seen.</li>
         <li><b>A copy of the website's files</b>, so it opens quickly and offline.</li>
-      </ul><p>Because all of this is needed for the app to work, we don't ask for cookie consent. Signing out removes your sign-in, the copy of your group and unsent ticks. Deleting your account removes the rest from that device.</p>`)}
+      </ul><p>Because all of this is needed for the app to work, we don't ask for cookie consent. Signing out removes your sign-in, the copy of your group and unsent ticks. Deleting your account also removes your note backups and choices from that device.</p>`)}
       ${sec("How long we keep it", `<p>Your data is kept while you have an account. Screenshots you delete are removed. The record of which reminders were sent is deleted after 7 days. When you delete your account, your account, ticks, notes, reflections, pictures, settings and reminder devices are deleted. Group owners can also remove members.</p>`)}
       ${sec("Your rights", `<ul>
         <li><b>See and download</b> your data: Settings → Your data → Download my data.</li>
