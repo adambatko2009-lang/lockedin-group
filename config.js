@@ -8,5 +8,5 @@ window.MNQ_CONFIG = {
   // Public key for reminder notifications (public by design; its private half is only in Supabase's secrets).
   vapidPublicKey: "BAgcDXmc-vtf4eApgX3oACHFjXZpeVZnxJBiU7U86Z2SWKbAzkmJlUeRp1hfC9-pDUZVmF40TmWpZtbsBeVRJeY",
   // Shown on the Privacy policy and Terms pages. Fill in before launch.
-  contactEmail: "",
+  contactEmail: "lockedingroup.support@gmail.com",
 };
