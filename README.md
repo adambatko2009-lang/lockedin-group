@@ -25,6 +25,7 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
 | `supabase/functions/send-reminders/index.ts` | Sends the reminders. Lives in Supabase (Edge Functions), not on the website |
 | `sw.js` | Background helper: the app opens without internet, and shows reminders |
 | `manifest.webmanifest`, `icons/` | App icon for "Add to Home Screen" |
+| `CNAME` | Tells GitHub Pages the site's address: lockedingroup.app (DNS is at Porkbun) |
 | Privacy policy and Terms | Pages inside `index.html` (`?p=privacy`, `?p=terms`). The contact email comes from `contactEmail` in `config.js` |
 | `secrets/` | Your private reminder key. **Never uploaded** (git ignores it). Don't share it |
 | `tests/` | Checks every database rule and the reminder sender (see the first line of each file for how to run) |
@@ -92,7 +93,7 @@ Supabase → **SQL Editor** → **New query** → paste everything from `supabas
 The result should show one row with your Discord name. Reload the website: you're in, with an **Admin** tab.
 
 ### 9. Share it
-Post the website link in the Discord channel. When someone signs in, they show up in **Admin → Waiting for approval** (with a red number on the Admin tab). Pick their name → **Approve**.
+Post the website link (https://lockedingroup.app) in the Discord channel. When someone signs in, they show up in **Admin → Waiting for approval** (with a red number on the Admin tab). Pick their name → **Approve**.
 
 ---
 
