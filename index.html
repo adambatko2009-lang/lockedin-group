@@ -136,6 +136,13 @@
   .tabbar button svg { width: 22px; height: 22px; }
   .tabbar button span { font-size: 11px; font-weight: 600; }
   .tabbar button[aria-selected="true"] { color: var(--accent-text); }
+  /* your Discord picture in place of the Me icon */
+  .meav { display: inline-grid; place-items: center; flex: none; border-radius: 50%; overflow: hidden; background: var(--surface-2); }
+  .meav img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .meav svg { width: 70%; height: 70%; }
+  .tabbar button .meav { width: 24px; height: 24px; font-size: 0; box-shadow: 0 0 0 1.5px var(--line-strong); }
+  .tabbar button[aria-selected="true"] .meav { box-shadow: 0 0 0 2px var(--accent-text); }
+  .topbar .end #toggleme .meav { width: 22px; height: 22px; margin-left: -6px; }
   .tabbar button:active { transform: scale(0.94); }
   .tabbar .badge { position: absolute; top: 6px; right: calc(50% - 20px); min-width: 16px; height: 16px; border-radius: 8px; padding: 0 4px;
                    background: var(--crit); color: #fff; font-size: 10px; font-weight: 700; display: grid; place-items: center; }
@@ -1803,6 +1810,16 @@ function groupButton(px) {
   return `<button class="gname" id="open-groups" aria-label="Groups: ${esc(g ? g.name : "")}">${groupLogo(g, px)}<span>${esc(g ? g.name : "Groups")}</span>${pendingElsewhere() ? `<i class="gdot" aria-hidden="true"></i>` : ""}<svg class="chev" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
 }
 const XMARK = `<span class="x" aria-hidden="true">✕</span>`;
+// Your Discord profile picture (or the person icon if there isn't one).
+function myAvatarUrl() {
+  const m = members.find(x => x.key === myKey()), meta = session && session.user.user_metadata;
+  return (profile && profile.avatar_url) || (m && m.avatar_url) || (meta && meta.avatar_url) || "";
+}
+function meIcon() {
+  const url = myAvatarUrl();
+  const src = url ? url + (url.includes("?") ? "&" : "?") + "size=64" : "";
+  return `<span class="meav" aria-hidden="true">${src ? `<img src="${esc(src)}" alt="" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createRange().createContextualFragment(SVG.me))">` : SVG.me}</span>`;
+}
 // App owner: group requests waiting. (People waiting in the open group show on the Admin tab.)
 const pendingElsewhere = () => isAppOwner && requests.some(r => r.status === "pending") && tab !== "admin" ? 1 : 0;
 // ---------------------------------------------------------------- updating the page in place
@@ -1865,7 +1882,7 @@ function renderTop() {
       <div class="end"><span>${status}</span>${selected !== today && tab !== "admin" && tab !== "me" ? `<button id="gotoday">Today</button>` : ""}
         ${isAdmin ? `<button id="toggleadmin" class="gearbtn ${tab === "admin" ? "on" : ""}" aria-label="${tab === "admin" ? "Close Admin" : "Admin"}" title="${tab === "admin" ? "Close Admin" : "Admin"}">${tab === "admin" ? `${XMARK}` : SVG.gear}${pendingCount() ? `<span class="count" aria-label="${pendingCount()} waiting">${pendingCount()}</span>` : ""}</button>` : ""}
         ${tab === "me" ? `<button id="toggleme" class="gearbtn on" aria-label="Close Me" title="Close">${XMARK}</button>`
-          : `<button id="toggleme">${SVG.me.replace("<svg ", '<svg width="16" height="16" ')}Me</button>`}</div>`);
+          : `<button id="toggleme">${meIcon()}Me</button>`}</div>`);
     return;
   }
   let prev = `<span></span>`, next = `<span></span>`, mid;
@@ -1891,7 +1908,7 @@ function renderTabbar() {
   const list = tabsList(), labels = { day: "Day", week: "Week", board: "Ranking", admin: "Admin", me: "Me" };
   const i = Math.max(0, list.indexOf(tab));
   morph(bar, `<div class="pill" style="width:calc((100% - 10px) / ${list.length});transform:translateX(${i * 100}%)" aria-hidden="true"></div>` +
-    list.map(t => `<button role="tab" data-tab="${t}" aria-selected="${t === tab}" aria-label="${labels[t]}">${t === "admin" ? SVG.gear : SVG[t]}<span>${labels[t]}</span>
+    list.map(t => `<button role="tab" data-tab="${t}" aria-selected="${t === tab}" aria-label="${labels[t]}">${t === "admin" ? SVG.gear : t === "me" ? meIcon() : SVG[t]}<span>${labels[t]}</span>
       ${t === "admin" && pendingCount() ? `<i class="badge">${pendingCount()}</i>` : ""}</button>`).join(""));
 }
 
