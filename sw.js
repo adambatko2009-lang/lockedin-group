@@ -2,7 +2,7 @@
 // 1. Keeps a copy of the website on the phone, so the app opens without internet.
 // 2. Shows the reminder notifications sent by supabase/functions/send-reminders.
 // Change VERSION when you change this file's list of files, so phones throw the old copy away.
-const VERSION = "lockedin-1";
+const VERSION = "lockedin-2";
 const FILES = ["./", "index.html", "config.js", "manifest.webmanifest",
   "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png", "icons/favicon-64.png", "icons/favicon-128.png",
   "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"];
@@ -24,7 +24,8 @@ self.addEventListener("fetch", e => {
   if (ours && (req.mode === "navigate" || /\.(html|js|webmanifest)$/.test(url.pathname))) {
     // The website itself: the newest version from the internet, the saved copy when offline.
     const key = req.mode === "navigate" ? "./" : url.pathname.split("/").pop();
-    e.respondWith(fetch(req).then(res => {
+    // no-cache: always ask GitHub if there's a newer version (otherwise browsers reuse a copy for up to 10 minutes).
+    e.respondWith(fetch(req.url, { cache: "no-cache", credentials: "same-origin" }).then(res => {
       if (res.ok) { const copy = res.clone(); caches.open(VERSION).then(c => c.put(key, copy)); }
       return res;
     }).catch(() => caches.match(key).then(r => r || caches.match("./"))));
