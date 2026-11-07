@@ -433,6 +433,49 @@
   .topbar .mid .gname { display: flex; width: fit-content; max-width: 100%; font-size: 12px; line-height: 16px; margin: 1px auto 0; padding: 0; min-height: 0; color: var(--text-2); font-weight: 600; }
   .topbar .mid .gname .glogo { border-radius: 30%; }
   .gate.lobby { max-width: 420px; }
+  /* Front page (signed out) */
+  .land { max-width: 920px; width: 100%; margin: 0 auto; padding: 4vh 0 40px; display: flex; flex-direction: column; gap: 44px; }
+  .land-hero { display: grid; gap: 28px; align-items: center; }
+  .land-hero .appicon { width: 64px; height: 64px; border-radius: 28%; display: block; margin-bottom: 18px; box-shadow: 0 8px 24px var(--glass-shade); }
+  .land h1 { font-size: clamp(32px, 7vw, 48px); line-height: 1.05; letter-spacing: -0.03em; margin: 0 0 14px; text-wrap: balance; }
+  .land h1 em { font-style: normal; color: var(--accent-text); }
+  .land .lead { font-size: 17px; line-height: 1.55; color: var(--text-2); margin: 0 0 24px; max-width: 46ch; }
+  .land .fine { font-size: 13px; color: var(--muted); margin: 12px 0 0; }
+  .land h2 { font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px; }
+  .mock { padding: 18px; display: flex; flex-direction: column; gap: 14px; transform: rotate(-1.2deg); box-shadow: 0 24px 60px var(--glass-shade); }
+  .mock-top { display: flex; justify-content: space-between; align-items: baseline; font: 600 14px var(--font-data); color: var(--text-2); }
+  .mock-top b { font-size: 26px; color: var(--text); }
+  .mock-bar { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+  .mock-bar i { display: block; height: 100%; width: 60%; background: var(--good); border-radius: 3px; }
+  .mock-row { display: flex; align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .mock-row .av { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #fff; flex: none; }
+  .mock-row b { flex: 1; font-size: 15px; }
+  .mock-row .chips { display: flex; gap: 4px; }
+  .mock-row .chips i { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid var(--line-strong); }
+  .mock-row .chips i.on { background: var(--good); border-color: var(--good); }
+  .mock-row .st { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #0a0a0b; flex: none; }
+  .feats { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .feat { display: flex; gap: 14px; align-items: flex-start; }
+  .feat .fi { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex: none; background: color-mix(in srgb, var(--acc) 16%, transparent); color: var(--accent-text); }
+  .feat b { display: block; font-size: 16px; margin: 1px 0 3px; }
+  .feat p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--text-2); }
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; counter-reset: s; }
+  .steps li { counter-increment: s; display: flex; gap: 14px; align-items: center; font-size: 15px; line-height: 1.45; }
+  .steps li::before { content: counter(s); width: 32px; height: 32px; border-radius: 50%; flex: none; display: grid; place-items: center;
+    background: var(--accent); color: var(--on-accent); font: 700 14px var(--font-data); }
+  .land-own { display: flex; flex-direction: column; gap: 6px; }
+  .land-own > b { font-size: 17px; }
+  .land-own p, .land-priv { margin: 0; font-size: 14px; line-height: 1.55; color: var(--text-2); }
+  .land-end { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .land-end h2 { font-size: 24px; letter-spacing: -0.02em; text-transform: none; color: var(--text); margin: 0; }
+  @media (min-width: 760px) {
+    .land { padding-top: 8vh; gap: 64px; }
+    .land-hero { grid-template-columns: 1.1fr 0.9fr; gap: 56px; }
+    .feats { grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .feat { flex-direction: column; }
+    .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  }
+  .twocol { display: grid; gap: 12px; }
   .lobby-line { font-size: 14px; color: var(--text-2); margin: 10px 0 0; text-align: left; }
   .lobby-line .ic { margin-right: 6px; color: var(--muted); }
   .panel .joinbox label { display: none; }
@@ -667,6 +710,9 @@ const ICON_PATHS = {
   megaphone: '<path d="M4 10.5v3a1 1 0 0 0 1 1h2.5l6.5 4V5.5l-6.5 4H5a1 1 0 0 0-1 1z"/><path d="M17.5 9a4 4 0 0 1 0 6"/>',
   diamond: '<path d="M6.5 4h11l3.5 5-9 11L3 9l3.5-5z"/><path d="M3 9h18"/>',
   repeat: '<path d="M17 3l3 3-3 3"/><path d="M4 11.5V10a4 4 0 0 1 4-4h12"/><path d="M7 21l-3-3 3-3"/><path d="M20 12.5V14a4 4 0 0 1-4 4H4"/>',
+  bell: '<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+  phone: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+  lock: '<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>',
   target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>',
 };
 const ic = (name, px = 16) => `<svg class="ic" viewBox="0 0 24 24" width="${px}" height="${px}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name] || ""}</svg>`;
@@ -2049,14 +2095,52 @@ function renderGate() {
   const name = profile ? profile.discord_name : (session && session.user.user_metadata && (session.user.user_metadata.full_name || session.user.user_metadata.name)) || "";
   const avatar = session && session.user.user_metadata && session.user.user_metadata.avatar_url;
   if (screen === "setup") return `<div class="gate card"><h1>Almost there</h1><p>Paste your Supabase address and key into <b>config.js</b>, then reload.</p></div>`;
-  if (screen === "signin") return `<div class="gate"><h1>LockedIn Group</h1><p>Daily trading homework for accountability groups.</p>
-    <button class="btn discord" id="signin">${SVG.discord}Sign in with Discord</button>
-    ${error ? `<p class="msg err" style="margin-top:16px">${esc(error)}</p>` : ""}</div>`;
+  if (screen === "signin") return renderLanding();
   if (screen === "lobby") return `<div class="gate lobby">${avatar ? `<img class="avatar" src="${esc(avatar)}" alt="">` : ""}
     <h1>Join a group</h1><p>Signed in as <b>${esc(name)}</b>. Type the join code you got from your group's owner.</p>
     <div class="card" style="text-align:left">${joinHtml()}</div>
     <button class="btn plain" id="signout" style="margin-top:18px">Sign out</button></div>`;
   return `<div class="card"><p class="msg">Loading…</p></div>`;
+}
+
+// The front page for people who aren't signed in: what the app is, how to join, then the sign-in button.
+function renderLanding() {
+  const signin = (id = "signin") => `<button class="btn discord" id="${id}">${SVG.discord}Sign in with Discord</button>`;
+  const person = (name, color, chips, st) => `<div class="mock-row"><span class="av" style="background:${color}">${name[0]}</span><b>${name}</b>
+    <span class="chips">${chips.map(c => `<i class="${c ? "on" : ""}"></i>`).join("")}</span>
+    <span class="st" style="background:var(--${st})">${st === "good" ? "✓" : st === "warn" ? "◐" : ""}</span></div>`;
+  const feat = (icon, title, text) => `<div class="card feat"><span class="fi">${ic(icon, 20)}</span><div><b>${title}</b><p>${text}</p></div></div>`;
+  return `<div class="land">
+    <section class="land-hero">
+      <div><img class="appicon" src="icons/icon-192.png" alt="">
+        <h1>Stay <em>locked in</em>, every trading day.</h1>
+        <p class="lead">A daily homework tracker for trading accountability groups on Discord. Tick off your chart, journal and HTF, see who's done, and keep each other honest.</p>
+        ${signin()}
+        ${error ? `<p class="msg err" style="margin-top:16px">${esc(error)}</p>` : ""}
+        <p class="fine">Free. You'll need a join code from your group's owner.</p></div>
+      <div class="card mock" aria-hidden="true">
+        <div class="mock-top"><span><b>3</b>/5 done</span><span>2h 14m left</span></div>
+        <div class="mock-bar"><i></i></div>
+        ${person("Alex", "#2563eb", [1, 1, 1], "good")}${person("Sam", "#7c3aed", [1, 1, 1], "good")}${person("Jordan", "#db2777", [1, 0, 1], "warn")}${person("Riley", "#0d9488", [1, 1, 1], "good")}
+      </div>
+    </section>
+    <section><h2>What you get</h2><div class="feats">
+      ${feat("check", "Daily homework", "One tap per box. Your group decides the boxes: chart with execution, journal, HTF, or your own.")}
+      ${feat("camera", "Notes &amp; chart pictures", "Write what happened and add screenshots of your trades. Everyone in the group can learn from them.")}
+      ${feat("flame", "Streaks, points &amp; badges", "A ranking for the group, streaks for days in a row, and badges to unlock.")}
+      ${feat("bell", "Reminders", "A notification on your phone before the day closes, if your homework isn't done yet.")}
+      ${feat("phone", "Works like an app", "Add it to your home screen. It opens full screen and still works with bad signal.")}
+      ${feat("lock", "Private to your group", "Only your group sees your ticks, notes and pictures. Nobody else, not even other groups.")}
+    </div></section>
+    <section class="twocol">
+      <div class="card"><h2>How to join</h2><ol class="steps">
+        <li>Sign in with Discord.</li><li>Type the join code from your group's owner.</li><li>The owner approves you. Then tick your boxes every day.</li></ol></div>
+      <div class="card land-own"><h2>Run a trading group?</h2><b>Start your own group</b>
+        <p>Sign in and tap <b>Start your own group</b>. Once approved you get your own join code, homework boxes, points, time zone, color and logo. You decide who gets in.</p></div>
+    </section>
+    <p class="land-priv">${ic("lock", 14)} Signing in with Discord only shares your Discord name, profile picture and email address with LockedIn. We never see your messages, servers or password.</p>
+    <section class="land-end"><h2>Ready to lock in?</h2>${signin("signin-end")}</section>
+  </div>`;
 }
 
 // The Me tab: your own profile with badges, then your account (groups, settings, tutorial, sign out) at the bottom.
@@ -2212,6 +2296,7 @@ document.addEventListener("click", async e => {
     return adminDo(sb.from("members").update({ active: false }).eq("key", d.hide), "Member removed.");
   }
   switch (t.id) {
+    case "signin-end":
     case "signin": {
       const { error: er } = await sb.auth.signInWithOAuth({ provider: "discord", options: { redirectTo: location.origin + location.pathname } });
       if (er) { error = er.message; render(); }
