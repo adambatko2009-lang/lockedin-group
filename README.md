@@ -21,6 +21,8 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
 | `supabase/update-10-reminders.sql` | Reminder notifications (run once, after update 9; see "Reminders" below) |
 | `supabase/update-11-your-data.sql` | Download my data and Delete my account (run once, after update 10) |
 | `supabase/update-12-lockdown.sql` | Signed-out visitors can't use the database's helper functions (run once, after update 11) |
+| `supabase/update-13-accept-terms.sql` | Everyone accepts the Terms once; saves when (run once, after update 12, before pushing) |
+| `supabase/sign-out-everyone-except-owner.sql` | Signs everyone but you out; no data is removed (run when needed) |
 | `vendor/` | Fonts and the Supabase library, hosted on our own site (see `vendor/THIRD-PARTY-NOTICES.md`) |
 | `supabase/functions/send-reminders/index.ts` | Sends the reminders. Lives in Supabase (Edge Functions), not on the website |
 | `sw.js` | Background helper: the app opens without internet, and shows reminders |

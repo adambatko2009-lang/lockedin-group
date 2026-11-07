@@ -455,6 +455,16 @@
   .topbar .mid .datepick { padding: 4px 8px; }
   .topbar .mid .gname .glogo { border-radius: 30%; }
   .gate.lobby { max-width: 420px; }
+  .termsgate { max-width: 460px; text-align: left; padding: 24px; }
+  .termsgate h1 { margin-bottom: 10px; }
+  .termsgate p { margin: 0 0 12px; }
+  .termsgate ul { margin: 0 0 18px; padding-left: 20px; color: var(--text-2); line-height: 1.5; display: grid; gap: 6px; }
+  .checkrow { display: flex; gap: 12px; align-items: flex-start; padding: 14px; margin-bottom: 16px; border-radius: 12px; background: var(--surface-2); cursor: pointer; line-height: 1.45; }
+  .checkrow input { width: 22px; height: 22px; flex: none; margin: 0; accent-color: var(--accent); }
+  .checkrow a { color: var(--accent-text); text-decoration: underline; text-underline-offset: 2px; }
+  .termsgate .btn.primary { width: 100%; justify-content: center; }
+  .termsgate .btn.primary:disabled { opacity: 0.45; cursor: not-allowed; }
+  .termsgate #signout { margin-top: 6px; }
   .offline-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4;
     background: color-mix(in srgb, var(--warn) 16%, transparent); border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent); color: var(--text); }
   .offline-bar .ic { flex: none; color: var(--warn); }
@@ -963,6 +973,8 @@ const sb = configured && window.supabase ? window.supabase.createClient(cfg.supa
   auth: { lock: async (name, acquireTimeout, fn) => await fn() },
 }) : null;
 
+// The date of the current Terms and Privacy policy. Change it when they change, and everyone is asked to accept again.
+const TERMS_VERSION = "2026-11-07";
 let screen = "loading";          // loading | setup | signin | waiting | rejected | app
 let session = null, profile = null;
 let isAdmin = false;             // can manage the open group: its owner, a group admin, or the app owner
@@ -1027,6 +1039,10 @@ async function loadAll() {
     sb.from("admins").select("user_id").eq("user_id", session.user.id),
   ]);
   profile = prof; isAppOwner = !!(adm && adm.length);
+  // Everyone accepts the current Terms and Privacy policy once (only after database update 13 has added the record).
+  if (profile && "terms_accepted_at" in profile && profile.terms_version !== TERMS_VERSION) {
+    screen = "terms"; loaded = false; clearTimeout(loadTimer); return render();
+  }
   loadSettings();
   await loadGroups();
   const usable = groups.filter(canOpen);
@@ -2465,6 +2481,18 @@ function renderGate() {
   const avatar = session && session.user.user_metadata && session.user.user_metadata.avatar_url;
   if (screen === "setup") return `<div class="gate card"><h1>Almost there</h1><p>Paste your Supabase address and key into <b>config.js</b>, then reload.</p></div>`;
   if (screen === "signin") return renderLanding();
+  if (screen === "terms") return `<div class="gate card termsgate">
+    <h1>Welcome to LockedIn</h1>
+    <p>Before you continue, please read and accept the Terms and the Privacy policy. In short:</p>
+    <ul>
+      <li>LockedIn is free and isn't financial advice.</li>
+      <li>Your group sees your ticks, notes and pictures. Other groups don't.</li>
+      <li>You can download or delete your data any time in Settings.</li>
+    </ul>
+    <label class="checkrow"><input type="checkbox" id="terms-ok"><span>I've read and agree to the <a href="?p=terms" data-land="terms">Terms</a> and the <a href="?p=privacy" data-land="privacy">Privacy policy</a>.</span></label>
+    <button class="btn primary" id="accept-terms" disabled>Continue</button>
+    <p class="msg err" id="terms-msg" role="alert"></p>
+    <button class="btn plain small" id="signout">Sign out</button></div>`;
   if (screen === "offline") return `<div class="gate card"><h1>You're offline</h1><p>Connect to the internet once to load your group. After that, LockedIn opens even without internet.</p>
     <button class="btn primary" onclick="location.reload()">Try again</button></div>`;
   if (screen === "lobby") return `<div class="gate lobby">${avatar ? `<img class="avatar" src="${esc(avatar)}" alt="">` : ""}
@@ -2571,7 +2599,7 @@ function renderLanding() {
   else if (page === "privacy" || page === "terms") {
     const mail = cfg.contactEmail ? `<a href="mailto:${esc(cfg.contactEmail)}">${esc(cfg.contactEmail)}</a>` : "the contact email (added before launch)";
     const sec = (title, html) => `<section class="legal-sec"><h2>${title}</h2>${html}</section>`;
-    const updated = `<p class="mono">Last updated 7 November 2026</p>`;
+    const updated = `<p class="mono">Last updated ${parse(TERMS_VERSION).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p>`;
     const ext = (href, label) => `<a href="${href}" target="_blank" rel="noopener noreferrer">${label}</a>`;
     body = page === "privacy" ? `<article class="legal">${updated}<h1>Privacy policy</h1>
       <p class="legal-lead">This page explains what LockedIn stores about you, why, who can see it, and how to download or delete it.</p>
@@ -2758,6 +2786,13 @@ document.addEventListener("click", async e => {
   if (d.edit) return openPanel(selected, d.edit);
   if (t.id === "open-settings") return openSettings();
   if (t.id === "export-data") return exportMyData();
+  if (t.id === "accept-terms") {
+    if (!document.getElementById("terms-ok").checked) return;
+    t.disabled = true;
+    const { error: e2 } = await sb.rpc("accept_terms", { terms_v: TERMS_VERSION });
+    if (e2) { t.disabled = false; document.getElementById("terms-msg").textContent = "Couldn't save: " + e2.message; return; }
+    screen = "loading"; render(); watchLoading(); return startLoad();
+  }
   if (t.id === "delete-account") return deleteMyAccount(t);
   if (d.remind) {
     remindMins = +d.remind;
@@ -2915,6 +2950,7 @@ document.addEventListener("click", async e => {
 });
 document.addEventListener("input", e => {
   if (tab === "admin" && e.target.closest && e.target.closest("#app")) adminDirty = true;
+  if (e.target.id === "terms-ok") { document.getElementById("accept-terms").disabled = !e.target.checked; return; }
   if (e.target.id === "set-confetti") { settings.confetti = e.target.checked; return saveSettings(); }
   if (e.target.id === "set-remind") return e.target.checked ? turnRemindersOn() : turnRemindersOff();
   if (e.target.id === "panel-notrade" && editing) { const on = e.target.checked; return editTick(editing.day, editing.key, row => { row.no_trade = on; }); }

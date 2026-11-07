@@ -1,7 +1,7 @@
 // Security test for supabase/*.sql. Run:  cd tests && npm install --no-save @electric-sql/pglite@0.2.17 http_ece@1.2.0 && node security-test.mjs
 // Loads setup.sql + every update into an in-memory Postgres that mimics Supabase, then tries to break the rules.
 // Updates 2-8 are tested first (one group), then update 9 (groups) is loaded on top of that data and tested,
-// then update 10 (reminders; everything above its SCHEDULE part, which needs Supabase's pg_cron), then update 11 (your data), then update 12 (helpers locked).
+// then update 10 (reminders; everything above its SCHEDULE part, which needs Supabase's pg_cron), then update 11 (your data), then update 12 (helpers locked), then update 13 (accepting the Terms).
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -502,6 +502,22 @@ const exposed = await db.query(`select p.proname from pg_proc p join pg_namespac
   where n.nspname = 'public' and p.prosecdef and has_function_privilege('anon', p.oid, 'execute')`);
 ok(exposed.rows.length === 0, "no database function with special rights can be called by signed-out visitors" + (exposed.rows.length ? ": " + exposed.rows.map(x => x.proname).join(", ") : ""));
 ok((await db.query(`select tablename from pg_tables where schemaname = 'public' and not rowsecurity`)).rows.length === 0, "every table has access rules switched on");
+
+// ================================================================ update 13: accepting the Terms
+await db.exec(readFileSync(dir + "update-13-accept-terms.sql", "utf8"));
+console.log("\nloaded: update-13-accept-terms.sql");
+section("accepting the Terms");
+ok((await one(`select count(*)::int n from public.profiles where terms_accepted_at is not null`)).n === 0, "nobody has accepted yet after the update (everyone is asked)");
+r = await rpc("sid", "accept_terms", ["2026-11-07"]);
+ok(!r.error, "a member accepts the Terms");
+r = await one(`select terms_version v, terms_accepted_at is not null a from public.profiles where user_id = $1`, [U.sid]);
+ok(r.v === "2026-11-07" && r.a, "the time and version are saved as proof");
+ok((await one(`select count(*)::int n from public.profiles where terms_accepted_at is not null`)).n === 1, "accepting only records your own acceptance");
+ok(!!(await as("anon", `select public.accept_terms('2026-11-07')`)).error, "signed-out visitors can't record an acceptance");
+ok(!!(await rpc("sid", "accept_terms", ["anything"])).error, "only real version dates are accepted");
+r = await as("sid", `update public.profiles set terms_accepted_at = null where user_id = $1`, [U.sid]);
+ok(!!r.error || r.count === 0, "nobody can change the acceptance record directly");
+ok((await one(`select count(*)::int n from public.ticks where member_key = 'sid'`)).n > 0, "nobody's ticks were touched");
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
