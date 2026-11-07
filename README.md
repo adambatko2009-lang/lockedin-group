@@ -22,6 +22,7 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
 | `supabase/functions/send-reminders/index.ts` | Sends the reminders. Lives in Supabase (Edge Functions), not on the website |
 | `sw.js` | Background helper: the app opens without internet, and shows reminders |
 | `manifest.webmanifest`, `icons/` | App icon for "Add to Home Screen" |
+| Privacy policy and Terms | Pages inside `index.html` (`?p=privacy`, `?p=terms`). The contact email comes from `contactEmail` in `config.js` |
 | `secrets/` | Your private reminder key. **Never uploaded** (git ignores it). Don't share it |
 | `tests/` | Checks every database rule and the reminder sender (see the first line of each file for how to run) |
 

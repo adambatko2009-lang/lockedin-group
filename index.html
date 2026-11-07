@@ -113,7 +113,7 @@
   .topbar {
     position: sticky; top: calc(env(safe-area-inset-top, 0px) + 8px); z-index: 5;
     display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 4px;
-    border-radius: 999px; padding: 4px;
+    border-radius: 20px; padding: 4px;
   }
   .topbar .mid { text-align: center; min-width: 0; line-height: 1.15; }
   .topbar .mid b { display: block; font-size: 17px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -128,10 +128,10 @@
     position: fixed; z-index: 6; left: 50%; transform: translateX(-50%);
     bottom: calc(14px + env(safe-area-inset-bottom, 0px));
     width: min(420px, calc(100% - 32px));
-    display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; padding: 5px; border-radius: 999px;
+    display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; padding: 5px; border-radius: 22px;
   }
-  .tabbar .pill { position: absolute; top: 5px; bottom: 5px; left: 5px; border-radius: 999px; background: var(--glass-pill); }
-  .tabbar button { position: relative; min-height: 50px; border: 0; background: transparent; border-radius: 999px; cursor: pointer;
+  .tabbar .pill { position: absolute; top: 5px; bottom: 5px; left: 5px; border-radius: 17px; background: var(--glass-pill); }
+  .tabbar button { position: relative; min-height: 50px; border: 0; background: transparent; border-radius: 17px; cursor: pointer;
                    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; color: var(--text-2); }
   .tabbar button svg { width: 22px; height: 22px; }
   .tabbar button span { font-size: 11px; font-weight: 600; }
@@ -164,6 +164,8 @@
   .stack { display: flex; gap: 2px; height: 6px; margin-top: 12px; }
   .stack i { border-radius: 3px; min-width: 6px; }
 
+  .sym { width: 1em; height: 1em; display: inline-block; vertical-align: -0.14em; flex: none; }
+  .dot .sym, .cell .sym { width: 1.15em; height: 1.15em; }
   .dot { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; }
   .COMPLETE { background: var(--good); color: var(--on-good); }
   .PARTIAL { background: var(--warn); color: var(--on-warn); }
@@ -188,7 +190,9 @@
        font-size: 13px; font-weight: 600; line-height: 1.15; padding: 6px 4px; cursor: pointer; text-align: center; }
   .t.bonus { border-style: dashed; }
   .t[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-  .t[aria-pressed="true"]::before { content: "✓ "; font-weight: 700; }
+  .t[aria-pressed="true"]::before { content: ""; display: inline-block; width: 0.85em; height: 0.85em; margin-right: 4px; vertical-align: -0.08em; background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.2 8.4 6.4 11.4 12.8 4.8' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.2 8.4 6.4 11.4 12.8 4.8' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
   .t:not(:disabled):active { transform: scale(0.96); filter: brightness(0.92); }
   .t:disabled { cursor: default; }
   .member.locked .t:not([aria-pressed="true"]) { opacity: 0.5; }
@@ -304,12 +308,12 @@
   .gate h1 { font-size: 26px; letter-spacing: -0.02em; margin: 0 0 6px; }
   .gate p { color: var(--text-2); margin: 0 0 22px; }
   .gate .avatar { width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 12px; display: block; background: var(--surface-2); }
-  .btn { min-height: 48px; padding: 0 22px; border-radius: 999px; border: 0; font-size: 16px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; }
+  .btn { min-height: 48px; padding: 0 22px; border-radius: 12px; border: 0; font-size: 16px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; }
   .btn:active { transform: scale(0.97); }
   .btn.discord { background: var(--discord); color: #fff; }
   .btn.primary { background: var(--accent); color: var(--on-accent); }
   .btn.plain { background: var(--surface-2); color: var(--text); }
-  .btn.small { min-height: 38px; padding: 0 16px; font-size: 14px; border-radius: 999px; }
+  .btn.small { min-height: 38px; padding: 0 16px; font-size: 14px; border-radius: 10px; }
   .btn.danger { background: transparent; color: var(--crit); box-shadow: inset 0 0 0 1.5px var(--line); }
 
   /* ---------- profile + achievements ---------- */
@@ -354,7 +358,7 @@
   .jentry .jd { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); }
   .jentry p { margin: 6px 0 0; font-size: 15px; color: var(--text); overflow-wrap: anywhere; white-space: pre-wrap; }
   .toast { position: fixed; z-index: 30; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 70px); transform: translateX(-50%);
-           display: flex; align-items: center; gap: 12px; padding: 10px 18px 10px 10px; border-radius: 999px; max-width: calc(100% - 32px); }
+           display: flex; align-items: center; gap: 12px; padding: 10px 18px 10px 10px; border-radius: 14px; max-width: calc(100% - 32px); }
   .toast .medal { width: 42px; height: 42px; margin: 0; }
   .toast b { display: block; font-size: 15px; } .toast span { font-size: 13px; color: var(--text-2); }
   @media (prefers-reduced-motion: no-preference) { .toast { animation: toast-in .45s cubic-bezier(.3, 1.4, .5, 1); } @keyframes toast-in { from { transform: translate(-50%, -30px); opacity: 0; } } }
@@ -386,10 +390,10 @@
 
   /* ---------- rule breaks, settings, confetti ---------- */
   .breaks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .bchip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; color: var(--text);
+  .bchip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 6px; color: var(--text);
            background: color-mix(in srgb, var(--crit) 14%, var(--surface)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--crit) 45%, transparent); }
   .tagpick { display: flex; flex-wrap: wrap; gap: 8px; }
-  .tagpick button { min-height: 38px; padding: 0 13px; border-radius: 999px; border: 1.5px solid var(--line); background: transparent;
+  .tagpick button { min-height: 38px; padding: 0 13px; border-radius: 10px; border: 1.5px solid var(--line); background: transparent;
                     color: var(--text-2); font-size: 14px; font-weight: 600; cursor: pointer; }
   .tagpick button[aria-pressed="true"] { border-color: var(--crit); color: var(--text); background: color-mix(in srgb, var(--crit) 14%, var(--surface)); }
   .tagpick button:active { transform: scale(0.96); }
@@ -457,14 +461,14 @@
   .lp .mono { font: 500 11px/1.4 var(--font-data); letter-spacing: 0.22em; text-transform: uppercase; color: var(--lp-2); margin: 0; }
   .lp-nav { position: fixed; z-index: 20; top: max(12px, env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
     width: min(1120px, calc(100% - 24px)); display: flex; align-items: center; justify-content: space-between; padding: 6px 6px 6px 16px;
-    border-radius: 999px; background: rgba(18, 18, 22, 0.55); border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px; background: rgba(18, 18, 22, 0.55); border: 1px solid rgba(255, 255, 255, 0.08);
     -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4); }
   .lp-nav .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
   .lp-nav .brand img { width: 26px; height: 26px; border-radius: 28%; }
   .lp-nav .links { display: none; gap: 26px; }
   .lp-nav .links a { color: var(--lp-2); text-decoration: none; font: 500 11px var(--font-data); letter-spacing: 0.18em; text-transform: uppercase; }
   .lp-nav .links a:hover { color: #fff; }
-  .lp-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 0 26px; border-radius: 999px;
+  .lp-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 0 26px; border-radius: 12px;
     border: 0; font: 600 16px var(--font-ui); cursor: pointer; text-decoration: none; transition: transform .2s, box-shadow .2s, background .2s; }
   .lp-btn.white { background: #fff; color: #000; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3), 0 12px 48px rgba(96, 165, 250, 0.35); }
   .lp-btn.white:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px #fff, 0 16px 60px rgba(96, 165, 250, 0.5); }
@@ -477,9 +481,9 @@
   .lp-nav .links a[aria-current="page"]::after { content: ""; display: block; height: 1px; margin-top: 5px; background: #fff; }
   /* on phones the page links sit under the bar (the bar only has room for the logo and Sign in) */
   .lp-tabs { position: fixed; z-index: 19; top: calc(max(12px, env(safe-area-inset-top, 0px)) + 62px); left: 50%; transform: translateX(-50%);
-    display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(18, 18, 22, 0.6); border: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: rgba(18, 18, 22, 0.6); border: 1px solid rgba(255, 255, 255, 0.08);
     -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); white-space: nowrap; }
-  .lp-tabs a { color: var(--lp-2); text-decoration: none; font: 500 10.5px var(--font-data); letter-spacing: 0.14em; text-transform: uppercase; padding: 9px 12px; border-radius: 999px; }
+  .lp-tabs a { color: var(--lp-2); text-decoration: none; font: 500 10.5px var(--font-data); letter-spacing: 0.14em; text-transform: uppercase; padding: 9px 12px; border-radius: 9px; }
   .lp-tabs a[aria-current="page"] { background: rgba(255, 255, 255, 0.12); color: #fff; }
   .lp-hero.pagehead { min-height: 72svh; padding-top: 150px; }
   .lp-hero.pagehead h1 { font-size: clamp(40px, 8.5vw, 96px); }
@@ -492,11 +496,22 @@
   .foot-links { display: flex; flex-wrap: wrap; gap: 8px 20px; }
   .foot-links a { color: var(--lp-2); text-decoration: none; font: 500 11px var(--font-data); letter-spacing: 0.18em; text-transform: uppercase; }
   .foot-links a:hover, .foot-links a[aria-current="page"] { color: #fff; }
+  .legal { max-width: 720px; margin: 0 auto; padding: 150px 20px 40px; text-align: left; }
+  .legal h1 { font-size: clamp(36px, 7vw, 56px); letter-spacing: -0.04em; font-weight: 600; margin: 14px 0 12px; line-height: 1.05; }
+  .legal-lead { font-size: 18px; line-height: 1.55; color: rgba(245, 245, 247, 0.78); margin: 0 0 18px; }
+  .legal-sec { border-top: 1px solid var(--lp-line); padding: 22px 0 6px; }
+  .lp .legal h2 { font-size: 20px; letter-spacing: -0.02em; margin: 0 0 10px; line-height: 1.3; }
+  .legal p, .legal li { font-size: 15.5px; line-height: 1.65; color: rgba(245, 245, 247, 0.78); }
+  .legal p { margin: 0 0 12px; }
+  .legal ul { margin: 0 0 12px; padding-left: 20px; display: grid; gap: 8px; }
+  .legal b { color: #fff; font-weight: 600; }
+  .lp a:not(.lp-btn):not(.brand):not([data-land]) , .legal a, .lp .fine a { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+  @media (min-width: 760px) { .legal { padding-top: 130px; } }
   /* moving smoke: soft colored clouds, blurred together, with film grain on top */
   .smoke { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
   .smoke i { position: absolute; border-radius: 50%; filter: blur(70px); mix-blend-mode: screen; will-change: transform; }
   .smoke i:nth-child(1) { width: 70vmax; height: 50vmax; left: -15%; top: 10%; background: radial-gradient(closest-side, rgba(96, 165, 250, 0.55), transparent); animation: drift-a 26s ease-in-out infinite alternate; }
-  .smoke i:nth-child(2) { width: 55vmax; height: 55vmax; right: -20%; top: -15%; background: radial-gradient(closest-side, rgba(99, 102, 241, 0.5), transparent); animation: drift-b 32s ease-in-out infinite alternate; }
+  .smoke i:nth-child(2) { width: 55vmax; height: 55vmax; right: -20%; top: -15%; background: radial-gradient(closest-side, rgba(29, 78, 216, 0.5), transparent); animation: drift-b 32s ease-in-out infinite alternate; }
   .smoke i:nth-child(3) { width: 60vmax; height: 30vmax; left: 15%; bottom: -10%; background: radial-gradient(closest-side, rgba(230, 236, 255, 0.24), transparent); animation: drift-c 24s ease-in-out infinite alternate; }
   .smoke i:nth-child(4) { width: 30vmax; height: 30vmax; left: 45%; top: 35%; background: radial-gradient(closest-side, rgba(74, 222, 128, 0.18), transparent); animation: drift-b 20s ease-in-out infinite alternate-reverse; }
   .smoke::before { content: ""; position: absolute; inset: 0; z-index: 2; opacity: 0.09; mix-blend-mode: overlay;
@@ -532,7 +547,7 @@
   .vcol li b { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; margin-top: 1px; }
   .vcol.them li b { background: rgba(255, 95, 87, 0.16); color: #ff8a84; }
   .vcol.us li b { background: rgba(74, 222, 128, 0.18); color: var(--lp-green); }
-  .vs { justify-self: center; font: 600 11px var(--font-data); letter-spacing: 0.2em; color: var(--lp-2); padding: 8px 12px; border-radius: 999px; border: 1px solid var(--lp-line); background: #000; }
+  .vs { justify-self: center; font: 600 11px var(--font-data); letter-spacing: 0.2em; color: var(--lp-2); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--lp-line); background: #000; }
   /* the daily card, floating */
   .ritual { display: grid; gap: 48px; align-items: center; }
   .stage { position: relative; perspective: 1400px; display: grid; place-items: center; padding: 20px 0; }
@@ -583,7 +598,7 @@
   .frow b { font-size: 21px; letter-spacing: -0.02em; font-weight: 600; }
   .frow p { grid-column: 2; margin: 0; color: rgba(245, 245, 247, 0.68); font-size: 15.5px; line-height: 1.55; max-width: 52ch; }
   .lp-own { margin-top: 56px; border-radius: 24px; padding: 30px 26px; text-align: left; border: 1px solid var(--lp-line);
-    background: radial-gradient(120% 140% at 100% 0%, rgba(99, 102, 241, 0.22), transparent 55%), rgba(255, 255, 255, 0.03); }
+    background: radial-gradient(120% 140% at 100% 0%, rgba(37, 99, 235, 0.2), transparent 55%), rgba(255, 255, 255, 0.03); }
   .lp-own h3 { font-size: clamp(26px, 4vw, 36px); letter-spacing: -0.035em; font-weight: 600; margin: 12px 0 10px; }
   .lp-own p { color: rgba(245, 245, 247, 0.72); margin: 0 0 20px; line-height: 1.55; max-width: 56ch; }
   .lp-final { position: relative; isolation: isolate; text-align: center; padding: 140px 20px 80px; overflow: hidden; }
@@ -592,9 +607,9 @@
     display: flex; flex-wrap: wrap; gap: 10px 24px; justify-content: space-between; color: var(--lp-2); font-size: 13px; line-height: 1.5; }
   .lp-foot p { margin: 0; max-width: 60ch; }
   /* scroll reveal */
-  .rv { opacity: 0; transform: translateY(28px); transition: opacity 1s cubic-bezier(.2, .8, .2, 1), transform 1s cubic-bezier(.2, .8, .2, 1); }
+  .rv { opacity: 0; transform: translateY(10px); transition: opacity .6s ease-out, transform .6s ease-out; }
   .rv.in { opacity: 1; transform: none; }
-  .rv.d1 { transition-delay: .1s; } .rv.d2 { transition-delay: .2s; } .rv.d3 { transition-delay: .3s; }
+  .rv.d1 { transition-delay: .06s; } .rv.d2 { transition-delay: .12s; } .rv.d3 { transition-delay: .18s; }
   @media (min-width: 760px) {
     .lp-nav .links { display: flex; }
     .lp-tabs { display: none; }
@@ -671,7 +686,7 @@
 
   /* ---------- pull to refresh ---------- */
   .ptr { position: fixed; z-index: 7; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 66px); transform: translate(-50%, var(--pull, 0px));
-         display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--text-2); pointer-events: none; }
+         display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 12px; font-size: 13px; font-weight: 600; color: var(--text-2); pointer-events: none; }
   .ptr.ready { color: var(--accent-text); }
   @media (prefers-reduced-motion: no-preference) { .ptr.spin .ic { animation: spin 0.9s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } } }
 
@@ -729,7 +744,7 @@
     .topbar .center { display: flex; align-items: center; gap: 6px; }
     .topbar .center b { font-size: 17px; font-weight: 600; min-width: 132px; text-align: center; }
     .topbar .end { justify-self: end; display: flex; align-items: center; gap: 10px; padding-right: 8px; font-size: 13px; color: var(--muted); }
-    .topbar .end button { border: 0; background: var(--glass-pill); color: var(--accent-text); font-size: 13px; font-weight: 600; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+    .topbar .end button { border: 0; background: var(--glass-pill); color: var(--accent-text); font-size: 13px; font-weight: 600; border-radius: 10px; padding: 6px 12px; cursor: pointer; }
     .topbar .end button.on { background: var(--accent); color: var(--on-accent); }
     .topbar .end button { display: inline-flex; align-items: center; gap: 6px; }
     .topbar .end .gearbtn { position: relative; width: 34px; height: 34px; padding: 0; justify-content: center; }
@@ -787,7 +802,7 @@
 <div class="tour" id="tour" hidden>
   <div class="tour-hole" id="tour-hole"></div>
   <div class="tour-card" id="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-title">
-    <div class="tour-top"><span class="tour-n" id="tour-n"></span><button class="round tour-x" id="tour-skip" aria-label="Skip tutorial" title="Skip tutorial">✕</button></div>
+    <div class="tour-top"><span class="tour-n" id="tour-n"></span><button class="round tour-x" id="tour-skip" aria-label="Skip tutorial" title="Skip tutorial"><svg class="sym" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.2 4.2 11.8 11.8M11.8 4.2 4.2 11.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
     <h3 id="tour-title"></h3><p id="tour-text"></p>
     <div class="tour-dots" id="tour-dots" aria-hidden="true"></div>
     <div class="tour-actions"><button class="btn plain small" id="tour-back">Back</button><button class="btn primary small" id="tour-next">Next</button></div>
@@ -795,7 +810,7 @@
 </div>
 <aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title" hidden></aside>
 <dialog id="viewer" aria-label="Picture">
-  <div class="vtop"><div class="vcap" id="viewer-cap"></div><span class="vn" id="viewer-n"></span><button class="round" id="viewer-close" aria-label="Close">✕</button></div>
+  <div class="vtop"><div class="vcap" id="viewer-cap"></div><span class="vn" id="viewer-n"></span><button class="round" id="viewer-close" aria-label="Close"><svg class="sym" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.2 4.2 11.8 11.8M11.8 4.2 4.2 11.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
   <div class="vstage" id="viewer-stage"><img id="viewer-img" alt="" draggable="false"></div>
   <button class="vnav prev" id="viewer-prev" aria-label="Previous picture">‹</button>
   <button class="vnav next" id="viewer-next" aria-label="Next picture">›</button>
@@ -831,7 +846,13 @@ applyGroupRules(null);
 const tzCity = tz => tz.split("/").pop().replace(/_/g, " ");
 const hh = h => String(h).padStart(2, "0") + ":00";
 
-const ICON = { COMPLETE: "✓", PARTIAL: "◐", MISSING: "✕", WAITING: "", UNLOGGED: "?", EXCUSED: "E" };
+// Small drawn icons (no emoji or symbol characters, which look different on every phone).
+const SYM = {
+  check: `<svg class="sym" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.2 8.4 6.4 11.4 12.8 4.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  x: `<svg class="sym" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.2 4.2 11.8 11.8M11.8 4.2 4.2 11.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
+  half: `<svg class="sym" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 2.4a5.6 5.6 0 0 1 0 11.2z" fill="currentColor"/></svg>`,
+};
+const ICON = { COMPLETE: SYM.check, PARTIAL: SYM.half, MISSING: SYM.x, WAITING: "", UNLOGGED: "?", EXCUSED: "E" };
 const LABEL = { COMPLETE: "Complete", PARTIAL: "Partial", MISSING: "Missing", WAITING: "Waiting", UNLOGGED: "Not logged", EXCUSED: "Excused" };
 const STATUS_ORDER = ["COMPLETE", "PARTIAL", "MISSING", "WAITING", "UNLOGGED", "EXCUSED"];
 const STATUS_COLOR = { COMPLETE: "var(--good)", PARTIAL: "var(--warn)", MISSING: "var(--crit)", WAITING: "var(--line)", UNLOGGED: "var(--line)", EXCUSED: "var(--muted)" };
@@ -1367,7 +1388,7 @@ function openSettings() {
   const opt = (v, label) => `<button data-theme-set="${v}" aria-pressed="${settings.theme === v}">${label}</button>`;
   document.getElementById("panel").innerHTML = `<div class="grab" aria-hidden="true"></div>
     <header><div><b id="panel-title">Settings</b><span>Only for you · saved to your account</span></div>
-      <button class="round" id="panel-close" aria-label="Close">✕</button></header>
+      <button class="round" id="panel-close" aria-label="Close">${SYM.x}</button></header>
     <h3>Appearance</h3>
     <div class="segset" role="group" aria-label="Appearance">${opt("system", "System")}${opt("light", "Light")}${opt("dark", "Dark")}</div>
     <p class="sub-hint" style="margin-top:8px">Dark is the default. System follows your phone or computer.</p>
@@ -1380,6 +1401,7 @@ function openSettings() {
     <h3>Celebrations</h3>
     <label class="switchrow"><span><b>Confetti</b><small>When you complete your day.</small></span>
       <input type="checkbox" id="set-confetti" role="switch" ${settings.confetti !== false ? "checked" : ""}></label>
+    <p class="sub-hint legal-links"><a href="?p=privacy" data-land="privacy">Privacy policy</a> · <a href="?p=terms" data-land="terms">Terms</a></p>
     <button class="btn primary done" id="panel-done">Done</button>`;
   document.getElementById("scrim").hidden = false;
   document.getElementById("panel").hidden = false;
@@ -1624,7 +1646,7 @@ function openPanel(day, key) {
   if (noteState[id] === "saved") delete noteState[id];
   panel.innerHTML = `<div class="grab" aria-hidden="true"></div>
     <header><div><b id="panel-title">${esc(m ? m.name : key)}</b><span>${fmtDay(day, { weekday: "long", month: "long" })}</span></div>
-      <button class="round" id="panel-close" aria-label="Close">✕</button></header>
+      <button class="round" id="panel-close" aria-label="Close">${SYM.x}</button></header>
     <label class="switchrow"><span><b>No trade today</b><small>Shows the group you sat out on purpose. Chart with executions, journal and HTF are still required.</small></span>
       <input type="checkbox" id="panel-notrade" role="switch" ${rec.no_trade ? "checked" : ""}></label>
     <h3>Note</h3>
@@ -1669,7 +1691,7 @@ function renderPanelPics() {
   ensureShotUrls(images);
   const tiles = images.map((p, i) => `<div class="pic">
       <button class="open" data-view-shot="${key}|${esc(p)}" aria-label="Open picture ${i + 1}" style="${shotUrls[p] ? `background-image:url('${shotUrls[p]}')` : ""}"></button>
-      <button class="remove" data-remove-shot="${esc(p)}" aria-label="Delete picture ${i + 1}">✕</button></div>`).join("")
+      <button class="remove" data-remove-shot="${esc(p)}" aria-label="Delete picture ${i + 1}">${SYM.x}</button></div>`).join("")
     + Array.from({ length: busy }, () => `<div class="pic busy">Uploading…</div>`).join("")
     + (images.length + busy < MAX_SHOTS ? `<button class="addpic" data-add-shot="${key}">${SVG.camera}Add picture${matchMedia("(hover: hover)").matches ? `<small>or paste ⌘V / drop here</small>` : ""}</button>` : "");
   document.getElementById("panel-pics").innerHTML = tiles;
@@ -1809,7 +1831,7 @@ function groupButton(px) {
   const g = group();
   return `<button class="gname" id="open-groups" aria-label="Groups: ${esc(g ? g.name : "")}">${groupLogo(g, px)}<span>${esc(g ? g.name : "Groups")}</span>${pendingElsewhere() ? `<i class="gdot" aria-hidden="true"></i>` : ""}<svg class="chev" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`;
 }
-const XMARK = `<span class="x" aria-hidden="true">✕</span>`;
+const XMARK = `<span class="x" aria-hidden="true">${SYM.x}</span>`;
 // Your Discord profile picture (or the person icon if there isn't one).
 function myAvatarUrl() {
   const m = members.find(x => x.key === myKey()), meta = session && session.user.user_metadata;
@@ -1868,7 +1890,7 @@ function renderTop() {
     const m = members.find(x => x.key === profileKey);
     morph(top, isWide()
       ? `${groupButton(24)}<div class="center"><b>${esc(m ? m.name : "Profile")}</b></div><div class="end"><button id="profile-back" class="gearbtn" aria-label="Close profile" title="Close">${XMARK}</button></div>`
-      : `<span></span><div class="mid"><b>${esc(m ? m.name : "")}</b></div><button class="round" id="profile-back" aria-label="Close profile">✕</button>`);
+      : `<span></span><div class="mid"><b>${esc(m ? m.name : "")}</b></div><button class="round" id="profile-back" aria-label="Close profile">${SYM.x}</button>`);
     return;
   }
   if (isWide()) {
@@ -1896,7 +1918,7 @@ function renderTop() {
     mid = `<b>${fmtDay(weekStart, { weekday: undefined })} – ${fmtDay(addDays(weekStart, 4), { weekday: undefined })}</b>${statusText()}`;
   } else {
     mid = `<b>${{ admin: "Admin", board: "Ranking", me: "Me" }[tab] || ""}</b>${statusText()}`;
-    if (tab === "admin" || tab === "me") next = `<button class="round" id="close-admin" aria-label="Close ${tab === "me" ? "Me" : "Admin"}">✕</button>`;
+    if (tab === "admin" || tab === "me") next = `<button class="round" id="close-admin" aria-label="Close ${tab === "me" ? "Me" : "Admin"}">${SYM.x}</button>`;
   }
   morph(top, prev + `<div class="mid">${groupButton(16)}${mid}</div>` + next);
 }
@@ -2201,7 +2223,7 @@ function renderBoard() {
   </div>`;
 }
 
-const COLORS = [["blue", "Blue"], ["violet", "Violet"], ["green", "Green"], ["orange", "Orange"], ["red", "Red"], ["teal", "Teal"], ["pink", "Pink"], ["gold", "Gold"]];
+const COLORS = [["blue", "Blue"], ["green", "Green"], ["orange", "Orange"], ["red", "Red"], ["teal", "Teal"], ["pink", "Pink"], ["gold", "Gold"]];
 const COMMON_TZ = ["America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "America/Toronto", "America/Sao_Paulo",
   "Europe/London", "Europe/Oslo", "Europe/Stockholm", "Europe/Berlin", "Europe/Paris", "Europe/Amsterdam", "Europe/Madrid", "Europe/Warsaw",
   "Africa/Lagos", "Africa/Johannesburg", "Asia/Dubai", "Asia/Kolkata", "Asia/Singapore", "Asia/Hong_Kong", "Asia/Tokyo", "Australia/Sydney"];
@@ -2351,7 +2373,7 @@ function openGroupsPanel() {
   const canLeave = m && g && g.owner_id !== session.user.id;
   document.getElementById("panel").innerHTML = `<div class="grab" aria-hidden="true"></div>
     <header><div><b id="panel-title">Groups</b><span>Switch, join or start one</span></div>
-      <button class="round" id="panel-close" aria-label="Close">✕</button></header>
+      <button class="round" id="panel-close" aria-label="Close">${SYM.x}</button></header>
     <div class="glist">${mine.map(row).join("") || `<p class="empty">You're not in a group yet.</p>`}</div>
     ${others.length ? `<h3>Other groups (app owner)</h3><div class="glist">${others.map(row).join("")}</div>` : ""}
     <h3>Join another group</h3>
@@ -2405,8 +2427,11 @@ function renderGate() {
 
 // The front page for people who aren't signed in. The menu opens separate pages in the same window
 // (?p=why / how / features), so the back button works; the logo goes back to the front page.
-const LAND_PAGES = { why: "Why", how: "How it works", features: "Features" };
+const LAND_PAGES = { why: "Why", how: "How it works", features: "Features", privacy: "Privacy policy", terms: "Terms" };
+const LEGAL = ["privacy", "terms"];
 function landPage() { const p = new URLSearchParams(location.search).get("p"); return LAND_PAGES[p] ? p : "home"; }
+// The privacy policy and terms open for everyone, signed in or not.
+const legalOpen = () => LEGAL.includes(landPage());
 function goLandPage(p) {
   const url = new URL(location.href);
   if (p === "home") url.searchParams.delete("p"); else url.searchParams.set("p", p);
@@ -2414,15 +2439,15 @@ function goLandPage(p) {
   render();
   window.scrollTo(0, 0);
 }
-window.addEventListener("popstate", () => { if (screen === "signin") { render(); window.scrollTo(0, 0); } });
+window.addEventListener("popstate", () => { render(); window.scrollTo(0, 0); });
 function renderLanding() {
-  const page = landPage();
+  const page = landPage(), inApp = !!session && screen !== "signin";   // signed in, reading the Privacy or Terms page
   const signin = (id = "signin", label = "Sign in with Discord") => `<button class="lp-btn white" id="${id}">${SVG.discord}${label}</button>`;
   const smoke = `<div class="smoke" aria-hidden="true"><i></i><i></i><i></i><i></i></div>`;
   const link = (p, label, cls = "") => `<a href="${p === "home" ? "./" : "?p=" + p}" data-land="${p}" class="${cls}"${page === p ? ' aria-current="page"' : ""}>${label}</a>`;
   const person = (name, color, chips, last) => `<div class="mock-row${last ? " late" : ""}"><span class="av" style="background:${color}">${name[0]}</span><b>${name}</b>
     <span class="chips">${chips.map((c, i) => `<i class="${c ? "on" : ""}${last && i === 1 ? " late-box" : ""}"></i>`).join("")}</span>
-    <span class="st">${last ? `<span class="warn">◐</span><span class="good late-st">✓</span>` : `<span class="good">✓</span>`}</span></div>`;
+    <span class="st">${last ? `<span class="warn">${SYM.half}</span><span class="good late-st">${SYM.check}</span>` : `<span class="good">${SYM.check}</span>`}</span></div>`;
   const row = (n, title, text) => `<div class="frow rv"><span class="mono">${n}</span><b>${title}</b><p>${text}</p></div>`;
   const li = (mark, text) => `<li><b aria-hidden="true">${mark}</b><span>${text}</span></li>`;
   const errMsg = error ? `<p class="msg err" style="margin-top:16px">${esc(error)}</p>` : "";
@@ -2432,7 +2457,7 @@ function renderLanding() {
   const mock = `<div class="stage rv d1" aria-hidden="true"><div class="mock">
       <div class="mock-top"><span><b><span class="count-old">4</span><span class="count-new">5</span></b>/5 done</span><span>1h 12m left</span></div>
       <div class="mock-bar"><i></i></div>
-      ${person("Alex", "#2563eb", [1, 1, 1])}${person("Sam", "#7c3aed", [1, 1, 1])}${person("Riley", "#0d9488", [1, 1, 1])}${person("Morgan", "#ea580c", [1, 1, 1])}${person("Jordan", "#db2777", [1, 0, 1], true)}
+      ${person("Alex", "#2563eb", [1, 1, 1])}${person("Sam", "#0e7490", [1, 1, 1])}${person("Riley", "#0d9488", [1, 1, 1])}${person("Morgan", "#ea580c", [1, 1, 1])}${person("Jordan", "#db2777", [1, 0, 1], true)}
     </div></div>`;
   const own = `<div class="lp-own rv">
       <div><p class="mono">Run a trading group?</p><h3>Start your <span class="serif">own</span> group.</h3>
@@ -2446,16 +2471,16 @@ function renderLanding() {
     <section class="lp-sec center">
       <div class="versus" style="margin-top:0">
         <div class="vcol them rv"><p class="mono">On your own</p><h3>Good intentions</h3><ul>
-          ${li("✕", "Skip the journal \"just today\"")}${li("✕", "Nobody notices the missed days")}${li("✕", "Repeat the same revenge trade next week")}${li("✕", "Motivation gone by midweek")}</ul></div>
+          ${li(SYM.x, "Skip the journal \"just today\"")}${li(SYM.x, "Nobody notices the missed days")}${li(SYM.x, "Repeat the same revenge trade next week")}${li(SYM.x, "Motivation gone by midweek")}</ul></div>
         <span class="vs rv d1">VS</span>
         <div class="vcol us rv d2"><p class="mono">In a LockedIn group</p><h3>Proof, every day</h3><ul>
-          ${li("✓", "Everyone sees who's done before the cutoff")}${li("✓", "Streaks you really don't want to break")}${li("✓", "Notes and charts your group learns from")}${li("✓", "A reminder before the day closes")}</ul></div>
+          ${li(SYM.check, "Everyone sees who's done before the cutoff")}${li(SYM.check, "Streaks you really don't want to break")}${li(SYM.check, "Notes and charts your group learns from")}${li(SYM.check, "A reminder before the day closes")}</ul></div>
       </div>
     </section>
     <section class="lp-sec center">
-      <p class="mono rv">The only score that matters</p>
+      <p class="mono rv">The daily goal</p>
       <div class="chrome rv d1" aria-label="5 out of 5">5/5</div>
-      <p class="sub rv d2">Every member, every box, every trading day.</p>
+      <p class="sub rv d2">Every member ticks every required box before the cutoff.</p>
       ${next("how", "How it works")}
     </section>`;
   else if (page === "how") body = head("How it works", `Three boxes. <span class="serif">One tap each.</span>`,
@@ -2482,7 +2507,7 @@ function renderLanding() {
       ${next("features", "Features")}
     </section>`;
   else if (page === "features") body = head("Features", `Built for traders <span class="serif">who show up.</span>`,
-      "Everything your group needs to stay accountable, and nothing it doesn't.") + `
+      "What's in the app, from daily ticks to reminders.") + `
     <section class="lp-sec">
       <div class="flist" style="margin-top:0">
         ${row("01", "Daily homework", "One tap per box. Your group decides the boxes: chart with execution, journal, HTF, or your own.")}
@@ -2494,16 +2519,61 @@ function renderLanding() {
       </div>
       ${own}
     </section>`;
+  else if (page === "privacy" || page === "terms") {
+    const mail = cfg.contactEmail ? `<a href="mailto:${esc(cfg.contactEmail)}">${esc(cfg.contactEmail)}</a>` : "the contact email (added before launch)";
+    const sec = (title, html) => `<section class="legal-sec"><h2>${title}</h2>${html}</section>`;
+    const updated = `<p class="mono">Last updated 7 November 2026</p>`;
+    body = page === "privacy" ? `<article class="legal">${updated}<h1>Privacy policy</h1>
+      <p class="legal-lead">This page explains what LockedIn stores about you, who can see it, and how to get it deleted.</p>
+      ${sec("Who runs LockedIn", `<p>LockedIn is run by Adam Batko, who decides how your data is used. Questions or requests: ${mail}.</p>`)}
+      ${sec("What we store", `<ul>
+        <li><b>From Discord, when you sign in:</b> your Discord username, profile picture, email address and Discord account ID. We never see your Discord password, messages or servers.</li>
+        <li><b>What you add:</b> your ticks, notes, rule-break tags, weekly reflections, screenshots, your settings, and requests to join or start a group.</li>
+        <li><b>Reminders, only if you turn them on:</b> a push address for that phone or computer (made by your browser's push service, such as Apple, Google or Mozilla) and how long before the cutoff you want to be reminded.</li>
+        <li><b>On your own device:</b> a copy of your group's data so the app opens without internet, unsent ticks, note backups and display settings. Signing out removes the copy of your group and unsent ticks.</li>
+      </ul><p>We don't use cookies or trackers for analytics or advertising. Your browser's storage is only used to keep you signed in and to make the app work offline.</p>`)}
+      ${sec("Who can see it", `<ul>
+        <li><b>Your group</b> sees your name, picture, ticks, notes, screenshots, reflections, streaks and badges.</li>
+        <li><b>Your group's owner and admins</b> can also approve or remove members, excuse days and correct ticks.</li>
+        <li><b>The app owner</b> (Adam Batko) can see every group, to run and support the service.</li>
+        <li><b>Other groups</b> can't see anything of yours. We don't sell your data and there are no ads.</li>
+      </ul>`)}
+      ${sec("Services that handle your data for us", `<ul>
+        <li><b>Supabase:</b> database, sign-in, screenshot storage and sending reminders.</li>
+        <li><b>Discord:</b> sign-in.</li>
+        <li><b>GitHub Pages:</b> hosts the website.</li>
+        <li><b>jsDelivr and Google Fonts:</b> deliver code and fonts the website uses.</li>
+        <li><b>Your browser's push service:</b> delivers reminders.</li>
+      </ul><p>Like any website, these services receive your IP address when your browser contacts them.</p>`)}
+      ${sec("How long we keep it", `<p>Your account data, ticks, notes and screenshots are kept while you use LockedIn. Screenshots you delete are removed. The record of which reminders were sent is deleted after 7 days. If you ask us to delete your account, we delete your data from the database.</p>`)}
+      ${sec("Your rights", `<p>You can ask to see, correct, export or delete your data at any time by writing to ${mail}. If you live in the EU or EEA you can also complain to your data protection authority (in Norway: Datatilsynet).</p>`)}
+      ${sec("Age", `<p>You need to be old enough to have a Discord account (at least 13) to use LockedIn.</p>`)}
+      ${sec("Changes", `<p>If this policy changes, we update this page and the date at the top.</p>`)}
+    </article>` : `<article class="legal">${updated}<h1>Terms</h1>
+      <p class="legal-lead">These terms apply when you use LockedIn. By signing in you agree to them.</p>
+      ${sec("What LockedIn is", `<p>LockedIn is a free tool for trading groups to track daily homework (such as charts, journals and higher-timeframe analysis) together. It is run by Adam Batko.</p>`)}
+      ${sec("Not financial advice", `<p>Nothing in LockedIn is financial or investment advice. Trading carries risk of loss. You are responsible for your own trading decisions.</p>`)}
+      ${sec("Your account", `<ul>
+        <li>You sign in with your own Discord account and need to be at least 13.</li>
+        <li>One account per person. Don't use someone else's account or name.</li>
+      </ul>`)}
+      ${sec("Groups", `<p>Each group's owner decides who joins, which homework counts and the group's settings. Group owners and admins can approve and remove members, excuse days and correct ticks. The app owner can pause or delete any group.</p>`)}
+      ${sec("What you post", `<p>You keep ownership of your notes and screenshots. You allow LockedIn to store them and show them to your group so the app works. Don't post anything illegal, other people's private information, harassment, or anything that harms the app or its users. Content or accounts that break these rules can be removed.</p>`)}
+      ${sec("Availability", `<p>LockedIn is free and provided as it is, without guarantees. It may change, have downtime or stop. Keep your own copies of anything important. As far as the law allows, we are not responsible for losses caused by using the app.</p>`)}
+      ${sec("Stopping", `<p>You can stop using LockedIn at any time and ask us to delete your data at ${mail}. We can end access for anyone who breaks these terms.</p>`)}
+      ${sec("Changes and contact", `<p>If these terms change, we update this page and the date at the top. Questions: ${mail}.</p>`)}
+    </article>`;
+  }
   else body = `<header class="lp-hero">${smoke}
       <div>
-        <p class="mono rv in">Built for serious traders</p>
-        <h1 class="rv in d1">Where trading groups <span class="serif">level up together.</span></h1>
-        <p class="lead rv in d2">Daily homework, streaks and accountability for your Discord group. Everyone ticks off their chart, journal and HTF, and everyone sees who did.</p>
+        <p class="mono rv in">For trading groups on Discord</p>
+        <h1 class="rv in d1">Daily trading homework, <span class="serif">tracked as a group.</span></h1>
+        <p class="lead rv in d2">Your group picks the boxes, like chart, journal and HTF. Everyone ticks them off after their session, and everyone can see who did.</p>
         <div class="lp-cta rv in d3">${signin()}${link("how", "See how it works", "lp-btn ghost")}</div>
         ${errMsg}
         <p class="fine rv in d3">Free. You'll need a join code from your group's owner.</p>
+        <p class="fine rv in d3">By signing in you agree to the ${link("terms", "Terms")} and the ${link("privacy", "Privacy policy")}.</p>
       </div>
-      <div class="cue" aria-hidden="true"><span class="mono">Scroll</span><i></i></div>
     </header>
     <section class="lp-sec"><div class="ritual">
       <div>
@@ -2515,28 +2585,29 @@ function renderLanding() {
       ${mock}
     </div></section>
     <section class="lp-sec center">
-      <p class="mono rv">The only score that matters</p>
+      <p class="mono rv">The daily goal</p>
       <div class="chrome rv d1" aria-label="5 out of 5">5/5</div>
-      <p class="sub rv d2">Every member, every box, every trading day.</p>
+      <p class="sub rv d2">Every member ticks every required box before the cutoff.</p>
     </section>
     <section class="lp-sec">${own}</section>`;
   return `<div class="lp">
     <nav class="lp-nav" aria-label="LockedIn">
       ${link("home", `<img src="icons/icon-192.png" alt="">LockedIn`, "brand")}
-      <span class="links">${link("why", "Why")}${link("how", "How it works")}${link("features", "Features")}</span>
-      ${signin("signin-nav", "Sign in").replace("lp-btn white", "lp-btn white small")}
+      ${inApp ? "" : `<span class="links">${link("why", "Why")}${link("how", "How it works")}${link("features", "Features")}</span>`}
+      ${inApp ? link("home", "Open app", "lp-btn white small") : signin("signin-nav", "Sign in").replace("lp-btn white", "lp-btn white small")}
     </nav>
-    <div class="lp-tabs" role="navigation" aria-label="Pages">${link("why", "Why")}${link("how", "How it works")}${link("features", "Features")}</div>
+    ${inApp ? "" : `<div class="lp-tabs" role="navigation" aria-label="Pages">${link("why", "Why")}${link("how", "How it works")}${link("features", "Features")}</div>`}
     ${body}
-    <section class="lp-final">${smoke}
+    ${LEGAL.includes(page) ? "" : `<section class="lp-final">${smoke}
       <p class="mono rv">Ready?</p>
       <h2 class="rv d1">Stop trading <span class="serif">alone.</span></h2>
       <div class="lp-cta rv d2" style="margin-top:30px">${signin("signin-end")}</div>
       ${page !== "home" ? errMsg : ""}
       <p class="fine rv d3">Sign in, type your group's join code, and the owner lets you in.</p>
-    </section>
+      <p class="fine rv d3">By signing in you agree to the ${link("terms", "Terms")} and the ${link("privacy", "Privacy policy")}.</p>
+    </section>`}
     <footer class="lp-foot">
-      <span class="foot-links">${link("home", "Home")}${link("why", "Why")}${link("how", "How it works")}${link("features", "Features")}</span>
+      <span class="foot-links">${inApp ? link("home", "Back to the app") : link("home", "Home") + link("why", "Why") + link("how", "How it works") + link("features", "Features")}${link("privacy", "Privacy")}${link("terms", "Terms")}</span>
       <p>Signing in with Discord only shares your Discord name, profile picture and email address with LockedIn. We never see your messages, servers or password.</p></footer>
   </div>`;
 }
@@ -2570,6 +2641,9 @@ function render() {
   renderTop(); renderTabbar();
   const app = document.getElementById("app");
   document.body.classList.toggle("landing", screen === "signin");
+  const legal = legalOpen() && screen !== "loading" && screen !== "setup";
+  document.body.classList.toggle("landing", screen === "signin" || legal);
+  if (legal) { document.getElementById("topbar").hidden = true; document.getElementById("tabbar").hidden = true; app.innerHTML = renderLanding(); revealLanding(); return; }
   if (screen !== "app") { app.innerHTML = renderGate(); if (screen === "signin") revealLanding(); return; }
   let html;
   if (tab === "admin" && isAdmin) html = renderAdmin();
@@ -2597,7 +2671,7 @@ function setTab(t) {
 // ---------------------------------------------------------------- events
 document.addEventListener("click", async e => {
   const landLink = e.target.closest("a[data-land]");
-  if (landLink && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); return goLandPage(landLink.dataset.land); }
+  if (landLink && !e.metaKey && !e.ctrlKey && !e.shiftKey) { e.preventDefault(); if (editing || settingsOpen) closePanel(); return goLandPage(landLink.dataset.land); }
   // Tap a long note (not a link inside it) to show all of it.
   const longNote = e.target.closest(".note p");
   if (longNote && !e.target.closest("a")) { longNote.classList.add("open"); return; }
@@ -2909,7 +2983,7 @@ function tourSteps() {
   const tabEl = t => wide ? null : q(`.tabbar [data-tab="${t}"]`);
   const myRow = () => { const b = document.querySelector(`.member [data-tick^="${me}:"]`) || document.querySelector(`[data-edit="${me}"]`); return b && b.closest(".member"); };
   const steps = [
-    { title: `Welcome to ${g ? g.name : "LockedIn"}`, text: "Here's a quick tour of everything: about a minute. Tap ✕ to skip it, and replay it any time from the Me tab." },
+    { title: `Welcome to ${g ? g.name : "LockedIn"}`, text: "Here's a quick tour of everything: about a minute. Skip it with the close button in the corner, and replay it any time from the Me tab." },
     mine && { el: wide ? myRow : q(".quick .qgrid"), title: "Tick your homework",
       text: `Tap a box when it's done. Required: ${esc(listText(req))}. All required ticked = Complete (green circle).`
         + (bonus.length ? ` ${esc(listText(bonus))} ${bonus.length > 1 ? "are bonus boxes" : "is a bonus box"}: extra points.` : "")

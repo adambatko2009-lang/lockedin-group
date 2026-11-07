@@ -7,4 +7,6 @@ window.MNQ_CONFIG = {
   supabaseAnonKey: "sb_publishable_os6M-4IwXTuKMG6hhnwFPw_pSJHkrK1",
   // Public key for reminder notifications (public by design; its private half is only in Supabase's secrets).
   vapidPublicKey: "BAgcDXmc-vtf4eApgX3oACHFjXZpeVZnxJBiU7U86Z2SWKbAzkmJlUeRp1hfC9-pDUZVmF40TmWpZtbsBeVRJeY",
+  // Shown on the Privacy policy and Terms pages. Fill in before launch.
+  contactEmail: "",
 };
