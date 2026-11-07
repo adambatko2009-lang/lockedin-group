@@ -867,22 +867,32 @@ const keyOf = d => d.toISOString().slice(0, 10);
 const addDays = (k, n) => { const d = parse(k); d.setUTCDate(d.getUTCDate() + n); return keyOf(d); };
 const isTradingDay = k => { const w = parse(k).getUTCDay(); return w > 0 && w < 6 && !HOLIDAYS.has(k); };
 const prevTrading = k => { do k = addDays(k, -1); while (!isTradingDay(k)); return k; };
-const nextTrading = k => { do k = addDays(k, 1); while (!isTradingDay(k)); return k; };
-const mondayOf = k => addDays(k, -((parse(k).getUTCDay() + 6) % 7));
+// Asked thousands of times while counting streaks, so the answers are remembered (forgotten when holidays reload).
+const dateMemo = { next: new Map(), monday: new Map() };
+const nextTrading = k => { let v = dateMemo.next.get(k); if (!v) { v = k; do v = addDays(v, 1); while (!isTradingDay(v)); dateMemo.next.set(k, v); } return v; };
+const mondayOf = k => { let v = dateMemo.monday.get(k); if (!v) { v = addDays(k, -((parse(k).getUTCDay() + 6) % 7)); dateMemo.monday.set(k, v); } return v; };
 const fmtDay = (k, o) => parse(k).toLocaleDateString("en-GB", Object.assign({ weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }, o));
 
+const tzFormats = {};   // making a date formatter is slow, so one per time zone is reused
 function nyParts(ms) {
-  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: TZ, hourCycle: "h23",
-    year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
-    .formatToParts(new Date(ms)).map(x => [x.type, x.value]));
+  const f = tzFormats[TZ] || (tzFormats[TZ] = new Intl.DateTimeFormat("en-US", { timeZone: TZ, hourCycle: "h23",
+    year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }));
+  const p = Object.fromEntries(f.formatToParts(new Date(ms)).map(x => [x.type, x.value]));
   return { key: `${p.year}-${p.month}-${p.day}`, hour: +p.hour, minute: +p.minute };
 }
 // The real moment of HH:00 New York time on a given date (handles daylight saving).
+const momentCache = new Map();   // the answer never changes for the same time zone, day and hour
 function nyMoment(k, hour) {
-  const guess = Date.UTC(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10), hour);
-  const p = nyParts(guess);
-  const seen = Date.UTC(+p.key.slice(0, 4), +p.key.slice(5, 7) - 1, +p.key.slice(8, 10), p.hour, p.minute);
-  return new Date(guess - (seen - guess));
+  const ck = TZ + "|" + k + "|" + hour;
+  let ms = momentCache.get(ck);
+  if (ms === undefined) {
+    const guess = Date.UTC(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10), hour);
+    const p = nyParts(guess);
+    const seen = Date.UTC(+p.key.slice(0, 4), +p.key.slice(5, 7) - 1, +p.key.slice(8, 10), p.hour, p.minute);
+    ms = guess - (seen - guess);
+    momentCache.set(ck, ms);
+  }
+  return new Date(ms);
 }
 function currentTradingDay() {
   const p = nyParts(Date.now());
@@ -937,7 +947,15 @@ const roleOf = (g = group()) => !g ? "" : session && g.owner_id === session.user
   : (myMembership(g.id) || {}).role === "admin" ? "Admin" : (myMembership(g.id) || {}).status === "approved" ? "Member" : isAppOwner ? "App owner" : "";
 const activeMembers = () => members.filter(m => m.active).sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name));
 const tickOf = (k, key) => ticks[k + "|" + key] || null;
-const dayHasAny = k => Object.entries(ticks).some(([id, r]) => id.startsWith(k + "|") && !r.excused);
+// Days where anyone logged anything. Built once per screen update (scanning every tick for every
+// person and day made big groups freeze); ticksChanged() throws it away after any change.
+let dayAny = null, tickDays = null;
+const statsCache = new Map();
+function ticksChanged() { dayAny = null; tickDays = null; statsCache.clear(); }
+function dayHasAny(k) {
+  if (!dayAny) { dayAny = new Set(); for (const id in ticks) if (!ticks[id].excused) dayAny.add(id.slice(0, 10)); }
+  return dayAny.has(k);
+}
 const canEdit = (k, key) => isAdmin || (key === myKey() && k === today && !isFinal(k) && !!group() && group().status === "active");
 
 function statusOf(k, key) {
@@ -980,6 +998,44 @@ async function loadGroups() {
   groups = g.data || []; myMemberships = m.data || []; requests = r.data || [];
 }
 
+// Supabase sends at most 1000 rows per request, so bigger lists come in pages (all at once, after the first).
+const PAGE = 1000;
+// build(options) must return a fresh query: sb.from(...).select("*", options)...
+async function fetchAll(build) {
+  const first = await build({ count: "exact" }).range(0, PAGE - 1);
+  if (first.error) return { data: [], error: first.error };
+  const total = first.count == null ? (first.data || []).length : first.count, rest = [];
+  if (!first.data || first.data.length >= total) return { data: first.data || [], error: null };
+  for (let from = PAGE; from < total; from += PAGE) rest.push(build().range(from, from + PAGE - 1));
+  const pages = await Promise.all(rest);
+  const bad = pages.find(x => x.error);
+  return { data: first.data.concat(...pages.map(x => x.data || [])), error: bad ? bad.error : null };
+}
+// A group's ticks. With a saved copy on this device only what changed since then is downloaded
+// (a whole year for 100 people is ~20,000 rows; downloading that on every open would use up the free plan).
+let syncedAt = null;   // newest change time the server has sent us
+const maxStamp = (rows, start) => rows.reduce((a, r) => (r.updated_at && r.updated_at > a ? r.updated_at : a), start || "");
+async function loadTicks(id, snap) {
+  const q = o => sb.from("ticks").select("*", o).eq("group_id", id).order("day", { ascending: false }).order("member_key");
+  const toMap = rows => { const o = {}; rows.forEach(r => { o[r.day + "|" + r.member_key] = r; }); return o; };
+  if (snap && snap.syncedAt && Date.now() - snap.at < 30 * 86400000) {
+    const since = new Date(new Date(snap.syncedAt).getTime() - 10 * 60000).toISOString();   // 10 min margin
+    const [d, c] = await Promise.all([
+      fetchAll(o => q(o).gte("updated_at", since)),
+      sb.from("ticks").select("day", { count: "exact", head: true }).eq("group_id", id),
+    ]);
+    if (!d.error && !c.error) {
+      const map = toMap(snap.ticks || []);
+      d.data.forEach(r => { map[r.day + "|" + r.member_key] = r; });
+      // Same number of rows as the server: nothing was deleted, the copy is complete.
+      if (Object.keys(map).length === c.count) return { ticks: map, syncedAt: maxStamp(d.data, snap.syncedAt) };
+    }
+  }
+  const all = await fetchAll(q);
+  if (all.error) return { ticks: snap ? toMap(snap.ticks || []) : {}, syncedAt: snap ? snap.syncedAt : null, error: all.error };
+  return { ticks: toMap(all.data), syncedAt: maxStamp(all.data) };
+}
+
 // Load one group's names, ticks and reflections, and switch the app to it.
 async function openGroup(id) {
   const changed = id !== gid || !loaded;
@@ -989,25 +1045,26 @@ async function openGroup(id) {
   applyGroupRules(g);
   isAdmin = canManageGroup(g);
   loadStep = "members and ticks";
+  const snap = await readSnapshot(id);
   const [m, h, t] = await Promise.all([
     sb.from("members").select("*").eq("group_id", id),
     sb.from("holidays").select("day"),
-    sb.from("ticks").select("*").eq("group_id", id).order("day", { ascending: false }).limit(5000),
+    loadTicks(id, snap),
   ]);
   const failed = [m, h, t].find(r => r.error);
   if (failed) { error = "Couldn't load data: " + failed.error.message; }
-  members = m.data || [];
-  HOLIDAYS = new Set((h.data || []).map(r => r.day));
-  ticks = {};
-  (t.data || []).forEach(r => { ticks[r.day + "|" + r.member_key] = r; });
+  members = m.data || (snap ? snap.members : []);
+  HOLIDAYS = new Set((h.data || []).map(r => r.day)); dateMemo.next.clear();
+  ticks = t.ticks;
+  syncedAt = t.syncedAt;
   applyOutbox();
   today = currentTradingDay();
   if (changed || selected > today || !isTradingDay(selected)) selected = today;
   weekStart = mondayOf(selected);
   loadStep = "weekly reflections";
-  const rf = await sb.from("reflections").select("*").eq("group_id", id).order("week_start", { ascending: false }).limit(3000);
+  const rf = await fetchAll(o => sb.from("reflections").select("*", o).eq("group_id", id).order("week_start", { ascending: false }).order("member_key"));
   reflections = {};
-  if (!rf.error) (rf.data || []).forEach(r => { reflections[r.week_start + "|" + r.member_key] = r; });
+  ((rf.error && snap ? snap.reflections : rf.data) || []).forEach(r => { reflections[r.week_start + "|" + r.member_key] = r; });
   loadStep = "admin list";
   people = [];
   if (isAdmin) await loadPeople();
@@ -1051,6 +1108,33 @@ async function loadOwnerData() {
 }
 const profileName = uid => ((allProfiles.find(p => p.user_id === uid) || people.find(p => p.user_id === uid) || {}).discord_name) || "Unknown";
 
+// When many people tick at once (near the cutoff), redraw at most a few times a second.
+let renderTimer = null;
+function scheduleRender() {
+  if (renderTimer) return;
+  renderTimer = setTimeout(() => { renderTimer = null; autoRender(); }, 250);
+}
+// Redraws nobody asked for (live updates, the clock) skip the Admin page while you're typing in it,
+// so a member ticking a box can't wipe the group name you're halfway through changing.
+let adminDirty = false;
+function autoRender() {
+  if (screen !== "app") return;
+  const f = document.activeElement, typing = f && f.closest && f.closest("#app") && /^(INPUT|TEXTAREA|SELECT)$/.test(f.tagName);
+  if (tab === "admin" && (typing || adminDirty)) { renderTop(); renderTabbar(); return; }
+  render();
+}
+// In the background the live connection is closed after 2 minutes (saves Supabase's free limits);
+// coming back downloads only what changed and reconnects.
+let idleTimer = null, sleeping = false;
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => { if (channel) { sb.removeChannel(channel); channel = null; sleeping = true; } }, 120000);
+  } else {
+    clearTimeout(idleTimer);
+    if (sleeping && screen === "app" && session) { sleeping = false; refreshNow().catch(() => subscribe()); }
+  }
+});
 function subscribe() {
   if (channel) { sb.removeChannel(channel); channel = null; }
   const filter = `group_id=eq.${gid}`, here = gid;
@@ -1060,8 +1144,9 @@ function subscribe() {
       if (!row || !row.day || here !== gid || (row.group_id && row.group_id !== gid)) return;
       const id = row.day + "|" + row.member_key;
       if (payload.eventType === "DELETE") delete ticks[id];
-      else if (!pending[id]) ticks[id] = payload.new;   // don't overwrite a tick you're still saving
-      render();
+      else if (!pending[id] && !getOutbox()[id]) ticks[id] = payload.new;   // don't overwrite a tick you're still saving
+      ticksChanged();
+      scheduleRender();
     })
     .on("postgres_changes", { event: "*", schema: "public", table: "reflections", filter }, payload => {
       const row = payload.new && payload.new.week_start ? payload.new : payload.old;
@@ -1069,11 +1154,11 @@ function subscribe() {
       const id = row.week_start + "|" + row.member_key;
       if (payload.eventType === "DELETE") delete reflections[id];
       else if (!pendingRefl[id]) reflections[id] = payload.new;
-      render();
+      scheduleRender();
     })
     .on("postgres_changes", { event: "*", schema: "public", table: "memberships", filter }, () => {
       // Someone typed the join code (managers see them appear in Admin right away).
-      if (isAdmin && here === gid) loadPeople().then(render);
+      if (isAdmin && here === gid) loadPeople().then(autoRender);
     })
     .subscribe();
 }
@@ -1081,18 +1166,18 @@ function subscribe() {
 // One save at a time per row; quick taps are combined into one save.
 const pending = {}, timers = {};
 function editTick(k, key, mutate, quiet) {
-  if (!canEdit(k, key)) return;
+  if (!key || !canEdit(k, key)) return;
   const id = k + "|" + key;
   const row = Object.assign({ day: k, member_key: key, chart: false, journal: false, review: false, social: false, box5: false, box6: false, note: "", images: [], no_trade: false, rule_breaks: [] }, tickOf(k, key));
   row.images = [...(row.images || [])];
   row.rule_breaks = [...(row.rule_breaks || [])];
   const before = statusOf(k, key);
   mutate(row);
-  ticks[id] = row; pending[id] = true; noteState[id] = "saving";
+  ticks[id] = row; pending[id] = true; noteState[id] = "saving"; ticksChanged();
   if (key === myKey() && before !== "COMPLETE" && statusOf(k, key) === "COMPLETE") celebrate();
   if (quiet) renderTop(); else render();
   clearTimeout(timers[id]);
-  timers[id] = setTimeout(() => saveTick(id), 450);
+  timers[id] = setTimeout(() => saveTick(id), quiet ? 1200 : 450);   // quiet = typing a note
 }
 async function saveTick(id) {
   const row = ticks[id];
@@ -1347,11 +1432,12 @@ function ensureShotUrls(paths) {
   missing.forEach(p => shotRequested.add(p));
   sb.storage.from("screenshots").createSignedUrls(missing, 3600).then(({ data }) => {
     (data || []).forEach(d => { if (d.signedUrl) shotUrls[d.path] = d.signedUrl; });
-    render();
-  });
+    missing.forEach(p => { if (!shotUrls[p]) setTimeout(() => shotRequested.delete(p), 20000); });   // try again later
+    scheduleRender();
+  }).catch(() => missing.forEach(p => setTimeout(() => shotRequested.delete(p), 20000)));
 }
 // Signed links last an hour; refresh them before they run out.
-setInterval(() => { Object.keys(shotUrls).forEach(p => delete shotUrls[p]); shotRequested.clear(); if (screen === "app") render(); }, 50 * 60000);
+setInterval(() => { Object.keys(shotUrls).forEach(p => delete shotUrls[p]); shotRequested.clear(); autoRender(); }, 50 * 60000);
 
 // Shrink to max 1600px and JPEG, so a screenshot is ~200-300 KB instead of several MB.
 async function shrink(file) {
@@ -1595,6 +1681,7 @@ async function adminDo(promise, okMsg) {
 }
 // Re-read groups, people and names after a change (and leave a group that no longer exists).
 async function refreshAfterAdmin() {
+  adminDirty = false;   // saved: the page may redraw again
   await loadGroups();
   if (!group() || !canOpen(group())) { loaded = false; return loadAll(); }
   applyGroupRules(group());
@@ -1859,11 +1946,19 @@ function renderWeek() {
   return `<div class="card">${head2}<div class="grid-wrap"><table class="grid"><thead><tr><th class="who"></th>${head}</tr></thead><tbody>${body}</tbody></table></div></div>`;
 }
 
+// Everyone's points, streaks and badges. Remembered until the next change (the ranking asks for every member).
 function stats(key) {
-  const days = [...new Set(Object.keys(ticks).map(id => id.split("|")[0]))].filter(isTradingDay).sort();
+  if (statsCache.has(key)) return statsCache.get(key);
+  const result = computeStats(key);
+  statsCache.set(key, result);
+  return result;
+}
+function computeStats(key) {
+  const days = tickDays || (tickDays = [...new Set(Object.keys(ticks).map(id => id.slice(0, 10)))].filter(isTradingDay).sort());
   let points = 0, run = 0, best = 0, closed = 0, complete = 0, last = null;
   let noTrades = 0, completeDays = 0, social = 0, notes = 0, pics = 0, comebacks = 0, prevSt = null, since = null;
   const weeks = {};   // monday -> {n: closed days counted, ex: excused days, ok: all Complete, open: has an open day}
+  const bonusBoxes = RULES.filter(r => r[2] === "bonus").map(r => r[0]);
   for (const k of days) {
     if (last && nextTrading(last) !== k) run = 0;   // an unlogged trading day in between breaks a streak
     last = k;
@@ -1873,7 +1968,7 @@ function stats(key) {
     pics += (rec.images || []).length;
     if (st === "EXCUSED") { w.ex++; continue; }   // no points, no streak change, not counted in %
     if (raw && !since) since = k;
-    const bonusTicks = RULES.filter(r => r[2] === "bonus" && rec[r[0]]).length;   // the group's bonus boxes
+    const bonusTicks = bonusBoxes.filter(b => rec[b]).length;   // the group's bonus boxes
     social += bonusTicks;
     points += (POINTS[st] || 0) + POINTS.bonus * bonusTicks;
     if (st === "COMPLETE") { run++; best = Math.max(best, run); completeDays++; if (prevSt === "MISSING") comebacks++; if (rec.no_trade) noTrades++; }
@@ -2417,6 +2512,7 @@ function renderMe() {
 }
 
 function render() {
+  ticksChanged();
   renderTop(); renderTabbar();
   const app = document.getElementById("app");
   document.body.classList.toggle("landing", screen === "signin");
@@ -2439,6 +2535,7 @@ function render() {
 }
 
 function setTab(t) {
+  adminDirty = false;
   if (t === tab && !profileKey) { selected = today; weekStart = mondayOf(today); }
   tab = t; profileKey = null; flash = ""; try { localStorage.setItem("tab", t); } catch (e) {} render(); window.scrollTo(0, 0); }
 
@@ -2573,7 +2670,8 @@ document.addEventListener("click", async e => {
     }
     case "signout":
       if (push.sub) await turnRemindersOff();   // this device stops getting your reminders
-      try { localStorage.removeItem(snapKey()); localStorage.removeItem(OUTBOX); } catch (e) {}
+      try { localStorage.removeItem(OUTBOX); } catch (e) {}
+      await idbClear();   // nothing of yours stays on this device
       await sb.auth.signOut(); return;
     case "addmember": {
       const el = document.getElementById("newmember"), name = el.value.trim();
@@ -2618,6 +2716,7 @@ document.addEventListener("click", async e => {
   }
 });
 document.addEventListener("input", e => {
+  if (tab === "admin" && e.target.closest && e.target.closest("#app")) adminDirty = true;
   if (e.target.id === "set-confetti") { settings.confetti = e.target.checked; return saveSettings(); }
   if (e.target.id === "set-remind") return e.target.checked ? turnRemindersOn() : turnRemindersOff();
   if (e.target.id === "panel-notrade" && editing) { const on = e.target.checked; return editTick(editing.day, editing.key, row => { row.no_trade = on; }); }
@@ -2702,10 +2801,10 @@ window.addEventListener("drop", e => e.preventDefault());
 setInterval(() => {
   const t = currentTradingDay();
   if (t !== today) { if (selected === today) selected = t; today = t; weekStart = mondayOf(selected); }
-  if (screen === "app" && tab !== "admin") render();
+  if (screen === "app" && tab !== "admin" && document.visibilityState === "visible") autoRender();
 }, 60000);
 // While waiting for approval in a group, check every 20 seconds so the page opens as soon as you're approved.
-setInterval(() => { if (screen === "lobby" && session && myMemberships.some(m => m.status === "pending")) loadAll(); }, 20000);
+setInterval(() => { if (screen === "lobby" && session && navigator.onLine && myMemberships.some(m => m.status === "pending")) loadAll().catch(() => {}); }, 20000);
 
 // ---------------------------------------------------------------- pull down to refresh (phones)
 async function refreshNow() {
@@ -2854,27 +2953,44 @@ addEventListener("scroll", () => tour && placeTour(), { passive: true });
 // The last loaded group is kept on this device, so the app still opens without internet.
 // Ticks made without internet wait in an "outbox" on this device and upload when the connection is back.
 var offline = !navigator.onLine, offlineSince = null;   // var, not let: render() can run before this line
-const snapKey = () => "snap:" + (session ? session.user.id : "");
-function saveSnapshot() {
-  if (!session || !loaded || offlineSince) return;
-  const snap = { at: Date.now(), gid, groups, myMemberships, profile, isAppOwner, members, holidays: [...HOLIDAYS],
-    ticks: Object.values(ticks), reflections: Object.values(reflections) };
-  try { localStorage.setItem(snapKey(), JSON.stringify(snap)); }
-  catch (e) {   // too big for this device: keep the last 6 months
-    const cut = addDays(today, -183);
-    snap.ticks = snap.ticks.filter(r => r.day >= cut);
-    snap.reflections = snap.reflections.filter(r => r.week_start >= cut);
-    try { localStorage.setItem(snapKey(), JSON.stringify(snap)); } catch (e2) {}
-  }
+// Saved in IndexedDB (room for years of ticks); localStorage is kept small for note backups and the outbox.
+const snapKey = (g = gid) => "snap:" + (session ? session.user.id : "") + ":" + g;
+function idb() {
+  return new Promise((res, rej) => {
+    if (!("indexedDB" in window)) return rej(new Error("no IndexedDB"));
+    const r = indexedDB.open("lockedin", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("kv");
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
 }
-function restoreSnapshot() {
-  let snap = null;
-  try { snap = JSON.parse(localStorage.getItem(snapKey()) || "null"); } catch (e) {}
+async function idbDo(mode, fn) {
+  const db = await idb();
+  return new Promise((res, rej) => {
+    const tx = db.transaction("kv", mode), req = fn(tx.objectStore("kv"));
+    tx.oncomplete = () => res(req && req.result); tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error);
+  });
+}
+const idbGet = k => idbDo("readonly", st => st.get(k)).catch(() => null);
+const idbSet = (k, v) => idbDo("readwrite", st => st.put(v, k)).catch(() => {});
+const idbClear = () => idbDo("readwrite", st => st.clear()).catch(() => {});
+try { Object.keys(localStorage).filter(k => k.startsWith("snap:")).forEach(k => localStorage.removeItem(k)); } catch (e) {}   // old copies
+async function readSnapshot(g) {
+  const snap = await idbGet(snapKey(g));
+  return snap && snap.gid === g ? snap : null;
+}
+function saveSnapshot() {
+  if (!session || !loaded || offlineSince || !gid) return;
+  idbSet(snapKey(), { at: Date.now(), gid, groups, myMemberships, profile, isAppOwner, members, holidays: [...HOLIDAYS],
+    ticks: Object.values(ticks), reflections: Object.values(reflections), syncedAt });
+}
+async function restoreSnapshot() {
+  const snap = await readSnapshot(gid);
   if (!snap || !snap.groups) return false;
   gid = snap.gid; groups = snap.groups; myMemberships = snap.myMemberships; profile = snap.profile; isAppOwner = snap.isAppOwner;
-  members = snap.members; HOLIDAYS = new Set(snap.holidays || []);
+  members = snap.members; HOLIDAYS = new Set(snap.holidays || []); dateMemo.next.clear();
   ticks = {}; (snap.ticks || []).forEach(r => { ticks[r.day + "|" + r.member_key] = r; });
   reflections = {}; (snap.reflections || []).forEach(r => { reflections[r.week_start + "|" + r.member_key] = r; });
+  syncedAt = snap.syncedAt || null;
   applyGroupRules(group());
   isAdmin = canManageGroup(); people = [];
   applyOutbox();
@@ -2932,13 +3048,13 @@ function offlineBar() {
 }
 // Start: load from the server; if that's impossible, open the copy saved on this device.
 async function startLoad() {
-  if (!navigator.onLine && restoreSnapshot()) return;
+  if (!navigator.onLine && await restoreSnapshot()) return;
   try {
     await loadAll();
     loadPush();
   } catch (err) {
     if (isNetErr(err) || !navigator.onLine || /Couldn't load groups: (TypeError|Failed|Load failed)/i.test(err.message)) {
-      if (restoreSnapshot()) return;
+      if (await restoreSnapshot()) return;
       screen = "offline"; clearTimeout(loadTimer); return render();
     }
     throw err;
@@ -3023,8 +3139,16 @@ function showCrash(err) {
     <pre style="white-space:pre-wrap;font:12px/1.4 var(--font-data);color:var(--text-2);margin:10px 0">${esc(msg).slice(0, 1200)}</pre>
     <button class="btn plain small" onclick="location.reload()">Reload</button></div>`;
 }
-window.addEventListener("error", e => showCrash(e.error || e.message));
-window.addEventListener("unhandledrejection", e => showCrash(e.reason));
+// Once the app is running, a stray error (often just bad signal) shouldn't wipe the screen: show a short note instead.
+function softError(err) {
+  if (screen !== "app" || !loaded) return showCrash(err);
+  console.error(err);
+  const m = (err && err.message) || String(err);
+  error = isNetErr(err) ? "No connection. Changes are kept and retried." : "Something went wrong: " + m.slice(0, 80);
+  try { renderTop(); } catch (e) {}
+}
+window.addEventListener("error", e => softError(e.error || e.message));
+window.addEventListener("unhandledrejection", e => softError(e.reason));
 let loadTimer = null;
 function watchLoading() {
   clearTimeout(loadTimer);
