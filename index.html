@@ -14,9 +14,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="LockedIn">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500;600&family=Instrument+Serif:ital@0;1&display=swap">
+<link rel="stylesheet" href="vendor/fonts.css">
 <style>
   /* Layout: content cards scroll under floating glass bars (date bar on top, tab bar at the bottom on phones).
      Glass is only on those bars, never on content. Monitors get a two-column dashboard and no tab bar.
@@ -31,6 +29,7 @@
     --acc: #2563eb; --acc-lt: #1d4ed8; --acc-dk: #60a5fa;   /* the group's color (Admin → Group settings) */
     --accent: var(--acc); --accent-text: var(--acc-lt); --on-accent: #ffffff;
     --good: #28c840; --warn: #febc2e; --crit: #ff5f57; --on-good: #0a0a0b; --on-warn: #0a0a0b; --on-crit: #0a0a0b;
+    --crit-text: #c4271f;   /* red text that's readable on white (the bright red is for backgrounds) */
     --discord: #5865f2;
     --glass: rgba(255, 255, 255, 0.6); --glass-edge: rgba(10, 10, 11, 0.10); --glass-shade: rgba(0, 0, 0, 0.08);
     --glass-pill: rgba(10, 10, 11, 0.07); --glass-hi: rgba(255, 255, 255, 0.8);
@@ -47,6 +46,7 @@
       --text: #f5f5f7; --text-2: #c9c9d1; --muted: #9a9aa6;
       --accent: var(--acc); --accent-text: var(--acc-dk); --on-accent: #ffffff;
       --good: #28c840; --warn: #febc2e; --crit: #ff5f57; --on-good: #0a0a0b; --on-warn: #0a0a0b; --on-crit: #0a0a0b;
+      --crit-text: #ff7a73;
       --glass: rgba(255, 255, 255, 0.08); --glass-edge: rgba(255, 255, 255, 0.18); --glass-shade: rgba(0, 0, 0, 0.35);
       --glass-pill: rgba(255, 255, 255, 0.14); --glass-hi: rgba(255, 255, 255, 0.14);
       --glow-1: color-mix(in srgb, var(--acc) 22%, transparent); --glow-2: color-mix(in srgb, var(--acc-dk) 12%, transparent); --dots: rgba(255, 255, 255, 0.05);
@@ -60,6 +60,7 @@
       --text: #f5f5f7; --text-2: #c9c9d1; --muted: #9a9aa6;
       --accent: var(--acc); --accent-text: var(--acc-dk); --on-accent: #ffffff;
       --good: #28c840; --warn: #febc2e; --crit: #ff5f57; --on-good: #0a0a0b; --on-warn: #0a0a0b; --on-crit: #0a0a0b;
+      --crit-text: #ff7a73;
       --glass: rgba(255, 255, 255, 0.08); --glass-edge: rgba(255, 255, 255, 0.18); --glass-shade: rgba(0, 0, 0, 0.35);
       --glass-pill: rgba(255, 255, 255, 0.14); --glass-hi: rgba(255, 255, 255, 0.14);
       --glow-1: color-mix(in srgb, var(--acc) 22%, transparent); --glow-2: color-mix(in srgb, var(--acc-dk) 12%, transparent); --dots: rgba(255, 255, 255, 0.05);
@@ -96,6 +97,7 @@
   /* Same 12px gap between every card on a page (16px on monitors). */
   #app { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
   [hidden] { display: none !important; }
+  .sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent; }
   button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
 
@@ -119,7 +121,7 @@
   .topbar .mid b { display: block; font-size: 17px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .topbar .mid button { border: 0; background: none; color: var(--accent-text); font-size: 13px; font-weight: 600; padding: 2px 8px; min-height: 22px; cursor: pointer; }
   .topbar .mid small { display: block; font-size: 12px; color: var(--muted); }
-  .topbar small.err, .topbar .err { color: var(--crit); }
+  .topbar small.err, .topbar .err { color: var(--crit-text); }
   .round { width: 44px; height: 44px; border-radius: 50%; border: 0; background: transparent; font-size: 22px; cursor: pointer; display: grid; place-items: center; }
   .round:not(:disabled):active { background: var(--glass-pill); transform: scale(0.92); }
   .round:disabled { opacity: 0.3; cursor: default; }
@@ -135,13 +137,14 @@
                    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; color: var(--text-2); }
   .tabbar button svg { width: 22px; height: 22px; }
   .tabbar button span { font-size: 11px; font-weight: 600; }
-  .tabbar button[aria-selected="true"] { color: var(--accent-text); }
+  .tabbar button[aria-current="page"] { color: var(--text); }
+  .tabbar button[aria-current="page"] svg { color: var(--accent-text); }
   /* your Discord picture in place of the Me icon */
   .meav { display: inline-grid; place-items: center; flex: none; border-radius: 50%; overflow: hidden; background: var(--surface-2); }
   .meav img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .meav svg { width: 70%; height: 70%; }
   .tabbar button .meav { width: 24px; height: 24px; font-size: 0; box-shadow: 0 0 0 1.5px var(--line-strong); }
-  .tabbar button[aria-selected="true"] .meav { box-shadow: 0 0 0 2px var(--accent-text); }
+  .tabbar button[aria-current="page"] .meav { box-shadow: 0 0 0 2px var(--accent-text); }
   .topbar .end #toggleme .meav { width: 22px; height: 22px; margin-left: -6px; }
   .tabbar button:active { transform: scale(0.94); }
   .tabbar .badge { position: absolute; top: 6px; right: calc(50% - 20px); min-width: 16px; height: 16px; border-radius: 8px; padding: 0 4px;
@@ -150,7 +153,7 @@
   /* ---------- content (solid, no glass) ---------- */
   .card { background: var(--card); border: 1px solid var(--line); box-shadow: inset 0 1px 0 var(--card-hi); border-radius: 16px; padding: 16px; min-width: 0; }
   .msg { font-size: 14px; color: var(--text-2); margin: 0; }
-  .msg.err { color: var(--crit); }
+  .msg.err { color: var(--crit-text); }
 
   .track { position: relative; height: 6px; border-radius: 3px; background: var(--surface-2); }
   .track .fill { position: absolute; inset: 0 auto 0 0; border-radius: 3px; background: var(--muted); opacity: 0.6; }
@@ -314,7 +317,7 @@
   .btn.primary { background: var(--accent); color: var(--on-accent); }
   .btn.plain { background: var(--surface-2); color: var(--text); }
   .btn.small { min-height: 38px; padding: 0 16px; font-size: 14px; border-radius: 10px; }
-  .btn.danger { background: transparent; color: var(--crit); box-shadow: inset 0 0 0 1.5px var(--line); }
+  .btn.danger { background: transparent; color: var(--crit-text); box-shadow: inset 0 0 0 1.5px var(--line); }
 
   /* ---------- profile + achievements ---------- */
   .namebtn { border: 0; background: none; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; max-width: 100%;
@@ -367,7 +370,7 @@
   .ic { flex: none; vertical-align: -3px; }
   .ntag { display: inline-flex; align-items: center; gap: 4px; flex: none; font-size: 12px; font-weight: 600; color: var(--text-2); background: var(--surface-2); border-radius: 6px; padding: 1px 6px; }
   @media (max-width: 420px) { .ntag-text { display: none; } }
-  .time.urgent { color: var(--crit); }
+  .time.urgent { color: var(--crit-text); }
   @media (prefers-reduced-motion: no-preference) {
     .time.urgent { animation: pulse 1.6s ease-in-out infinite; }
     @keyframes pulse { 50% { opacity: 0.4; } }
@@ -385,7 +388,7 @@
   .reflect form + .rentry, .rentry:first-of-type { border-top: 0; }
   .rentry .who { display: flex; align-items: center; gap: 8px; font-weight: 600; margin-bottom: 6px; }
   .rentry .who small { font-weight: 400; color: var(--muted); }
-  .rentry h4 { margin: 6px 0 2px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .rentry h4, .rentry .rh { margin: 6px 0 2px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
   .rentry p { margin: 0; font-size: 15px; overflow-wrap: anywhere; white-space: pre-wrap; }
 
   /* ---------- rule breaks, settings, confetti ---------- */
@@ -411,7 +414,7 @@
   /* ---------- note save status, paste/drop, quick tick, day picker ---------- */
   .note-status { display: flex; align-items: center; gap: 6px; min-height: 20px; font-size: 12px; color: var(--muted); margin: 6px 2px 0; }
   .note-status.ok { color: var(--muted); }
-  .note-status.bad { color: var(--crit); font-weight: 600; }
+  .note-status.bad { color: var(--crit-text); font-weight: 600; }
   .note-status button { border: 0; background: none; color: var(--accent-text); font: 600 12px var(--font-ui); padding: 2px 4px; cursor: pointer; }
   .addpic small { font-size: 12px; font-weight: 500; color: var(--muted); }
   .panel.dropping { box-shadow: inset 0 0 0 3px var(--accent), 0 20px 60px var(--glass-shade); }
@@ -423,7 +426,7 @@
   .q b { display: block; font-size: 15px; font-weight: 600; line-height: 1.15; }
   .q small { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.08em; }
   .q[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-  .q[aria-pressed="true"] small { color: rgba(255, 255, 255, 0.78); }
+  .q[aria-pressed="true"] small { color: #fff; }
   .q[aria-pressed="true"] .qc { background: #fff; box-shadow: none; color: var(--accent); }
   .q:active { transform: scale(0.97); }
   .quick .qnote { width: 100%; margin-top: 8px; min-height: 44px; border-radius: 12px; border: 0; background: transparent; color: var(--accent-text);
@@ -449,7 +452,10 @@
     background: color-mix(in srgb, var(--warn) 16%, transparent); border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent); color: var(--text); }
   .offline-bar .ic { flex: none; color: var(--warn); }
   .offline-bar span { flex: 1; }
-  .sub-hint.bad { color: var(--crit); }
+  .sub-hint.bad { color: var(--crit-text); }
+  .datarow { display: flex; flex-wrap: wrap; gap: 8px; }
+  .btn.danger { color: var(--crit-text); }
+  .btn.danger.armed { background: var(--crit); color: #0a0a0b; }
   /* Front page (signed out): its own always-dark, cinematic look */
   body.landing { background: #000; padding: 0; }
   body.landing::after { display: none; }
@@ -541,7 +547,7 @@
   .versus { position: relative; display: grid; gap: 12px; margin-top: 48px; text-align: left; }
   .vcol { border-radius: 22px; padding: 26px; border: 1px solid var(--lp-line); background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)); }
   .vcol.us { border-color: rgba(96, 165, 250, 0.35); background: linear-gradient(180deg, rgba(96, 165, 250, 0.14), rgba(96, 165, 250, 0.03)); box-shadow: 0 30px 80px -30px rgba(96, 165, 250, 0.45); }
-  .vcol h3 { font-size: 26px; letter-spacing: -0.03em; margin: 12px 0 18px; font-weight: 600; }
+  .vcol h3, .lp .vcol h2 { font-size: 26px; line-height: 1.2; letter-spacing: -0.03em; margin: 12px 0 18px; font-weight: 600; }
   .vcol ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
   .vcol li { display: flex; gap: 12px; align-items: flex-start; font-size: 15.5px; line-height: 1.45; color: rgba(245, 245, 247, 0.82); }
   .vcol li b { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; margin-top: 1px; }
@@ -599,7 +605,7 @@
   .frow p { grid-column: 2; margin: 0; color: rgba(245, 245, 247, 0.68); font-size: 15.5px; line-height: 1.55; max-width: 52ch; }
   .lp-own { margin-top: 56px; border-radius: 24px; padding: 30px 26px; text-align: left; border: 1px solid var(--lp-line);
     background: radial-gradient(120% 140% at 100% 0%, rgba(37, 99, 235, 0.2), transparent 55%), rgba(255, 255, 255, 0.03); }
-  .lp-own h3 { font-size: clamp(26px, 4vw, 36px); letter-spacing: -0.035em; font-weight: 600; margin: 12px 0 10px; }
+  .lp-own h3, .lp .lp-own h2 { font-size: clamp(26px, 4vw, 36px); line-height: 1.1; letter-spacing: -0.035em; font-weight: 600; margin: 12px 0 10px; }
   .lp-own p { color: rgba(245, 245, 247, 0.72); margin: 0 0 20px; line-height: 1.55; max-width: 56ch; }
   .lp-final { position: relative; isolation: isolate; text-align: center; padding: 140px 20px 80px; overflow: hidden; }
   .lp-final h2 { font-size: clamp(46px, 10vw, 120px); line-height: 0.95; }
@@ -744,7 +750,7 @@
     .topbar .center { display: flex; align-items: center; gap: 6px; }
     .topbar .center b { font-size: 17px; font-weight: 600; min-width: 132px; text-align: center; }
     .topbar .end { justify-self: end; display: flex; align-items: center; gap: 10px; padding-right: 8px; font-size: 13px; color: var(--muted); }
-    .topbar .end button { border: 0; background: var(--glass-pill); color: var(--accent-text); font-size: 13px; font-weight: 600; border-radius: 10px; padding: 6px 12px; cursor: pointer; }
+    .topbar .end button { border: 0; background: var(--glass-pill); color: var(--text); font-size: 13px; font-weight: 600; border-radius: 10px; padding: 6px 12px; cursor: pointer; }
     .topbar .end button.on { background: var(--accent); color: var(--on-accent); }
     .topbar .end button { display: inline-flex; align-items: center; gap: 6px; }
     .topbar .end .gearbtn { position: relative; width: 34px; height: 34px; padding: 0; justify-content: center; }
@@ -786,14 +792,14 @@
   }
 </style>
 <script src="config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"></script>
+<script src="vendor/supabase-2.57.4.js"></script>
 </head>
 <body>
 <main>
   <div class="topbar glass" id="topbar" hidden></div>
   <div id="app"><div class="card"><p class="msg">Loading…</p></div></div>
 </main>
-<nav class="tabbar glass" id="tabbar" role="tablist" aria-label="View" hidden></nav>
+<nav class="tabbar glass" id="tabbar" aria-label="Pages" hidden></nav>
 <input type="file" id="shotinput" accept="image/*" multiple hidden>
 <input type="file" id="logoinput" accept="image/*" hidden>
 <div class="toast glass" id="toast" role="status" aria-live="polite" hidden></div>
@@ -808,7 +814,7 @@
     <div class="tour-actions"><button class="btn plain small" id="tour-back">Back</button><button class="btn primary small" id="tour-next">Next</button></div>
   </div>
 </div>
-<aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title" hidden></aside>
+<div class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title" hidden></div>
 <dialog id="viewer" aria-label="Picture">
   <div class="vtop"><div class="vcap" id="viewer-cap"></div><span class="vn" id="viewer-n"></span><button class="round" id="viewer-close" aria-label="Close"><svg class="sym" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.2 4.2 11.8 11.8M11.8 4.2 4.2 11.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
   <div class="vstage" id="viewer-stage"><img id="viewer-img" alt="" draggable="false"></div>
@@ -1401,10 +1407,15 @@ function openSettings() {
     <h3>Celebrations</h3>
     <label class="switchrow"><span><b>Confetti</b><small>When you complete your day.</small></span>
       <input type="checkbox" id="set-confetti" role="switch" ${settings.confetti !== false ? "checked" : ""}></label>
+    <h3>Your data</h3>
+    <p class="sub-hint">Download a copy of everything LockedIn stores about you, or delete your account.</p>
+    <div class="datarow"><button class="btn plain small" id="export-data">Download my data</button>
+      <button class="btn plain small danger" id="delete-account">Delete my account</button></div>
+    <p class="sub-hint" id="data-msg" role="status" aria-live="polite"></p>
     <p class="sub-hint legal-links"><a href="?p=privacy" data-land="privacy">Privacy policy</a> · <a href="?p=terms" data-land="terms">Terms</a></p>
     <button class="btn primary done" id="panel-done">Done</button>`;
   document.getElementById("scrim").hidden = false;
-  document.getElementById("panel").hidden = false;
+  document.getElementById("panel").hidden = false; panelOpened();
   document.body.style.overflow = "hidden";
   loadPush();
 }
@@ -1443,7 +1454,7 @@ function renderReflections() {
     const r = reflections[week + "|" + m.key];
     if (!r || !(r.went_well || r.to_fix)) return "";
     return `<div class="rentry"><div class="who">${avatarHtml(m, 24)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === me ? `<span class="you">YOU</span>` : ""}</div>
-      ${r.went_well ? `<h4>Went well</h4><p>${linkify(r.went_well)}</p>` : ""}${r.to_fix ? `<h4>To fix</h4><p>${linkify(r.to_fix)}</p>` : ""}</div>`;
+      ${r.went_well ? `<h3 class="rh">Went well</h3><p>${linkify(r.went_well)}</p>` : ""}${r.to_fix ? `<h3 class="rh">To fix</h3><p>${linkify(r.to_fix)}</p>` : ""}</div>`;
   }).join("");
   return `<div class="card reflect" id="reflect"><div class="cardhead"><h2>Weekly reflection · ${label}</h2></div>
     ${form}${entries || `<p class="empty">No reflections for this week yet.</p>`}</div>`;
@@ -1669,7 +1680,7 @@ function openPanel(day, key) {
       <input type="checkbox" id="panel-excused" role="switch" ${rec.excused ? "checked" : ""}></label>` : ""}
     <button class="btn primary done" id="panel-done">Done</button>`;
   document.getElementById("scrim").hidden = false;
-  panel.hidden = false;
+  panel.hidden = false; panelOpened();
   document.body.style.overflow = "hidden";
   renderPanelPics();
 }
@@ -1681,7 +1692,30 @@ function closePanel() {
   document.getElementById("scrim").hidden = true;
   document.body.style.overflow = "";
   render();
+  // keyboard users land back on the button that opened the window
+  const back = panelOpener && panelOpener.isConnected ? panelOpener : panelOpener && panelOpener.id && document.getElementById(panelOpener.id);
+  if (back && back.focus) back.focus({ preventScroll: true });
+  panelOpener = null;
 }
+// A window (note, Settings, Groups) takes keyboard focus and keeps it inside until it closes.
+let panelOpener = null;
+function panelOpened() {
+  const panel = document.getElementById("panel");
+  const a = document.activeElement;
+  if (!panelOpener && a && a !== document.body && !panel.contains(a)) panelOpener = a;
+  if (!panel.contains(a)) { const c = document.getElementById("panel-close"); if (c) c.focus({ preventScroll: true }); }
+}
+document.addEventListener("keydown", e => {
+  if (e.key !== "Tab") return;
+  const panel = document.getElementById("panel");
+  if (panel.hidden) return;
+  const items = [...panel.querySelectorAll('button, a[href], input, textarea, select, [tabindex]:not([tabindex="-1"])')].filter(x => !x.disabled && x.offsetParent !== null);
+  if (!items.length) return;
+  const first = items[0], last = items[items.length - 1];
+  if (!panel.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+  else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+});
 
 function renderPanelPics() {
   if (!editing) return;
@@ -1930,7 +1964,7 @@ function renderTabbar() {
   const list = tabsList(), labels = { day: "Day", week: "Week", board: "Ranking", admin: "Admin", me: "Me" };
   const i = Math.max(0, list.indexOf(tab));
   morph(bar, `<div class="pill" style="width:calc((100% - 10px) / ${list.length});transform:translateX(${i * 100}%)" aria-hidden="true"></div>` +
-    list.map(t => `<button role="tab" data-tab="${t}" aria-selected="${t === tab}" aria-label="${labels[t]}">${t === "admin" ? SVG.gear : t === "me" ? meIcon() : SVG[t]}<span>${labels[t]}</span>
+    list.map(t => `<button data-tab="${t}"${t === tab ? ' aria-current="page"' : ""} aria-label="${labels[t]}">${t === "admin" ? SVG.gear : t === "me" ? meIcon() : SVG[t]}<span>${labels[t]}</span>
       ${t === "admin" && pendingCount() ? `<i class="badge">${pendingCount()}</i>` : ""}</button>`).join(""));
 }
 
@@ -2019,7 +2053,7 @@ function renderWeek() {
       <button class="round" id="pw" aria-label="Previous week">‹</button>
       <span>${fmtDay(weekStart, { weekday: undefined })} – ${fmtDay(addDays(weekStart, 4), { weekday: undefined })}</span>
       <button class="round" id="nw" aria-label="Next week" ${weekStart >= mondayOf(today) ? "disabled" : ""}>›</button></div></div>` : "";
-  return `<div class="card">${head2}<div class="grid-wrap"><table class="grid"><thead><tr><th class="who"></th>${head}</tr></thead><tbody>${body}</tbody></table></div></div>`;
+  return `<div class="card">${head2}<div class="grid-wrap"><table class="grid"><thead><tr><th class="who"><span class="sr-only">Member</span></th>${head}</tr></thead><tbody>${body}</tbody></table></div></div>`;
 }
 
 // Everyone's points, streaks and badges. Remembered until the next change (the ranking asks for every member).
@@ -2135,13 +2169,13 @@ function renderProfile(key) {
   const ach = `<div class="card"><div class="cardhead"><h2>Achievements · ${earned}/${badges.length}</h2></div><div class="badges">
     ${order.map(b => `<div class="badge tier-${b.tier} ${b.earned ? "" : "locked"}" title="${esc(b.title)}">
       <div class="medal"><span>${ic(b.icon, 26)}</span></div><b>${esc(b.title)}</b>
-      ${b.earned ? `<small>${b.tier}</small>` : `<div class="bar" aria-label="${b.have} of ${b.goal}"><i style="width:${Math.round(100 * b.have / b.goal)}%"></i></div><small>${b.have}/${b.goal}</small>`}
+      ${b.earned ? `<small>${b.tier}</small>` : `<div class="bar" role="img" aria-label="${b.have} of ${b.goal}"><i style="width:${Math.round(100 * b.have / b.goal)}%"></i></div><small>${b.have}/${b.goal}</small>`}
     </div>`).join("")}</div></div>`;
 
   // Last 12 weeks, one column per week, Mon-Fri rows.
   const firstMon = addDays(mondayOf(today), -77);
   const weeksCols = Array.from({ length: 12 }, (_, i) => addDays(firstMon, i * 7));
-  const heatRows = [0, 1, 2, 3, 4].map(d => `<tr><th>${["Mon", "", "Wed", "", "Fri"][d]}</th>${weeksCols.map(mon => {
+  const heatRows = [0, 1, 2, 3, 4].map(d => `<tr><th>${["Mon", `<span class="sr-only">Tue</span>`, "Wed", `<span class="sr-only">Thu</span>`, "Fri"][d]}</th>${weeksCols.map(mon => {
     const k = addDays(mon, d);
     if (!isTradingDay(k) || k > today) return `<td><i class="none"></i></td>`;
     const st = statusOf(k, key);
@@ -2170,7 +2204,7 @@ function renderProfile(key) {
     .sort((a, b) => b.week_start.localeCompare(a.week_start)).slice(0, 4);
   const reflCard = refl.length ? `<div class="card reflect"><div class="cardhead"><h2>Weekly reflections</h2></div>${refl.map(r => `<div class="rentry">
       <div class="who"><small>Week of ${fmtDay(r.week_start, { weekday: undefined })}</small></div>
-      ${r.went_well ? `<h4>Went well</h4><p>${linkify(r.went_well)}</p>` : ""}${r.to_fix ? `<h4>To fix</h4><p>${linkify(r.to_fix)}</p>` : ""}</div>`).join("")}</div>` : "";
+      ${r.went_well ? `<h3 class="rh">Went well</h3><p>${linkify(r.went_well)}</p>` : ""}${r.to_fix ? `<h3 class="rh">To fix</h3><p>${linkify(r.to_fix)}</p>` : ""}</div>`).join("")}</div>` : "";
   return isWide()
     ? `<div class="desk"><div class="maincol">${head}${ach}</div><div class="side">${heat}${breaksCard}${journal}${reflCard}</div></div>`
     : head + ach + heat + breaksCard + journal + reflCard;
@@ -2381,7 +2415,7 @@ function openGroupsPanel() {
     ${canLeave ? `<h3>${esc(g.name)}</h3><button class="btn danger small" id="leave-group">Leave this group</button>` : ""}
     <button class="btn primary done" id="panel-done">Done</button>`;
   document.getElementById("scrim").hidden = false;
-  document.getElementById("panel").hidden = false;
+  document.getElementById("panel").hidden = false; panelOpened();
   document.body.style.overflow = "hidden";
 }
 
@@ -2460,7 +2494,7 @@ function renderLanding() {
       ${person("Alex", "#2563eb", [1, 1, 1])}${person("Sam", "#0e7490", [1, 1, 1])}${person("Riley", "#0d9488", [1, 1, 1])}${person("Morgan", "#ea580c", [1, 1, 1])}${person("Jordan", "#db2777", [1, 0, 1], true)}
     </div></div>`;
   const own = `<div class="lp-own rv">
-      <div><p class="mono">Run a trading group?</p><h3>Start your <span class="serif">own</span> group.</h3>
+      <div><p class="mono">Run a trading group?</p><h2>Start your <span class="serif">own</span> group.</h2>
         <p>Sign in and tap <b>Start your own group</b>. Once approved you get your own join code, homework boxes, points, time zone, color and logo. You decide who gets in.</p></div>
       ${signin("signin-own", "Sign in to start")}
     </div>`;
@@ -2470,10 +2504,10 @@ function renderLanding() {
       "Homework done alone quietly stops by Wednesday. A red circle next to your name, in front of your group, doesn't let it.") + `
     <section class="lp-sec center">
       <div class="versus" style="margin-top:0">
-        <div class="vcol them rv"><p class="mono">On your own</p><h3>Good intentions</h3><ul>
+        <div class="vcol them rv"><p class="mono">On your own</p><h2>Good intentions</h2><ul>
           ${li(SYM.x, "Skip the journal \"just today\"")}${li(SYM.x, "Nobody notices the missed days")}${li(SYM.x, "Repeat the same revenge trade next week")}${li(SYM.x, "Motivation gone by midweek")}</ul></div>
         <span class="vs rv d1">VS</span>
-        <div class="vcol us rv d2"><p class="mono">In a LockedIn group</p><h3>Proof, every day</h3><ul>
+        <div class="vcol us rv d2"><p class="mono">In a LockedIn group</p><h2>Proof, every day</h2><ul>
           ${li(SYM.check, "Everyone sees who's done before the cutoff")}${li(SYM.check, "Streaks you really don't want to break")}${li(SYM.check, "Notes and charts your group learns from")}${li(SYM.check, "A reminder before the day closes")}</ul></div>
       </div>
     </section>
@@ -2515,7 +2549,7 @@ function renderLanding() {
         ${row("03", "Streaks, points &amp; badges", "A ranking for your group, streaks for days in a row, and 31 badges to unlock.")}
         ${row("04", "Reminders", "A notification on your phone before the day closes, only if your homework isn't done yet.")}
         ${row("05", "Works like an app", "Add it to your home screen. It opens full screen and keeps working with bad signal.")}
-        ${row("06", "Private to your group", "Only your group sees your ticks, notes and pictures. Not other groups, not anyone else.")}
+        ${row("06", "Kept inside your group", "Other groups can't see your ticks, notes or pictures. Only your group, its owner and the app owner can.")}
       </div>
       ${own}
     </section>`;
@@ -2523,44 +2557,61 @@ function renderLanding() {
     const mail = cfg.contactEmail ? `<a href="mailto:${esc(cfg.contactEmail)}">${esc(cfg.contactEmail)}</a>` : "the contact email (added before launch)";
     const sec = (title, html) => `<section class="legal-sec"><h2>${title}</h2>${html}</section>`;
     const updated = `<p class="mono">Last updated 7 November 2026</p>`;
+    const ext = (href, label) => `<a href="${href}" target="_blank" rel="noopener noreferrer">${label}</a>`;
     body = page === "privacy" ? `<article class="legal">${updated}<h1>Privacy policy</h1>
-      <p class="legal-lead">This page explains what LockedIn stores about you, who can see it, and how to get it deleted.</p>
-      ${sec("Who runs LockedIn", `<p>LockedIn is run by Adam Batko, who decides how your data is used. Questions or requests: ${mail}.</p>`)}
+      <p class="legal-lead">This page explains what LockedIn stores about you, why, who can see it, and how to download or delete it.</p>
+      ${sec("Who is responsible", `<p>LockedIn is a free, non-commercial project run by Adam Batko, a private individual in Norway. He decides how your data is used (the "data controller"). Contact: ${mail}.</p>`)}
       ${sec("What we store", `<ul>
-        <li><b>From Discord, when you sign in:</b> your Discord username, profile picture, email address and Discord account ID. We never see your Discord password, messages or servers.</li>
+        <li><b>From Discord, when you sign in:</b> your Discord username, profile picture, email address and Discord account ID. LockedIn doesn't use your email address for anything and never emails you. We never see your Discord password, messages or servers.</li>
         <li><b>What you add:</b> your ticks, notes, rule-break tags, weekly reflections, screenshots, your settings, and requests to join or start a group.</li>
-        <li><b>Reminders, only if you turn them on:</b> a push address for that phone or computer (made by your browser's push service, such as Apple, Google or Mozilla) and how long before the cutoff you want to be reminded.</li>
-        <li><b>On your own device:</b> a copy of your group's data so the app opens without internet, unsent ticks, note backups and display settings. Signing out removes the copy of your group and unsent ticks.</li>
-      </ul><p>We don't use cookies or trackers for analytics or advertising. Your browser's storage is only used to keep you signed in and to make the app work offline.</p>`)}
+        <li><b>Reminders, only if you turn them on:</b> a push address for that phone or computer (made by your browser's push service, such as Apple, Google or Mozilla), how long before the cutoff you want a reminder, and a note of which reminders were sent.</li>
+      </ul>`)}
+      ${sec("Why, and the legal basis", `<ul>
+        <li><b>To run the app you signed up for</b> (your account, groups, ticks, notes, pictures, ranking): this is needed to provide the service (GDPR Article 6(1)(b)). Without it you can't use LockedIn.</li>
+        <li><b>Reminders:</b> only with your consent, given when you switch them on (Article 6(1)(a)). Switch them off in Settings at any time.</li>
+        <li><b>Keeping the service safe and working</b>, for example the technical logs our providers keep: our legitimate interest in a secure service (Article 6(1)(f)).</li>
+      </ul><p>We don't sell your data, show ads, build profiles of you, or make automated decisions about you.</p>`)}
       ${sec("Who can see it", `<ul>
         <li><b>Your group</b> sees your name, picture, ticks, notes, screenshots, reflections, streaks and badges.</li>
         <li><b>Your group's owner and admins</b> can also approve or remove members, excuse days and correct ticks.</li>
         <li><b>The app owner</b> (Adam Batko) can see every group, to run and support the service.</li>
-        <li><b>Other groups</b> can't see anything of yours. We don't sell your data and there are no ads.</li>
+        <li><b>Other groups</b> can't see anything of yours.</li>
       </ul>`)}
-      ${sec("Services that handle your data for us", `<ul>
-        <li><b>Supabase:</b> database, sign-in, screenshot storage and sending reminders.</li>
-        <li><b>Discord:</b> sign-in.</li>
-        <li><b>GitHub Pages:</b> hosts the website.</li>
-        <li><b>jsDelivr and Google Fonts:</b> deliver code and fonts the website uses.</li>
-        <li><b>Your browser's push service:</b> delivers reminders.</li>
-      </ul><p>Like any website, these services receive your IP address when your browser contacts them.</p>`)}
-      ${sec("How long we keep it", `<p>Your account data, ticks, notes and screenshots are kept while you use LockedIn. Screenshots you delete are removed. The record of which reminders were sent is deleted after 7 days. If you ask us to delete your account, we delete your data from the database.</p>`)}
-      ${sec("Your rights", `<p>You can ask to see, correct, export or delete your data at any time by writing to ${mail}. If you live in the EU or EEA you can also complain to your data protection authority (in Norway: Datatilsynet).</p>`)}
-      ${sec("Age", `<p>You need to be old enough to have a Discord account (at least 13) to use LockedIn.</p>`)}
-      ${sec("Changes", `<p>If this policy changes, we update this page and the date at the top.</p>`)}
+      ${sec("Services that handle data for us", `<ul>
+        <li><b>Supabase</b> (database, sign-in, screenshot storage, sending reminders): ${ext("https://supabase.com/privacy", "Supabase privacy policy")}</li>
+        <li><b>Discord</b> (sign-in): ${ext("https://discord.com/privacy", "Discord privacy policy")}</li>
+        <li><b>GitHub Pages</b> (hosts the website; receives your IP address when the page loads): ${ext("https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement", "GitHub privacy statement")}</li>
+        <li><b>Your browser's push service</b> (delivers reminders, only if you turn them on).</li>
+      </ul><p>Some of these companies are based in the United States, so your data may be transferred there. They protect these transfers with the legal safeguards described in their privacy policies, such as the EU Standard Contractual Clauses. Fonts and code are hosted on our own site, so no other companies are contacted when you open LockedIn.</p>`)}
+      ${sec("Cookies and storage on your device", `<p>LockedIn doesn't use cookies for tracking, analytics or advertising. It stores only what's needed for features you use, in your browser's storage:</p>
+      <ul>
+        <li><b>Your sign-in</b>, so you stay signed in.</li>
+        <li><b>A copy of your group's data and ticks not uploaded yet</b>, so the app works without internet.</li>
+        <li><b>Backups of notes you're typing</b>, so a closed tab doesn't lose them.</li>
+        <li><b>Your choices</b>, such as light or dark mode, your last tab and group, reminder timing and which badges you've seen.</li>
+        <li><b>A copy of the website's files</b>, so it opens quickly and offline.</li>
+      </ul><p>Because all of this is needed for the app to work, we don't ask for cookie consent. Signing out removes your sign-in, the copy of your group and unsent ticks. Deleting your account removes the rest from that device.</p>`)}
+      ${sec("How long we keep it", `<p>Your data is kept while you have an account. Screenshots you delete are removed. The record of which reminders were sent is deleted after 7 days. When you delete your account, your account, ticks, notes, reflections, pictures, settings and reminder devices are deleted. Group owners can also remove members.</p>`)}
+      ${sec("Your rights", `<ul>
+        <li><b>See and download</b> your data: Settings → Your data → Download my data.</li>
+        <li><b>Delete</b> your account and data: Settings → Your data → Delete my account.</li>
+        <li><b>Correct, restrict or object</b> to how your data is used, or <b>withdraw consent</b> for reminders: switch reminders off in Settings, or write to ${mail}.</li>
+      </ul><p>If you think we handle your data wrongly, you can complain to your data protection authority. In Norway that's ${ext("https://www.datatilsynet.no/en/", "Datatilsynet")}.</p>`)}
+      ${sec("Age", `<p>You must be at least 13 to use LockedIn, the same as Discord's minimum age. If you're under 13, don't sign in. If we learn that someone under 13 has an account, we delete it.</p>`)}
+      ${sec("Changes", `<p>If this policy changes, we update this page and the date at the top. For big changes we'll also tell you in the app.</p>`)}
     </article>` : `<article class="legal">${updated}<h1>Terms</h1>
       <p class="legal-lead">These terms apply when you use LockedIn. By signing in you agree to them.</p>
-      ${sec("What LockedIn is", `<p>LockedIn is a free tool for trading groups to track daily homework (such as charts, journals and higher-timeframe analysis) together. It is run by Adam Batko.</p>`)}
+      ${sec("What LockedIn is", `<p>LockedIn is a free tool for trading groups to track daily homework (such as charts, journals and higher-timeframe analysis) together. It is a non-commercial project run by Adam Batko, a private individual in Norway. Contact: ${mail}.</p>`)}
+      ${sec("Price", `<p>LockedIn is free. There are no payments, subscriptions or hidden fees, so there is nothing to refund. If that ever changes, you'll be told clearly before paying for anything.</p>`)}
       ${sec("Not financial advice", `<p>Nothing in LockedIn is financial or investment advice. Trading carries risk of loss. You are responsible for your own trading decisions.</p>`)}
       ${sec("Your account", `<ul>
-        <li>You sign in with your own Discord account and need to be at least 13.</li>
+        <li>You sign in with your own Discord account and must be at least 13.</li>
         <li>One account per person. Don't use someone else's account or name.</li>
       </ul>`)}
       ${sec("Groups", `<p>Each group's owner decides who joins, which homework counts and the group's settings. Group owners and admins can approve and remove members, excuse days and correct ticks. The app owner can pause or delete any group.</p>`)}
       ${sec("What you post", `<p>You keep ownership of your notes and screenshots. You allow LockedIn to store them and show them to your group so the app works. Don't post anything illegal, other people's private information, harassment, or anything that harms the app or its users. Content or accounts that break these rules can be removed.</p>`)}
-      ${sec("Availability", `<p>LockedIn is free and provided as it is, without guarantees. It may change, have downtime or stop. Keep your own copies of anything important. As far as the law allows, we are not responsible for losses caused by using the app.</p>`)}
-      ${sec("Stopping", `<p>You can stop using LockedIn at any time and ask us to delete your data at ${mail}. We can end access for anyone who breaks these terms.</p>`)}
+      ${sec("Availability", `<p>LockedIn is provided as it is, without guarantees. It may change, have downtime or stop. Keep your own copies of anything important (Settings → Your data → Download my data). As far as the law allows, we are not responsible for losses caused by using the app.</p>`)}
+      ${sec("Stopping", `<p>You can stop using LockedIn at any time and delete your account in Settings. We can end access for anyone who breaks these terms.</p>`)}
       ${sec("Changes and contact", `<p>If these terms change, we update this page and the date at the top. Questions: ${mail}.</p>`)}
     </article>`;
   }
@@ -2608,7 +2659,7 @@ function renderLanding() {
     </section>`}
     <footer class="lp-foot">
       <span class="foot-links">${inApp ? link("home", "Back to the app") : link("home", "Home") + link("why", "Why") + link("how", "How it works") + link("features", "Features")}${link("privacy", "Privacy")}${link("terms", "Terms")}</span>
-      <p>Signing in with Discord only shares your Discord name, profile picture and email address with LockedIn. We never see your messages, servers or password.</p></footer>
+      <p>Signing in with Discord shares your Discord username, profile picture, email address and account ID with LockedIn. We never see your messages, servers or password. LockedIn is a free project run by Adam Batko, Norway.${cfg.contactEmail ? ` Contact: <a href="mailto:${esc(cfg.contactEmail)}">${esc(cfg.contactEmail)}</a>` : ""}</p></footer>
   </div>`;
 }
 // Fade sections in as they scroll into view (everything shows at once if motion is reduced).
@@ -2655,7 +2706,8 @@ function render() {
   } else if (tab === "week") html = renderWeek() + renderReflections();
   else if (tab === "board") html = renderBoard();
   else { const d = renderDay(); html = d.summary + d.list; }
-  morph(app, offlineBar() + html);
+  const pageName = profileKey ? ((members.find(x => x.key === profileKey) || {}).name || "Profile") : { day: "Day", week: "Week", board: "Ranking", admin: "Admin", me: "Me" }[tab] || "Day";
+  morph(app, `<h1 class="sr-only">${esc(pageName)}, ${esc((group() || {}).name || "LockedIn")}</h1>` + offlineBar() + html);
   renderPanelPics();
   checkUnlocks();
   // A picture's link may arrive after the viewer opened.
@@ -2690,6 +2742,8 @@ document.addEventListener("click", async e => {
   if (d.tick) { const [key, r] = d.tick.split(":"); return editTick(selected, key, row => { row[r] = !row[r]; }); }
   if (d.edit) return openPanel(selected, d.edit);
   if (t.id === "open-settings") return openSettings();
+  if (t.id === "export-data") return exportMyData();
+  if (t.id === "delete-account") return deleteMyAccount(t);
   if (d.remind) {
     remindMins = +d.remind;
     try { localStorage.setItem("remindMins", d.remind); } catch (e) {}
@@ -3255,6 +3309,45 @@ function remindHtml() {
 }
 function renderRemind() { const el = document.getElementById("remind-box"); if (el) el.innerHTML = remindHtml(); }
 if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("sw.js").catch(() => {});
+
+// ---------------------------------------------------------------- your data (download / delete)
+function dataMsg(text, bad) { const el = document.getElementById("data-msg"); if (el) { el.textContent = text; el.classList.toggle("bad", !!bad); } }
+const notSetUp = m => /function|schema cache/i.test(m) ? "This isn't set up yet (database update 11)." : m;
+async function exportMyData() {
+  dataMsg("Preparing your file…");
+  const { data, error: e } = await sb.rpc("export_my_data");
+  if (e) return dataMsg(notSetUp(e.message), true);
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = `lockedin-my-data-${today}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  dataMsg("Downloaded.");
+}
+async function deleteMyAccount(btn) {
+  if (!btn.classList.contains("armed")) {
+    btn.classList.add("armed"); btn.textContent = "Tap again to delete everything";
+    dataMsg("This deletes your account, ticks, notes, reflections and pictures for good. It can't be undone.", true);
+    return;
+  }
+  btn.disabled = true; dataMsg("Deleting…");
+  const paths = await sb.rpc("my_screenshot_paths");
+  if (paths.error) { btn.disabled = false; return dataMsg(notSetUp(paths.error.message), true); }
+  const list = (paths.data || []).map(x => typeof x === "string" ? x : x.my_screenshot_paths).filter(Boolean);
+  for (let i = 0; i < list.length; i += 100) {
+    const { error: e } = await sb.storage.from("screenshots").remove(list.slice(i, i + 100));
+    if (e) { btn.disabled = false; return dataMsg("Couldn't delete your pictures: " + e.message + ". Nothing else was deleted. Try again.", true); }
+  }
+  const { error: e } = await sb.rpc("delete_my_account");
+  if (e) { btn.disabled = false; return dataMsg(notSetUp(e.message), true); }
+  if (push.sub) try { await push.sub.unsubscribe(); } catch (err) {}
+  try { Object.keys(localStorage).filter(k => /^(draft:|badges:|outbox|remindMins|group|tab|mnq-settings)/.test(k)).forEach(k => localStorage.removeItem(k)); } catch (err) {}
+  await idbClear();
+  closePanel();
+  await sb.auth.signOut();
+  error = "Your account and data were deleted.";
+  screen = "signin"; render();
+}
 
 // ---------------------------------------------------------------- errors
 // If something breaks, show what went wrong (and a reload button) instead of an endless "Loading…".

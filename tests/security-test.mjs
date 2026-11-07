@@ -1,7 +1,7 @@
 // Security test for supabase/*.sql. Run:  cd tests && npm install --no-save @electric-sql/pglite@0.2.17 http_ece@1.2.0 && node security-test.mjs
 // Loads setup.sql + every update into an in-memory Postgres that mimics Supabase, then tries to break the rules.
 // Updates 2-8 are tested first (one group), then update 9 (groups) is loaded on top of that data and tested,
-// then update 10 (reminders; everything above its SCHEDULE part, which needs Supabase's pg_cron).
+// then update 10 (reminders; everything above its SCHEDULE part, which needs Supabase's pg_cron), then update 11 (your data).
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -449,6 +449,42 @@ r = await as("sid", `select * from public.push_subscriptions`);
 ok(r.rows.length === 0, "the old owner of that phone no longer gets its reminders");
 r = await as("eddie", `delete from public.push_subscriptions where endpoint like '%sid-phone'`);
 ok(!r.error && r.count === 1, "you can turn off reminders on your own device");
+
+// ================================================================ update 11: download and delete your data
+await db.exec(`alter table auth.users add column if not exists email text; update auth.users set email = 'e' || substr(id::text, 36) || '@example.com';`);
+await db.exec(readFileSync(dir + "update-11-your-data.sql", "utf8"));
+console.log("\nloaded: update-11-your-data.sql");
+section("your data: download");
+r = await as("sid", `select public.export_my_data() d`);
+ok(!r.error && r.rows[0].d.account.user_id === U.sid && r.rows[0].d.account.email, "you can download your account details");
+ok(r.rows[0] && r.rows[0].d.ticks.length > 0 && r.rows[0].d.ticks.every(t => t.member_key === "sid" && !("updated_by" in t)), "the download has your ticks and only yours");
+ok(r.rows[0] && r.rows[0].d.groups.some(g => g.group === "LockedIn"), "the download lists your groups");
+ok(!!(await as("anon", `select public.export_my_data()`)).error, "signed-out visitors can't download anything");
+
+section("your data: delete your account");
+ok(!!(await as("batko", `select public.delete_my_account()`)).error, "the app owner can't delete their account by accident");
+await db.query(`select public.make_group('Eddie Crew', $1)`, [U.eddie]);
+r = await as("eddie", `select public.delete_my_account()`);
+ok(!!r.error && /own a group/.test(r.error), "a group owner must hand over their group first");
+await db.exec(`delete from public.groups where name = 'Eddie Crew'`);
+await db.query(`insert into public.ticks (day, member_key, journal) values ('2026-01-05', 'eddie', true) on conflict do nothing`);
+await db.query(`insert into storage.objects (bucket_id, name) values ('screenshots', '2026-01-05/eddie/1.jpg'), ('screenshots', '2026-01-06/eddie/2.jpg')`);
+r = await as("sid", `delete from storage.objects where name = '2026-01-05/eddie/1.jpg'`);
+ok(!r.error && r.count === 0, "nobody can delete someone else's old pictures");
+r = await as("eddie", `delete from storage.objects where name = '2026-01-05/eddie/1.jpg'`);
+ok(!r.error && r.count === 1, "you can delete your own old pictures (needed to delete your account)");
+await sub("eddie", "eddie-laptop", 60);
+const sidBefore = (await one(`select count(*)::int n from public.ticks where member_key = 'sid'`)).n;
+r = await as("eddie", `select public.delete_my_account()`);
+ok(!r.error, "a member can delete their account");
+ok((await one(`select count(*)::int n from auth.users where id = $1`, [U.eddie])).n === 0, "the sign-in account is gone");
+ok((await one(`select count(*)::int n from public.ticks where member_key = 'eddie'`)).n === 0, "their ticks and notes are gone");
+ok((await one(`select count(*)::int n from public.members where key = 'eddie'`)).n === 0, "their name is gone from the group");
+ok((await one(`select count(*)::int n from public.memberships where user_id = $1`, [U.eddie])).n === 0, "their group memberships are gone");
+ok((await one(`select count(*)::int n from public.push_subscriptions where user_id = $1`, [U.eddie])).n === 0, "their reminder devices are gone");
+ok((await one(`select count(*)::int n from public.profiles where user_id = $1`, [U.eddie])).n === 0, "their profile is gone");
+ok((await one(`select count(*)::int n from public.ticks where member_key = 'sid'`)).n === sidBefore, "everyone else's ticks are untouched");
+ok(!!(await as("anon", `select public.delete_my_account()`)).error, "signed-out visitors can't delete anything");
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

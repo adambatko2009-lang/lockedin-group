@@ -2,10 +2,14 @@
 // 1. Keeps a copy of the website on the phone, so the app opens without internet.
 // 2. Shows the reminder notifications sent by supabase/functions/send-reminders.
 // Change VERSION when you change this file's list of files, so phones throw the old copy away.
-const VERSION = "lockedin-2";
+const VERSION = "lockedin-3";
 const FILES = ["./", "index.html", "config.js", "manifest.webmanifest",
   "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png", "icons/favicon-64.png", "icons/favicon-128.png",
-  "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js"];
+  "vendor/supabase-2.57.4.js", "vendor/fonts.css",
+  "vendor/fonts/geist-normal-latin-ext-0.woff2", "vendor/fonts/geist-normal-latin-1.woff2",
+  "vendor/fonts/geist-mono-normal-latin-ext-2.woff2", "vendor/fonts/geist-mono-normal-latin-3.woff2",
+  "vendor/fonts/instrument-serif-italic-latin-ext-4.woff2", "vendor/fonts/instrument-serif-italic-latin-5.woff2",
+  "vendor/fonts/instrument-serif-normal-latin-ext-6.woff2", "vendor/fonts/instrument-serif-normal-latin-7.woff2"];
 
 self.addEventListener("install", e => {
   // One missing file shouldn't stop the rest from being saved.
@@ -19,8 +23,7 @@ self.addEventListener("fetch", e => {
   const req = e.request, url = new URL(req.url);
   if (req.method !== "GET") return;
   const ours = url.origin === self.location.origin;
-  const shared = ["cdn.jsdelivr.net", "fonts.googleapis.com", "fonts.gstatic.com"].includes(url.hostname);
-  if (!ours && !shared) return;   // Supabase (sign-in, ticks, pictures) always goes straight to the internet
+  if (!ours) return;   // Supabase (sign-in, ticks, pictures) always goes straight to the internet
   if (ours && (req.mode === "navigate" || /\.(html|js|webmanifest)$/.test(url.pathname))) {
     // The website itself: the newest version from the internet, the saved copy when offline.
     const key = req.mode === "navigate" ? "./" : url.pathname.split("/").pop();
@@ -31,7 +34,7 @@ self.addEventListener("fetch", e => {
     }).catch(() => caches.match(key).then(r => r || caches.match("./"))));
     return;
   }
-  // Icons, fonts and the Supabase library don't change: use the saved copy, fetch once if missing.
+  // Icons and fonts don't change: use the saved copy, fetch once if missing.
   e.respondWith(caches.match(req).then(r => r || fetch(req).then(res => {
     if (res.ok || res.type === "opaque") { const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); }
     return res;
