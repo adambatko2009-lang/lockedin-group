@@ -508,6 +508,7 @@
   .lp .fine { font-size: 13px; color: var(--lp-2); margin: 16px 0 0; }
   .cue { position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; }
   .cue i { width: 1px; height: 38px; background: linear-gradient(#fff, transparent); transform-origin: top; animation: cue 2.2s ease-in-out infinite; }
+  @media (max-height: 760px) { .cue { display: none; } }
   @keyframes cue { 0% { transform: scaleY(0); opacity: 1; } 70% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1); opacity: 0; } }
   .lp-sec { scroll-margin-top: 40px; position: relative; max-width: 1120px; margin: 0 auto; padding: 96px 20px; }
   .lp-sec.center { text-align: center; }
@@ -2348,7 +2349,7 @@ function renderLanding() {
       <div>
         <p class="mono rv in">Built for serious traders</p>
         <h1 class="rv in d1">Where trading groups <span class="serif">level up together.</span></h1>
-        <p class="lead rv in d2">Daily homework, streaks and accountability for trading groups on Discord. Everyone ticks off their chart, journal and HTF, and everyone sees who did.</p>
+        <p class="lead rv in d2">Daily homework, streaks and accountability for your Discord group. Everyone ticks off their chart, journal and HTF, and everyone sees who did.</p>
         <div class="lp-cta rv in d3">${signin()}${link("how", "See how it works", "lp-btn ghost")}</div>
         ${errMsg}
         <p class="fine rv in d3">Free. You'll need a join code from your group's owner.</p>
