@@ -18,8 +18,12 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
 | `supabase/update-7-custom-rulebreaks.sql` | Lets members add their own rule-break tags (run once, after update 6) |
 | `supabase/update-8-long-notes.sql` | Removes the 140-character note limit (run once, after update 7) |
 | `supabase/update-9-groups.sql` | Many groups: join codes, group owners, group settings (run once, after update 8) |
+| `supabase/update-10-reminders.sql` | Reminder notifications (run once, after update 9; see "Reminders" below) |
+| `supabase/functions/send-reminders/index.ts` | Sends the reminders. Lives in Supabase (Edge Functions), not on the website |
+| `sw.js` | Background helper: the app opens without internet, and shows reminders |
 | `manifest.webmanifest`, `icons/` | App icon for "Add to Home Screen" |
-| `tests/security-test.mjs` | Checks every database rule (not needed on GitHub; see the first line for how to run it) |
+| `secrets/` | Your private reminder key. **Never uploaded** (git ignores it). Don't share it |
+| `tests/` | Checks every database rule and the reminder sender (see the first line of each file for how to run) |
 
 **Who can do what** (enforced by the database itself, so it can't be bypassed from the website):
 
@@ -85,6 +89,42 @@ The result should show one row with your Discord name. Reload the website: you'r
 
 ### 9. Share it
 Post the website link in the Discord channel. When someone signs in, they show up in **Admin → Waiting for approval** (with a red number on the Admin tab). Pick their name → **Approve**.
+
+---
+
+## Publishing changes (GitHub Desktop)
+
+This folder is connected to GitHub, with a history of every change. Use this instead of uploading files on github.com.
+
+1. Open **GitHub Desktop** → **File → Add Local Repository** → choose this `mnq-homework` folder → **Add Repository** (only the first time).
+2. Saved changes show under **History**. Click **Push origin** (top right). The website updates in about a minute.
+3. **Something broke?** **History** → right-click the change that broke it → **Revert Changes in Commit** → **Push origin**. The site goes back to how it was.
+
+If you ever do upload on github.com again, click **Fetch origin** → **Pull origin** in GitHub Desktop afterwards, so both stay the same.
+
+## Reminders (one-time setup)
+
+Members get a notification if their homework isn't done before the day closes (they pick 30 min, 1, 2 or 3 hours before).
+
+1. **Database:** Supabase → **SQL Editor** → **New query** → paste everything from `supabase/update-10-reminders.sql` → **Run**.
+   - If it says `pg_cron` or `pg_net` isn't available: **Database → Extensions** → switch on **pg_cron** and **pg_net** → run it again.
+2. **The sender:** Supabase → **Edge Functions** → **Deploy a new function** → **Via Editor**.
+   Name it exactly `send-reminders`, delete the example code, paste everything from `supabase/functions/send-reminders/index.ts` → **Deploy**.
+   Then open the function → **Details** (or Settings) → switch **off** "Enforce JWT verification" / "Verify JWT" → **Save**.
+   *(Safe: calling it can only send reminders that are due anyway, once.)*
+3. **The keys:** Supabase → **Edge Functions** → **Secrets** → add these three, copying name and value from `secrets/reminder-keys.txt` on your computer:
+   `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` → **Save**. Never paste the private key anywhere else.
+4. **Publish** the website (see above).
+5. **Try it:** Me → Settings → Reminders → switch on → **Allow**. You get a "Reminders are on" notification.
+   - **iPhone:** reminders only work in the app from the Home Screen (Safari → Share → Add to Home Screen), iOS 16.4 or newer.
+   - Check the sender: Supabase → Edge Functions → send-reminders → **Logs**. Every 5 minutes it runs and shows how many were sent.
+
+## Without internet
+
+The app keeps a copy of the website and of the last loaded group on each phone, so it opens without internet.
+Ticks made offline are kept on the phone and upload when the connection is back (a yellow bar shows this).
+If the day closed before they're back online, the tick can't be saved, and the app says so.
+Pictures need internet. Signing out removes the saved copy from that phone.
 
 ---
 

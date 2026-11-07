@@ -388,6 +388,7 @@
   .tagpick button:active { transform: scale(0.96); }
   .panel .sub-hint { font-size: 13px; color: var(--muted); margin: -4px 0 10px; }
   .segset { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; background: var(--surface-2); border-radius: 11px; padding: 3px; }
+  .segset.four { grid-template-columns: repeat(4, 1fr); margin-top: 8px; }
   .segset button { min-height: 38px; border: 0; border-radius: 8px; background: transparent; color: var(--text-2); font-size: 15px; font-weight: 600; cursor: pointer; }
   .segset button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22); }
   .bcount { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -433,6 +434,11 @@
   .topbar .mid .gname { display: flex; width: fit-content; max-width: 100%; font-size: 12px; line-height: 16px; margin: 1px auto 0; padding: 0; min-height: 0; color: var(--text-2); font-weight: 600; }
   .topbar .mid .gname .glogo { border-radius: 30%; }
   .gate.lobby { max-width: 420px; }
+  .offline-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.4;
+    background: color-mix(in srgb, var(--warn) 16%, transparent); border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent); color: var(--text); }
+  .offline-bar .ic { flex: none; color: var(--warn); }
+  .offline-bar span { flex: 1; }
+  .sub-hint.bad { color: var(--crit); }
   /* Front page (signed out) */
   .land { max-width: 920px; width: 100%; margin: 0 auto; padding: 4vh 0 40px; display: flex; flex-direction: column; gap: 44px; }
   .land-hero { display: grid; gap: 28px; align-items: center; }
@@ -868,6 +874,7 @@ async function openGroup(id) {
   HOLIDAYS = new Set((h.data || []).map(r => r.day));
   ticks = {};
   (t.data || []).forEach(r => { ticks[r.day + "|" + r.member_key] = r; });
+  applyOutbox();
   today = currentTradingDay();
   if (changed || selected > today || !isTradingDay(selected)) selected = today;
   weekStart = mondayOf(selected);
@@ -883,8 +890,11 @@ async function openGroup(id) {
   if (changed) profileKey = null;
   if (!isAdmin && tab === "admin") tab = "day";
   loaded = true; screen = "app";
+  offlineSince = null;
   subscribe();
   render();
+  if (!failed) saveSnapshot();
+  flushOutbox();
   maybeStartTour();
 }
 
@@ -963,10 +973,17 @@ async function saveTick(id) {
   const body = { day: row.day, member_key: row.member_key, chart: !!row.chart, journal: !!row.journal, review: !!row.review, social: !!row.social, box5: !!row.box5, box6: !!row.box6, note: row.note || "", images: row.images || [], excused: !!row.excused, no_trade: !!row.no_trade, rule_breaks: row.rule_breaks || [] };
   saving++; noteState[id] = "saving"; renderTop();
   let e;
-  try { ({ error: e } = await sb.from("ticks").upsert(body, { onConflict: "day,member_key" })); }
-  catch (err) { e = { message: "no connection" }; }
+  if (!navigator.onLine) e = { message: "offline" };
+  else try { ({ error: e } = await sb.from("ticks").upsert(body, { onConflict: "day,member_key" })); }
+  catch (err) { e = { message: "network: " + err.message }; }
   saving--;
   delete pending[id];
+  if (e && isNetErr(e)) {
+    // No internet: keep it on this device and upload it when the connection is back.
+    const o = getOutbox(); o[id] = body; putOutbox(o);
+    noteState[id] = "offline"; offline = !navigator.onLine;
+    return render();
+  }
   if (e) {
     error = e.code === "42501" || /row-level security/i.test(e.message)
       ? "Not saved: this day is closed or the row isn't yours."
@@ -977,6 +994,9 @@ async function saveTick(id) {
     if (data) ticks[id] = data; else delete ticks[id];
   } else {
     error = "";
+    const o = getOutbox();
+    if (o[id]) { delete o[id]; putOutbox(o); }   // this newer save replaces one that waited offline
+    flushOutbox();
     // If you kept typing while this was saving, the next save is already queued.
     noteState[id] = ticks[id] && (ticks[id].note || "") !== body.note ? "saving" : "saved";
     const d = getDraft(id);
@@ -1001,9 +1021,10 @@ function renderNoteStatus() {
   const el = document.getElementById("note-status");
   if (!el || !editing) return;
   const id = editing.day + "|" + editing.key, st = noteState[id];
-  el.className = "note-status " + (st === "error" ? "bad" : st === "saved" ? "ok" : "");
+  el.className = "note-status " + (st === "error" ? "bad" : st === "saved" || st === "offline" ? "ok" : "");
   el.innerHTML = st === "saving" ? "Saving…"
     : st === "saved" ? `${ic("check", 14)}Saved`
+    : st === "offline" ? `${ic("check", 14)}Saved on this device. Uploads when you're back online.`
     : st === "error" ? `Not saved yet. Your text is kept on this device. <button id="note-retry">Try again</button>`
     : "";
 }
@@ -1132,6 +1153,7 @@ function openSettings() {
     <h3>Appearance</h3>
     <div class="segset" role="group" aria-label="Appearance">${opt("system", "System")}${opt("light", "Light")}${opt("dark", "Dark")}</div>
     <p class="sub-hint" style="margin-top:8px">Dark is the default. System follows your phone or computer.</p>
+    <div id="remind-box">${remindHtml()}</div>
     <h3>My rule breaks</h3>
     <div id="settings-breaks">${customBreaksListHtml()}</div>
     ${installHtml()}
@@ -1144,6 +1166,7 @@ function openSettings() {
   document.getElementById("scrim").hidden = false;
   document.getElementById("panel").hidden = false;
   document.body.style.overflow = "hidden";
+  loadPush();
 }
 
 // ---------------------------------------------------------------- weekly reflection
@@ -2096,6 +2119,8 @@ function renderGate() {
   const avatar = session && session.user.user_metadata && session.user.user_metadata.avatar_url;
   if (screen === "setup") return `<div class="gate card"><h1>Almost there</h1><p>Paste your Supabase address and key into <b>config.js</b>, then reload.</p></div>`;
   if (screen === "signin") return renderLanding();
+  if (screen === "offline") return `<div class="gate card"><h1>You're offline</h1><p>Connect to the internet once to load your group. After that, LockedIn opens even without internet.</p>
+    <button class="btn primary" onclick="location.reload()">Try again</button></div>`;
   if (screen === "lobby") return `<div class="gate lobby">${avatar ? `<img class="avatar" src="${esc(avatar)}" alt="">` : ""}
     <h1>Join a group</h1><p>Signed in as <b>${esc(name)}</b>. Type the join code you got from your group's owner.</p>
     <div class="card" style="text-align:left">${joinHtml()}</div>
@@ -2152,7 +2177,7 @@ function renderMe() {
   const who = profile ? profile.discord_name : "";
   const account = `<div class="card"><div class="cardhead"><h2>Account</h2></div><div class="melist">
       ${row("open-groups", groupLogo(g, 34), "Groups", `${esc(g ? g.name : "")}${roleOf() ? " · " + esc(roleOf()) : ""} · switch, join or start one`)}
-      ${row("open-settings", tile("gear"), "Settings", "Light / dark mode, confetti, rule-break tags, app icon")}
+      ${row("open-settings", tile("gear"), "Settings", "Reminders, light / dark mode, rule-break tags, app icon")}
       ${row("start-tour", tile("target"), "Tutorial", "A one-minute tour of the app")}
     </div>
     <div class="account"><span>Signed in as <b>${esc(who)}</b></span><button class="linkbtn" id="signout">Sign out</button></div></div>`;
@@ -2173,6 +2198,7 @@ function render() {
   } else if (tab === "week") app.innerHTML = renderWeek() + renderReflections();
   else if (tab === "board") app.innerHTML = renderBoard();
   else { const d = renderDay(); app.innerHTML = d.summary + d.list; }
+  app.insertAdjacentHTML("afterbegin", offlineBar());
   renderPanelPics();
   checkUnlocks();
   // A picture's link may arrive after the viewer opened.
@@ -2204,6 +2230,13 @@ document.addEventListener("click", async e => {
   if (d.tick) { const [key, r] = d.tick.split(":"); return editTick(selected, key, row => { row[r] = !row[r]; }); }
   if (d.edit) return openPanel(selected, d.edit);
   if (t.id === "open-settings") return openSettings();
+  if (d.remind) {
+    remindMins = +d.remind;
+    try { localStorage.setItem("remindMins", d.remind); } catch (e) {}
+    renderRemind();
+    return savePushSub().catch(err => { push.msg = err.message; renderRemind(); });
+  }
+  if (t.id === "retry-load") { t.disabled = true; try { await refreshNow(); } catch (err) { render(); } return; }
   if (t.id === "install-app" && installPrompt) { installPrompt.prompt(); installPrompt = null; t.remove(); return; }
   if (t.id === "show-add-break") { const row = document.getElementById("add-break-row"); row.hidden = false; document.getElementById("newbreak").focus(); return; }
   if (t.id === "add-break") return addCustomBreak();
@@ -2302,7 +2335,10 @@ document.addEventListener("click", async e => {
       if (er) { error = er.message; render(); }
       return;
     }
-    case "signout": await sb.auth.signOut(); return;
+    case "signout":
+      if (push.sub) await turnRemindersOff();   // this device stops getting your reminders
+      try { localStorage.removeItem(snapKey()); localStorage.removeItem(OUTBOX); } catch (e) {}
+      await sb.auth.signOut(); return;
     case "addmember": {
       const el = document.getElementById("newmember"), name = el.value.trim();
       if (!name) return;
@@ -2347,6 +2383,7 @@ document.addEventListener("click", async e => {
 });
 document.addEventListener("input", e => {
   if (e.target.id === "set-confetti") { settings.confetti = e.target.checked; return saveSettings(); }
+  if (e.target.id === "set-remind") return e.target.checked ? turnRemindersOn() : turnRemindersOff();
   if (e.target.id === "panel-notrade" && editing) { const on = e.target.checked; return editTick(editing.day, editing.key, row => { row.no_trade = on; }); }
   if (e.target.dataset && e.target.dataset.refl) return editReflection(e.target.dataset.week, e.target.dataset.key, e.target.dataset.refl, e.target.value);
   if (e.target.id === "panel-excused" && editing) { const on = e.target.checked; return editTick(editing.day, editing.key, row => { row.excused = on; }); }
@@ -2577,6 +2614,167 @@ document.addEventListener("keydown", e => {
 addEventListener("resize", () => tour && placeTour());
 addEventListener("scroll", () => tour && placeTour(), { passive: true });
 
+// ---------------------------------------------------------------- offline
+// The last loaded group is kept on this device, so the app still opens without internet.
+// Ticks made without internet wait in an "outbox" on this device and upload when the connection is back.
+var offline = !navigator.onLine, offlineSince = null;   // var, not let: render() can run before this line
+const snapKey = () => "snap:" + (session ? session.user.id : "");
+function saveSnapshot() {
+  if (!session || !loaded || offlineSince) return;
+  const snap = { at: Date.now(), gid, groups, myMemberships, profile, isAppOwner, members, holidays: [...HOLIDAYS],
+    ticks: Object.values(ticks), reflections: Object.values(reflections) };
+  try { localStorage.setItem(snapKey(), JSON.stringify(snap)); }
+  catch (e) {   // too big for this device: keep the last 6 months
+    const cut = addDays(today, -183);
+    snap.ticks = snap.ticks.filter(r => r.day >= cut);
+    snap.reflections = snap.reflections.filter(r => r.week_start >= cut);
+    try { localStorage.setItem(snapKey(), JSON.stringify(snap)); } catch (e2) {}
+  }
+}
+function restoreSnapshot() {
+  let snap = null;
+  try { snap = JSON.parse(localStorage.getItem(snapKey()) || "null"); } catch (e) {}
+  if (!snap || !snap.groups) return false;
+  gid = snap.gid; groups = snap.groups; myMemberships = snap.myMemberships; profile = snap.profile; isAppOwner = snap.isAppOwner;
+  members = snap.members; HOLIDAYS = new Set(snap.holidays || []);
+  ticks = {}; (snap.ticks || []).forEach(r => { ticks[r.day + "|" + r.member_key] = r; });
+  reflections = {}; (snap.reflections || []).forEach(r => { reflections[r.week_start + "|" + r.member_key] = r; });
+  applyGroupRules(group());
+  isAdmin = canManageGroup(); people = [];
+  applyOutbox();
+  today = currentTradingDay(); selected = today; weekStart = mondayOf(today);
+  if (tab === "admin") tab = "day";
+  offlineSince = snap.at; loaded = true; screen = "app"; error = "";
+  render();
+  return true;
+}
+var OUTBOX = "outbox";
+function getOutbox() { try { return JSON.parse(localStorage.getItem(OUTBOX) || "{}"); } catch (e) { return {}; } }
+function putOutbox(o) { try { localStorage.setItem(OUTBOX, JSON.stringify(o)); } catch (e) {} }
+// Show ticks still waiting to upload (they're newer than what the server sent).
+function applyOutbox() {
+  const o = getOutbox();
+  for (const id in o) if (members.some(m => m.key === o[id].member_key)) ticks[id] = Object.assign({}, ticks[id], o[id]);
+}
+const isNetErr = e => !navigator.onLine || /fetch|network|load failed|offline|internet/i.test((e && e.message) || "");
+let flushing = false;
+async function flushOutbox() {
+  if (flushing || !session || !navigator.onLine) return;
+  const o = getOutbox(), ids = Object.keys(o);
+  if (!ids.length) return;
+  flushing = true;
+  for (const id of ids) {
+    let e;
+    try { ({ error: e } = await sb.from("ticks").upsert(o[id], { onConflict: "day,member_key" })); }
+    catch (err) { e = { message: "network: " + err.message }; }
+    if (e && isNetErr(e)) break;   // still no connection: try again later
+    const cur = getOutbox();
+    if (JSON.stringify(cur[id]) === JSON.stringify(o[id])) delete cur[id];   // unless you changed it again meanwhile
+    putOutbox(cur);
+    if (e) error = e.code === "42501" || /row-level security/i.test(e.message)
+      ? `A tick from ${fmtDay(o[id].day)} couldn't upload: that day closed before you were back online.` : "Not saved: " + e.message;
+    else if (noteState[id] === "offline") noteState[id] = "saved";
+  }
+  flushing = false;
+  render();
+}
+window.addEventListener("online", async () => {
+  offline = false; render();
+  if (screen === "app" && offlineSince) { try { await refreshNow(); } catch (e) {} }
+  flushOutbox();
+});
+window.addEventListener("offline", () => { offline = true; render(); });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") saveSnapshot(); });
+function offlineBar() {
+  const n = Object.keys(getOutbox()).length;
+  if (!offline && !offlineSince && !n) return "";
+  const when = offlineSince ? new Date(offlineSince).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+  const text = offline ? "You're offline. Your ticks are saved on this device and upload when you're back online."
+    : offlineSince ? "Can't reach the server right now." : `${n} tick${n > 1 ? "s" : ""} waiting to upload.`;
+  return `<div class="offline-bar" role="status">${ic("alert", 16)}<span>${text}${offlineSince ? ` Showing what was loaded at ${when}.` : ""}</span>
+    ${!offline ? `<button class="linkbtn" id="retry-load">Try again</button>` : ""}</div>`;
+}
+// Start: load from the server; if that's impossible, open the copy saved on this device.
+async function startLoad() {
+  if (!navigator.onLine && restoreSnapshot()) return;
+  try {
+    await loadAll();
+    loadPush();
+  } catch (err) {
+    if (isNetErr(err) || !navigator.onLine || /Couldn't load groups: (TypeError|Failed|Load failed)/i.test(err.message)) {
+      if (restoreSnapshot()) return;
+      screen = "offline"; clearTimeout(loadTimer); return render();
+    }
+    throw err;
+  }
+}
+
+// ---------------------------------------------------------------- reminders (notifications)
+// Settings → Reminders asks for permission and saves this device's push address in the database. The
+// send-reminders function (supabase/functions) then notifies you if your homework isn't done before the day closes.
+const VAPID = cfg.vapidPublicKey || "";
+const pushSupported = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const push = { sub: null, busy: false, msg: "" };
+let remindMins = 60;
+try { remindMins = +localStorage.getItem("remindMins") || 60; } catch (e) {}
+const unb64u = s => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4)), c => c.charCodeAt(0));
+// The background helper (sw.js); null if it isn't running.
+function swReg() {
+  if (!("serviceWorker" in navigator)) return Promise.resolve(null);
+  return Promise.race([navigator.serviceWorker.ready, new Promise(r => setTimeout(() => r(null), 6000))]);
+}
+async function loadPush() {
+  if (!VAPID || !pushSupported() || !session) return;
+  try { const reg = await swReg(); push.sub = reg ? await reg.pushManager.getSubscription() : null; } catch (e) { push.sub = null; }
+  // Keeps this device's address up to date and under the account that's signed in now.
+  if (push.sub && Notification.permission === "granted") savePushSub().catch(() => {});
+  renderRemind();
+}
+async function savePushSub() {
+  const j = push.sub.toJSON();
+  const { error: e } = await sb.rpc("save_push_subscription", { sub_endpoint: j.endpoint, sub_p256dh: j.keys.p256dh, sub_auth: j.keys.auth, sub_minutes: remindMins });
+  if (e) throw new Error(/function|schema cache/i.test(e.message) ? "Reminders aren't set up yet (database update 10)." : e.message);
+}
+async function turnRemindersOn() {
+  const asked = Notification.requestPermission();   // first, while it still counts as your tap
+  push.busy = true; push.msg = ""; renderRemind();
+  try {
+    const perm = await asked;
+    if (perm !== "granted") throw new Error(perm === "denied" ? "" : "You didn't allow notifications.");
+    const reg = await swReg();
+    if (!reg) throw new Error("Reminders couldn't start. Reload the page and try again.");
+    push.sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: unb64u(VAPID) });
+    await savePushSub();
+    reg.showNotification("Reminders are on", { body: "You'll get a notification here if your homework isn't done before the day closes.", icon: "icons/icon-192.png", tag: "remind-on" });
+  } catch (e) { push.msg = e.message || String(e); }
+  push.busy = false; renderRemind();
+}
+async function turnRemindersOff() {
+  push.busy = true; renderRemind();
+  try {
+    if (push.sub) { await sb.from("push_subscriptions").delete().eq("endpoint", push.sub.endpoint); await push.sub.unsubscribe(); }
+  } catch (e) {}
+  push.sub = null; push.busy = false; push.msg = ""; renderRemind();
+}
+function remindHtml() {
+  if (!VAPID) return "";
+  const head = `<h3>Reminders</h3>`;
+  if (!pushSupported()) return head + `<p class="sub-hint">${isIOS() && !isInstalled()
+    ? "On iPhone, reminders work in the app: add LockedIn to your Home Screen first (see <b>App on your phone</b>), then open it from there and turn reminders on."
+    : "This browser can't show reminders. Try Chrome, Edge, Firefox or Safari."}</p>`;
+  const blocked = Notification.permission === "denied", on = !!push.sub && Notification.permission === "granted";
+  const opt = (m, l) => `<button data-remind="${m}" aria-pressed="${remindMins === m}">${l}</button>`;
+  return head + `<label class="switchrow"><span><b>Remind me</b><small>A notification on this ${isWide() ? "computer" : "phone"} if your homework isn't done before the day closes.</small></span>
+      <input type="checkbox" id="set-remind" role="switch" ${on ? "checked" : ""} ${push.busy || blocked ? "disabled" : ""}></label>
+    ${on ? `<div class="segset four" role="group" aria-label="How long before the day closes">${opt(30, "30 min")}${opt(60, "1 hour")}${opt(120, "2 hours")}${opt(180, "3 hours")}</div>
+      <p class="sub-hint" style="margin-top:8px">before the day closes. Turn it on on each phone or computer you use.</p>` : ""}
+    ${blocked ? `<p class="sub-hint bad">Notifications are blocked for this site. Allow them in ${isIOS() ? "iPhone Settings → Notifications → LockedIn" : "your browser's site settings (the icon left of the address)"}, then reload.</p>` : ""}
+    ${push.msg ? `<p class="sub-hint bad">${esc(push.msg)}</p>` : ""}`;
+}
+function renderRemind() { const el = document.getElementById("remind-box"); if (el) el.innerHTML = remindHtml(); }
+if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("sw.js").catch(() => {});
+
 // ---------------------------------------------------------------- errors
 // If something breaks, show what went wrong (and a reload button) instead of an endless "Loading…".
 function showCrash(err) {
@@ -2608,7 +2806,7 @@ watchLoading();
     const was = session && session.user.id;
     session = s;
     if (!s) { screen = "signin"; profile = null; isAdmin = false; if (channel) { sb.removeChannel(channel); channel = null; } render(); }
-    else if (s.user.id !== was) { screen = "loading"; render(); watchLoading(); setTimeout(loadAll, 0); }
+    else if (s.user.id !== was) { screen = "loading"; render(); watchLoading(); setTimeout(startLoad, 0); }
   });
   const { data } = await sb.auth.getSession();
   if (!data.session) { screen = "signin"; render(); }

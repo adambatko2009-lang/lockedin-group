@@ -1,6 +1,7 @@
-// Security test for supabase/*.sql. Run:  cd tests && npm install @electric-sql/pglite@0.2.17 && node security-test.mjs
+// Security test for supabase/*.sql. Run:  cd tests && npm install --no-save @electric-sql/pglite@0.2.17 http_ece@1.2.0 && node security-test.mjs
 // Loads setup.sql + every update into an in-memory Postgres that mimics Supabase, then tries to break the rules.
-// Updates 2-8 are tested first (one group), then update 9 (groups) is loaded on top of that data and tested.
+// Updates 2-8 are tested first (one group), then update 9 (groups) is loaded on top of that data and tested,
+// then update 10 (reminders; everything above its SCHEDULE part, which needs Supabase's pg_cron).
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -41,8 +42,8 @@ await db.exec(readFileSync(dir + "make-me-admin.sql", "utf8"));
 
 async function as(who, sql, params = []) {
   await db.exec("reset role");
-  await db.query(`select set_config('request.jwt.claim.sub', $1, false)`, [who === "anon" ? "" : U[who]]);
-  await db.exec(`set role ${who === "anon" ? "anon" : "authenticated"}`);
+  await db.query(`select set_config('request.jwt.claim.sub', $1, false)`, [who === "anon" || who === "service" ? "" : U[who]]);
+  await db.exec(`set role ${who === "anon" ? "anon" : who === "service" ? "service_role" : "authenticated"}`);
   try { const r = await db.query(sql, params); return { rows: r.rows, count: r.affectedRows ?? r.rows.length }; }
   catch (e) { return { error: e.message }; }
   finally { await db.exec("reset role"); }
@@ -388,6 +389,66 @@ r = await as("batko", `delete from public.groups where id=$1`, [G2]);
 ok(!r.error && r.count === 1, "you can delete a group");
 ok((await one(`select count(*)::int n from public.ticks where member_key=$1`, [m2Key])).n === 0, "deleting a group removes its data");
 ok((await one(`select count(*)::int n from public.ticks where group_id='lockedin'`)).n >= 3, "other groups are untouched");
+
+// ================================================================ update 10: reminders
+await db.exec(`create role service_role nologin; grant usage on schema public to service_role;`);
+const u10 = readFileSync(dir + "update-10-reminders.sql", "utf8");
+await db.exec(u10.slice(0, u10.indexOf("-- ================================================================ SCHEDULE")));
+console.log("\nloaded: update-10-reminders.sql (without the schedule)");
+const sub = (who, ep, mins = 60) => rpc(who, "save_push_subscription", [`https://push.example.com/${ep}`, "B".repeat(87), "A".repeat(22), mins]);
+const due = at => as("service", `select * from public.due_reminders($1::timestamptz)`, [at]);
+const at = async mins => (await one(`select (public.day_closes_at('lockedin', public.current_trading_day('lockedin')) - make_interval(mins => $1))::text t`, [mins])).t;
+const d10 = (await one(`select public.current_trading_day('lockedin')::text d`)).d;
+
+section("reminders: saving a device");
+ok(!(await sub("sid", "sid-phone")).error, "a member turns reminders on for their phone");
+ok((await one(`select user_id::text u from public.push_subscriptions where endpoint like '%sid-phone'`)).u === U.sid, "the device is saved under their own account");
+ok(!!(await as("anon", `select public.save_push_subscription('https://push.example.com/x', '${"B".repeat(87)}', '${"A".repeat(22)}', 60)`)).error, "signed-out visitors can't save a device");
+ok(!!(await sub("sid", "sid-odd", 45)).error, "only 30 min, 1, 2 or 3 hours are allowed");
+ok(!!(await rpc("sid", "save_push_subscription", ["http://insecure.example.com/x", "B".repeat(87), "A".repeat(22), 60])).error, "push addresses must be https");
+r = await as("eddie", `select * from public.push_subscriptions`);
+ok(!r.error && r.rows.length === 0, "you can't see other people's devices");
+r = await as("eddie", `insert into public.push_subscriptions (user_id, endpoint, p256dh, auth) values ($1, 'https://push.example.com/fake', '${"B".repeat(87)}', '${"A".repeat(22)}')`, [U.sid]);
+ok(!!r.error, "nobody can add a device to someone else's account");
+r = await as("eddie", `delete from public.push_subscriptions where endpoint like '%sid-phone'`);
+ok(!r.error && r.count === 0, "nobody can turn off someone else's reminders");
+ok(!!(await as("sid", `select * from public.due_reminders()`)).error, "members can't ask who gets reminders");
+ok(!!(await as("sid", `select * from public.push_log`)).error, "members can't read the reminder log");
+
+section("reminders: who gets one");
+await db.query(`update public.ticks set chart=false, journal=true, review=false, excused=false where member_key='sid' and day=$1`, [d10]);
+const labels = (await one(`select array[boxes->'chart'->>'label', boxes->'review'->>'label'] l from public.groups where id='lockedin'`)).l;
+r = await due(await at(120));
+ok(!r.error && r.rows.length === 0, "no reminder 2 hours before when you chose 1 hour");
+r = await due(await at(30));
+ok(!r.error && r.rows.length === 1 && r.rows[0].endpoint.endsWith("sid-phone"), "a reminder goes out in the last hour if you're not done");
+ok(r.rows[0] && JSON.stringify(r.rows[0].missing) === JSON.stringify(labels) && r.rows[0].minutes_left === 30, "it says which boxes are missing and how long is left");
+r = await due(await at(25));
+ok(!r.error && r.rows.length === 0, "never two reminders for the same day");
+await sub("eddie", "eddie-phone", 180);
+await db.query(`insert into public.ticks (day, member_key, chart, journal, review) values ($1, 'eddie', true, true, true) on conflict (day, member_key) do update set chart=true, journal=true, review=true`, [d10]);
+r = await due(await at(100));
+ok(!r.error && r.rows.length === 0, "nobody is reminded when their homework is done");
+await as("batko", `update public.ticks set review=false, excused=true where member_key='eddie' and day=$1`, [d10]);
+r = await due(await at(90));
+ok(!r.error && r.rows.length === 0, "nobody is reminded on an excused day");
+await as("batko", `update public.ticks set excused=false where member_key='eddie' and day=$1`, [d10]);
+await sub("stranger", "stranger-phone", 180);
+r = await due(await at(80));
+ok(!r.error && r.rows.length === 1 && r.rows[0].endpoint.endsWith("eddie-phone"), "only approved members get reminders (not people waiting)");
+r = await due(await at(-5));
+ok(!r.error && r.rows.length === 0, "nothing is sent after the day closed");
+await sub("m3", "m3-phone", 180);
+await as("batko", `update public.groups set status='paused' where id='lockedin'`);
+await db.query(`delete from public.push_log`);
+r = await due(await at(10));
+ok(!r.error && r.rows.length === 0, "a paused group gets no reminders");
+await as("batko", `update public.groups set status='active' where id='lockedin'`);
+ok(!(await sub("eddie", "sid-phone")).error, "a phone someone else used can be taken over by the new person");
+r = await as("sid", `select * from public.push_subscriptions`);
+ok(r.rows.length === 0, "the old owner of that phone no longer gets its reminders");
+r = await as("eddie", `delete from public.push_subscriptions where endpoint like '%sid-phone'`);
+ok(!r.error && r.count === 1, "you can turn off reminders on your own device");
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
