@@ -1,7 +1,7 @@
-# MNQ Homework Tracker
+# LockedIn Group: MNQ Homework Tracker
 
-A website where each member signs in with Discord and ticks **only their own** homework boxes.
-Batko approves new people and is the only admin.
+A website for trading accountability groups. Members sign in with Discord, join a group with its join code,
+and tick **only their own** homework boxes. Batko is the app owner; each group has its own owner.
 
 | File | What it is |
 |---|---|
@@ -11,13 +11,27 @@ Batko approves new people and is the only admin.
 | `supabase/import-old-ticks.sql` | Copies your ticks from the old claude.ai page (step 2) |
 | `supabase/make-me-admin.sql` | Makes you the admin (step 8) |
 | `supabase/update-2-screenshots.sql` | Adds journal screenshots (run once, after setup.sql) |
+| `supabase/update-3-excused.sql` | Adds excused days (run once, after update 2) |
+| `supabase/update-4-avatars.sql` | Shows members' Discord profile pictures (run once, after update 3) |
+| `supabase/update-5-notrade-reflection.sql` | No-trade days + weekly reflections (run once, after update 4) |
+| `supabase/update-6-rulebreaks-settings.sql` | Rule-break tags + personal settings like light/dark mode (run once, after update 5) |
+| `supabase/update-7-custom-rulebreaks.sql` | Lets members add their own rule-break tags (run once, after update 6) |
+| `supabase/update-8-long-notes.sql` | Removes the 140-character note limit (run once, after update 7) |
+| `supabase/update-9-groups.sql` | Many groups: join codes, group owners, group settings (run once, after update 8) |
+| `manifest.webmanifest`, `icons/` | App icon for "Add to Home Screen" |
+| `tests/security-test.mjs` | Checks every database rule (not needed on GitHub; see the first line for how to run it) |
 
 **Who can do what** (enforced by the database itself, so it can't be bypassed from the website):
 
 - Not signed in: nothing.
-- Signed in but not approved: sees only "Waiting for approval".
-- Approved member: sees everything. Ticks **only their own row**, and **only while the day is open** (until 09:00 New York on the next trading day).
-- Admin (you): approves people, adds/renames/removes members, can fix anyone's ticks on any day.
+- Signed in, in no group: can type a join code, or ask for a group of their own.
+- Waiting in a group: sees only that group's name.
+- Member: sees only their own group(s). Ticks **only their own row**, **only while the day is open**.
+- Group admin (picked by the group owner): approves people, adds/renames names, excuses days, fixes ticks, in that group only.
+- Group owner: all of the above, plus that group's settings (name, color, logo, homework boxes, points, cutoff time, time zone),
+  its join code, and who its group admins are.
+- App owner (you): everything in every group. Approves group requests, creates, pauses and deletes groups, hands a group to a new owner.
+- Groups can never see each other's names, ticks, notes, pictures or reflections.
 
 **Nobody but you can change the website or its rules.** The code is in your GitHub account and the database is in your Supabase account; members can't edit either, and neither can their Claude.
 
@@ -54,7 +68,7 @@ Batko approves new people and is the only admin.
 1. GitHub Desktop → **File → Add Local Repository** → choose this `mnq-homework` folder → if asked, **create a repository** here.
 2. Summary: `First version` → **Commit to main** → **Publish repository** → untick **Keep this code private** → **Publish**.
 3. On github.com, open the repo → **Settings** → **Pages** → Source: **Deploy from a branch** → Branch: **main**, folder **/ (root)** → **Save**.
-4. After about a minute the page shows your address: `https://YOUR-GITHUB-NAME.github.io/mnq-homework/`. Copy it.
+4. After about a minute the page shows your address: `https://YOUR-GITHUB-NAME.github.io/lockedin-group/`. Copy it.
 
 ### 6. Tell Supabase your website's address
 Supabase → **Authentication** → **URL Configuration**:
@@ -75,9 +89,13 @@ Post the website link in the Discord channel. When someone signs in, they show u
 ---
 
 ## Day-to-day
+- **Switch group:** tap the group name at the top.
+- **Invite people:** Admin → Join code → Copy, post it in the group's Discord. They show up under "Waiting for approval".
 - **Approve someone:** Admin → choose their name → Approve. One Discord account per name.
+- **Someone wants their own group:** they tap "Start your own group". You see it in Admin → All groups → Approve. They become its owner.
+- **Pause / delete a group, change its owner:** Admin → All groups (only you see this).
+- **Group settings** (owner): Admin → Group settings → Save settings.
 - **Remove someone's access:** Admin → Approved → Remove access.
-- **Add / rename / remove a member:** Admin → Members. Removing hides them but keeps their history.
-- **Fix a mistake:** as admin you can tick or untick anyone on any day.
-- **Change the rules or points:** edit the top of the `<script>` in `index.html` (RULES, POINTS) on GitHub, or ask Claude in this project.
+- **Excuse a day** (sick, travelling): open that person's ✎ panel on that day → Admin → switch **Excused** on.
 - **Supabase free plan pauses after 7 days with no visits.** Daily use prevents it; if it ever happens, open supabase.com → your project → **Restore**.
+- **Free plan storage is 1 GB for pictures.** Plenty for a few groups; check Supabase → Storage now and then.
