@@ -912,8 +912,8 @@
 <body>
 <div id="splash" aria-hidden="true"><img src="icons/icon-192.png" alt=""><span>LockedIn</span></div>
 <script>
-  // The opening screen shows once per visit, and never for people who prefer less motion.
-  try { if (sessionStorage.getItem("splash") || matchMedia("(prefers-reduced-motion: reduce)").matches) document.getElementById("splash").remove(); else sessionStorage.setItem("splash", "1"); }
+  // The opening screen shows every time the page opens or reloads, but never for people who prefer less motion.
+  try { if (matchMedia("(prefers-reduced-motion: reduce)").matches) document.getElementById("splash").remove(); }
   catch (e) { document.getElementById("splash").remove(); }
 </script>
 <main>
