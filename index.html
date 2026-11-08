@@ -983,13 +983,16 @@
   .phone-big { margin: auto 0 0; font: 700 26px/0.92 var(--font-ui); letter-spacing: -0.04em; text-transform: uppercase; }
   .phone-btn { align-self: flex-start; background: #fff; color: #000; font: 600 11px var(--font-ui); letter-spacing: 0.06em; text-transform: uppercase; padding: 10px 12px; border-radius: 2px; }
   /* the giant tilted LockedIn with a white strip */
-  .band { position: relative; overflow: hidden; padding: 70px 0 90px; }
+  .band { position: relative; overflow: hidden; padding: calc(40px + 7vw) 0 calc(50px + 7vw); } /* room for the tilt, so its ends are never cut off */
   .band-tilt { transform: rotate(-7deg); width: 140%; margin-left: -20%; }
-  .band-meta { display: flex; justify-content: flex-end; gap: 18px; margin: 0 22% 6px 0; font: 500 11px var(--font-data); letter-spacing: 0.16em; text-transform: uppercase; color: #a3a3ad; }
+  /* tags sit above the left end of the word (the low side of the tilt), inside the visible screen, so nothing gets cut */
+  .band-meta { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 6px 18px; margin: 0 0 14px; padding: 0 calc(14.3% + 24px) 0 calc(16% + 24px); font: 500 11px var(--font-data); letter-spacing: 0.16em; text-transform: uppercase; color: #a3a3ad; }
+  .band-meta span { white-space: nowrap; }
   .band-word { font: 700 clamp(80px, 17vw, 260px)/0.8 var(--font-ui); letter-spacing: -0.07em; text-transform: uppercase; color: #fff; padding-left: 16%; white-space: nowrap; }
   .band-white { background: #fff; color: #000; padding: 26px 0 30px 18%; margin-top: 10px; }
   .band-small { margin: 0; font: 700 clamp(18px, 2.4vw, 30px) var(--font-ui); letter-spacing: -0.02em; text-transform: uppercase; }
   .band-big { margin: 0; font: 700 clamp(34px, 9.5vw, 150px)/0.86 var(--font-ui); letter-spacing: -0.055em; text-transform: uppercase; white-space: nowrap; }
+  @media (max-width: 520px) { .band-meta { gap: 6px 12px; padding: 0 calc(14.3% + 12px) 0 calc(16% + 16px); font-size: 10px; letter-spacing: 0.1em; } .band-word { font-size: 20.5vw; } }
   /* text sections */
   .lp-sec.split { display: grid; gap: 28px; align-items: end; }
   .bigsteps { display: grid; gap: 0; border-top: 1px solid rgba(255, 255, 255, 0.14); }
