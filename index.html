@@ -831,21 +831,27 @@
           --card-glass: rgba(255, 255, 255, 0.72); --card-edge: rgba(255, 255, 255, 0.85); --card-line: rgba(10, 10, 11, 0.07);
           --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -16px rgba(15, 23, 42, 0.18);
           --card-shadow-hi: 0 2px 4px rgba(15, 23, 42, 0.05), 0 22px 44px -18px rgba(15, 23, 42, 0.28);
-          --rail-bg: #101114; --rail-icon: #a1a1aa; --rail-on: #ffffff; }
+          --lg-fill: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.34));
+          --lg-rim: rgba(255, 255, 255, 0.9); --lg-edge: rgba(15, 23, 42, 0.10); --lg-glow: rgba(255, 255, 255, 0.75);
+          --lg-shadow: 0 24px 50px -22px rgba(15, 23, 42, 0.35); --rail-icon: #3a3a42; --rail-hover: rgba(15, 23, 42, 0.06); --rail-ind: #0a0a0b; }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
           --wash-a: color-mix(in srgb, var(--acc) 26%, transparent); --wash-b: color-mix(in srgb, #14b8a6 14%, transparent);
           --wash-c: color-mix(in srgb, var(--acc-dk) 12%, transparent); --base: #121317;
           --card-glass: rgba(34, 35, 41, 0.72); --card-edge: rgba(255, 255, 255, 0.07); --card-line: rgba(255, 255, 255, 0.06);
           --card-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 16px 40px -20px rgba(0, 0, 0, 0.7);
           --card-shadow-hi: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 26px 50px -20px rgba(0, 0, 0, 0.85);
-          --rail-bg: #0b0c0f; } }
+          --lg-fill: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.04));
+          --lg-rim: rgba(255, 255, 255, 0.22); --lg-edge: rgba(255, 255, 255, 0.10); --lg-glow: rgba(255, 255, 255, 0.16);
+          --lg-shadow: 0 24px 50px -20px rgba(0, 0, 0, 0.75); --rail-icon: #c9c9d1; --rail-hover: rgba(255, 255, 255, 0.08); --rail-ind: #ffffff; } }
   :root[data-theme="dark"] {
           --wash-a: color-mix(in srgb, var(--acc) 26%, transparent); --wash-b: color-mix(in srgb, #14b8a6 14%, transparent);
           --wash-c: color-mix(in srgb, var(--acc-dk) 12%, transparent); --base: #121317;
           --card-glass: rgba(34, 35, 41, 0.72); --card-edge: rgba(255, 255, 255, 0.07); --card-line: rgba(255, 255, 255, 0.06);
           --card-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 16px 40px -20px rgba(0, 0, 0, 0.7);
           --card-shadow-hi: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 26px 50px -20px rgba(0, 0, 0, 0.85);
-          --rail-bg: #0b0c0f; }
+          --lg-fill: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.04));
+          --lg-rim: rgba(255, 255, 255, 0.22); --lg-edge: rgba(255, 255, 255, 0.10); --lg-glow: rgba(255, 255, 255, 0.16);
+          --lg-shadow: 0 24px 50px -20px rgba(0, 0, 0, 0.75); --rail-icon: #c9c9d1; --rail-hover: rgba(255, 255, 255, 0.08); --rail-ind: #ffffff; }
   body:not(.landing) { background: var(--base); }
   body:not(.landing)::after {
     background:
@@ -889,23 +895,40 @@
   /* the icon bar's highlight slides to the page you pick */
   .rail-ind { position: absolute; left: 0; top: 0; width: 3px; height: 20px; border-radius: 0 3px 3px 0; background: #fff; opacity: 0;
     transition: transform .4s cubic-bezier(.3, 1.3, .5, 1), opacity .2s; pointer-events: none; }
+  .rail .rail-ind { background: var(--rail-ind); }
   /* computers: a slim icon bar on the left */
   .rail { display: none; }
   @media (min-width: 960px) {
     body.has-rail { padding-left: calc(100px + env(safe-area-inset-left, 0px)); }
+    /* liquid glass: see-through and frosted, a light rim where "light" catches the edge, and a soft glow that follows the pointer */
     .rail { position: fixed; z-index: 7; left: 16px; top: 16px; bottom: 16px; width: 64px; display: flex; flex-direction: column; align-items: center; gap: 6px;
-      padding: 12px 0; border-radius: 22px; background: var(--rail-bg); box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.6); }
+      padding: 12px 0; border-radius: 24px; background: var(--lg-fill); border: 1px solid var(--lg-edge); isolation: isolate; overflow: hidden;
+      -webkit-backdrop-filter: blur(26px) saturate(190%); backdrop-filter: blur(26px) saturate(190%);
+      box-shadow: inset 0 1px 0 var(--lg-rim), inset 1px 0 0 color-mix(in srgb, var(--lg-rim) 45%, transparent), inset 0 -1px 0 color-mix(in srgb, var(--lg-rim) 30%, transparent), var(--lg-shadow); }
+    .rail::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
+      background: radial-gradient(120% 40% at 30% 0%, color-mix(in srgb, var(--lg-glow) 70%, transparent), transparent 60%),
+                  radial-gradient(60px 120px at 50% var(--glow-y, -200px), var(--lg-glow), transparent 70%);
+      transition: background-position .2s; }
+    .rail::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
+      background: linear-gradient(115deg, transparent 35%, color-mix(in srgb, var(--lg-glow) 35%, transparent) 50%, transparent 65%); opacity: 0.6; }
     .rail[hidden] { display: none !important; }
     .rail .rail-logo { width: 38px; height: 38px; border-radius: 28%; display: block; margin-bottom: 10px; }
     .rail button { position: relative; width: 44px; height: 44px; border: 0; border-radius: 13px; background: transparent; color: var(--rail-icon);
       display: grid; place-items: center; cursor: pointer; transition: background-color .2s, color .2s, transform .15s; }
     .rail button svg { width: 21px; height: 21px; }
-    .rail button:hover { background: rgba(255, 255, 255, 0.08); color: var(--rail-on); }
-    .rail button[aria-current="page"] { background: var(--accent); color: var(--on-accent); }
-    .rail .meav { width: 28px; height: 28px; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18); }
+    .rail button:hover { background: var(--rail-hover); color: var(--text); }
+    /* the selected page: a lens of tinted glass in the group's color */
+    .rail button[aria-current="page"] { color: var(--on-accent);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 80%, white), var(--accent));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -1px 0 rgba(0, 0, 0, 0.12), 0 6px 16px -6px color-mix(in srgb, var(--accent) 70%, transparent); }
+    .rail .meav { width: 28px; height: 28px; box-shadow: 0 0 0 2px var(--lg-edge); }
     .rail .rail-sep { flex: 1; }
     .rail .count { position: absolute; top: 4px; right: 3px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--crit); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
-    .rail button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+    .rail button:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+    /* people who ask for less transparency or more contrast get a solid bar */
+    @media (prefers-reduced-transparency: reduce) { .rail { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; } .rail::before, .rail::after { display: none; } }
+    @media (prefers-contrast: more) { .rail { background: var(--surface); border-color: var(--text-2); } .rail::before, .rail::after { display: none; } }
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .rail { background: var(--surface); } }
   }
 </style>
 <script src="config.js"></script>
@@ -2143,6 +2166,13 @@ function renderTop() {
   morph(top, prev + `<div class="mid">${groupButton(16)}${mid}</div>` + next);
 }
 
+// The glass bar's soft glow follows the mouse up and down (not for people who prefer less motion).
+document.getElementById("rail").addEventListener("pointermove", e => {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  e.currentTarget.style.setProperty("--glow-y", Math.round(e.clientY - r.top) + "px");
+});
+document.getElementById("rail").addEventListener("pointerleave", e => e.currentTarget.style.setProperty("--glow-y", "-200px"));
 // Computers: the slim icon bar on the left (Day, Me, Admin, Settings).
 function renderRail() {
   const rail = document.getElementById("rail");
