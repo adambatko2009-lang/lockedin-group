@@ -824,12 +824,81 @@
     .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
     .admin-grid > div { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
   }
+
+  /* ================================================================ glass look (soft color wash, frosted cards, gentle motion) */
+  :root { --wash-a: color-mix(in srgb, var(--acc) 22%, transparent); --wash-b: color-mix(in srgb, #14b8a6 18%, transparent);
+          --wash-c: color-mix(in srgb, var(--acc-dk) 14%, transparent); --base: #eef2f6;
+          --card-glass: rgba(255, 255, 255, 0.72); --card-edge: rgba(255, 255, 255, 0.85); --card-line: rgba(10, 10, 11, 0.07);
+          --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -16px rgba(15, 23, 42, 0.18);
+          --card-shadow-hi: 0 2px 4px rgba(15, 23, 42, 0.05), 0 22px 44px -18px rgba(15, 23, 42, 0.28);
+          --rail-bg: #101114; --rail-icon: #a1a1aa; --rail-on: #ffffff; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+          --wash-a: color-mix(in srgb, var(--acc) 26%, transparent); --wash-b: color-mix(in srgb, #14b8a6 14%, transparent);
+          --wash-c: color-mix(in srgb, var(--acc-dk) 12%, transparent); --base: #121317;
+          --card-glass: rgba(34, 35, 41, 0.72); --card-edge: rgba(255, 255, 255, 0.07); --card-line: rgba(255, 255, 255, 0.06);
+          --card-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 16px 40px -20px rgba(0, 0, 0, 0.7);
+          --card-shadow-hi: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 26px 50px -20px rgba(0, 0, 0, 0.85);
+          --rail-bg: #0b0c0f; } }
+  :root[data-theme="dark"] {
+          --wash-a: color-mix(in srgb, var(--acc) 26%, transparent); --wash-b: color-mix(in srgb, #14b8a6 14%, transparent);
+          --wash-c: color-mix(in srgb, var(--acc-dk) 12%, transparent); --base: #121317;
+          --card-glass: rgba(34, 35, 41, 0.72); --card-edge: rgba(255, 255, 255, 0.07); --card-line: rgba(255, 255, 255, 0.06);
+          --card-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 16px 40px -20px rgba(0, 0, 0, 0.7);
+          --card-shadow-hi: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 26px 50px -20px rgba(0, 0, 0, 0.85);
+          --rail-bg: #0b0c0f; }
+  body:not(.landing) { background: var(--base); }
+  body:not(.landing)::after {
+    background:
+      radial-gradient(55% 45% at 8% 4%, var(--wash-a), transparent 70%),
+      radial-gradient(50% 45% at 96% 30%, var(--wash-b), transparent 70%),
+      radial-gradient(60% 50% at 70% 100%, var(--wash-c), transparent 70%);
+  }
+  .card { background: var(--card-glass); border: 1px solid var(--card-line); box-shadow: inset 0 1px 0 var(--card-edge), var(--card-shadow); border-radius: 18px;
+    -webkit-backdrop-filter: blur(18px) saturate(140%); backdrop-filter: blur(18px) saturate(140%); }
+  @media (prefers-reduced-transparency: reduce) { .card { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+  @media (prefers-contrast: more) { .card { background: var(--surface); border-color: var(--text-2); } }
+  .tile { background: color-mix(in srgb, var(--surface-2) 70%, transparent); border: 1px solid var(--card-line); border-radius: 14px; }
+  /* gentle motion: things you can click rise a little when you point at them (computers only) */
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .card { transition: box-shadow .25s ease, transform .25s ease; }
+    .card:hover { box-shadow: inset 0 1px 0 var(--card-edge), var(--card-shadow-hi); }
+    .tile, .q, .merow, .lb li, .gitem, .shot { transition: transform .2s ease, background-color .2s ease, box-shadow .2s ease; }
+    .tile:hover, .q:hover, .gitem:hover { transform: translateY(-3px); box-shadow: var(--card-shadow-hi); }
+    .shot:hover { transform: translateY(-2px) scale(1.02); }
+    .lb li:hover { transform: translateX(3px); }
+    .t:hover:not(:disabled) { transform: translateY(-1px); }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .t, .q, .btn, .round, .icon { transition: transform .15s ease, background-color .15s, border-color .15s, color .15s; }
+    .t:active:not(:disabled), .q:active, .btn:active, .icon:active { transform: scale(0.96); }
+  }
+
+  /* computers: a slim icon bar on the left */
+  .rail { display: none; }
+  @media (min-width: 960px) {
+    body.has-rail { padding-left: calc(100px + env(safe-area-inset-left, 0px)); }
+    .rail { position: fixed; z-index: 7; left: 16px; top: 16px; bottom: 16px; width: 64px; display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding: 12px 0; border-radius: 22px; background: var(--rail-bg); box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.6); }
+    .rail[hidden] { display: none !important; }
+    .rail .rail-logo { width: 38px; height: 38px; border-radius: 28%; display: block; margin-bottom: 10px; }
+    .rail button { position: relative; width: 44px; height: 44px; border: 0; border-radius: 13px; background: transparent; color: var(--rail-icon);
+      display: grid; place-items: center; cursor: pointer; transition: background-color .2s, color .2s, transform .15s; }
+    .rail button svg { width: 21px; height: 21px; }
+    .rail button:hover { background: rgba(255, 255, 255, 0.08); color: var(--rail-on); }
+    .rail button[aria-current="page"] { background: var(--accent); color: var(--on-accent); }
+    .rail button[aria-current="page"]::before { content: ""; position: absolute; left: -10px; top: 12px; bottom: 12px; width: 3px; border-radius: 2px; background: var(--rail-on); }
+    .rail .meav { width: 28px; height: 28px; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18); }
+    .rail .rail-sep { flex: 1; }
+    .rail .count { position: absolute; top: 4px; right: 3px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--crit); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+    .rail button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  }
 </style>
 <script src="config.js"></script>
 <script src="vendor/supabase-2.57.4.js"></script>
 </head>
 <body>
 <main>
+  <nav class="rail" id="rail" aria-label="Main" hidden></nav>
   <div class="topbar glass" id="topbar" hidden></div>
   <div id="app"><div class="card"><p class="msg">Loading…</p></div></div>
 </main>
@@ -913,6 +982,8 @@ const ICON_PATHS = {
   bell: '<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
   phone: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
   lock: '<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.6a6 6 0 0 1 3.5 5.4"/>',
+  sliders: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h12M20 18h0"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
   target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>',
 };
 const ic = (name, px = 16) => `<svg class="ic" viewBox="0 0 24 24" width="${px}" height="${px}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name] || ""}</svg>`;
@@ -2024,9 +2095,7 @@ function renderTop() {
         <button class="round" id="next" aria-label="Next trading day" ${selected >= today ? "disabled" : ""}>›</button>`}
       </div>
       <div class="end"><span>${status}</span>${selected !== today && tab !== "admin" && tab !== "me" ? `<button id="gotoday">Today</button>` : ""}
-        ${isAdmin ? `<button id="toggleadmin" class="gearbtn ${tab === "admin" ? "on" : ""}" aria-label="${tab === "admin" ? "Close Admin" : "Admin"}" title="${tab === "admin" ? "Close Admin" : "Admin"}">${tab === "admin" ? `${XMARK}` : SVG.gear}${pendingCount() ? `<span class="count" aria-label="${pendingCount()} waiting">${pendingCount()}</span>` : ""}</button>` : ""}
-        ${tab === "me" ? `<button id="toggleme" class="gearbtn on" aria-label="Close Me" title="Close">${XMARK}</button>`
-          : `<button id="toggleme">${meIcon()}Me</button>`}</div>`);
+        </div>`);
     return;
   }
   let prev = `<span></span>`, next = `<span></span>`, mid;
@@ -2045,6 +2114,21 @@ function renderTop() {
   morph(top, prev + `<div class="mid">${groupButton(16)}${mid}</div>` + next);
 }
 
+// Computers: the slim icon bar on the left (Day, Me, Admin, Settings).
+function renderRail() {
+  const rail = document.getElementById("rail");
+  const on = screen === "app" && isWide() && !legalOpen();
+  rail.hidden = !on; document.body.classList.toggle("has-rail", on);
+  if (!on) return;
+  const cur = t => (t === "day" ? tab !== "admin" && tab !== "me" && !profileKey : tab === t && !profileKey) ? ' aria-current="page"' : "";
+  morph(rail, `<img class="rail-logo" src="icons/icon-192.png" alt="">
+    <button data-tab="day"${cur("day")} aria-label="Day" title="Day">${SVG.day}</button>
+    <button id="toggleme" data-tab="me"${cur("me")} aria-label="Me" title="Me">${meIcon()}</button>
+    ${isAdmin ? `<button id="toggleadmin" data-tab="admin"${cur("admin")} aria-label="Admin${pendingCount() ? `, ${pendingCount()} waiting` : ""}" title="Admin">${SVG.gear}${pendingCount() ? `<span class="count" aria-hidden="true">${pendingCount()}</span>` : ""}</button>` : ""}
+    <span class="rail-sep"></span>
+    <button data-rail="groups" aria-label="Groups" title="Groups">${ic("users", 21)}</button>
+    <button data-rail="settings" aria-label="Settings" title="Settings">${ic("sliders", 21)}</button>`);
+}
 function renderTabbar() {
   const bar = document.getElementById("tabbar");
   bar.hidden = screen !== "app";
@@ -2793,7 +2877,7 @@ function renderMe() {
 
 function render() {
   ticksChanged();
-  renderTop(); renderTabbar();
+  renderTop(); renderTabbar(); renderRail();
   const app = document.getElementById("app");
   document.body.classList.toggle("landing", screen === "signin");
   const legal = legalOpen() && screen !== "loading" && screen !== "setup";
@@ -2820,10 +2904,24 @@ function render() {
   if (tour) requestAnimationFrame(placeTour);
 }
 
+// A short fade-up when you open another page, and the profile numbers count up (skipped if you prefer less motion).
+function pageEnter() {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const app = document.getElementById("app");
+  if (app.animate) app.animate([{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }], { duration: 260, easing: "cubic-bezier(.2,.8,.2,1)" });
+  document.querySelectorAll("#app .tile b").forEach(el => {
+    const m = /^(\d+)(%?)$/.exec(el.textContent.trim());
+    if (!m || +m[1] === 0) return;
+    const end = +m[1], start = performance.now(), dur = 600;
+    const step = now => { const k = Math.min(1, (now - start) / dur), v = Math.round(end * (1 - Math.pow(1 - k, 3)));
+      if (el.isConnected) el.textContent = v + m[2]; if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  });
+}
 function setTab(t) {
   adminDirty = false;
   if (t === tab && !profileKey) { selected = today; weekStart = mondayOf(today); }
-  tab = t; profileKey = null; flash = ""; try { localStorage.setItem("tab", t); } catch (e) {} render(); window.scrollTo(0, 0); }
+  tab = t; requestAnimationFrame(pageEnter); profileKey = null; flash = ""; try { localStorage.setItem("tab", t); } catch (e) {} render(); window.scrollTo(0, 0); }
 
 // ---------------------------------------------------------------- events
 document.addEventListener("click", async e => {
@@ -2836,7 +2934,7 @@ document.addEventListener("click", async e => {
   if (!t) return;
   const d = t.dataset;
   if (d.tab) return setTab(d.tab);
-  if (d.profile) { profileKey = d.profile; if (tab === "admin") tab = "day"; render(); return window.scrollTo(0, 0); }
+  if (d.profile) { profileKey = d.profile; if (tab === "admin") tab = "day"; render(); requestAnimationFrame(pageEnter); return window.scrollTo(0, 0); }
   if (t.id === "goto-reflect") {
     openPanel(today, myKey());
     const el = document.getElementById("panel-refl");
@@ -2844,9 +2942,14 @@ document.addEventListener("click", async e => {
     return;
   }
   if (t.id === "profile-back") { profileKey = null; render(); return window.scrollTo(0, 0); }
-  if (d.tick) { const [key, r] = d.tick.split(":"); return editTick(selected, key, row => { row[r] = !row[r]; }); }
+  if (d.tick) {
+    const [key, r] = d.tick.split(":");
+    if (t.animate && !matchMedia("(prefers-reduced-motion: reduce)").matches) t.animate([{ transform: "scale(0.94)" }, { transform: "scale(1.04)" }, { transform: "scale(1)" }], { duration: 280, easing: "ease-out" });
+    return editTick(selected, key, row => { row[r] = !row[r]; });
+  }
   if (d.edit) return editing && panelMode === "inline" && editing.key === d.edit && editing.day === selected ? closePanel() : openPanel(selected, d.edit);
-  if (t.id === "open-settings") return openSettings();
+  if (t.id === "open-settings" || d.rail === "settings") return openSettings();
+  if (d.rail === "groups") return openGroupsPanel();
   if (t.id === "export-data") return exportMyData();
   if (t.id === "accept-terms") {
     if (!document.getElementById("terms-ok").checked) return;
