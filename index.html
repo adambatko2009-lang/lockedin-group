@@ -1022,6 +1022,8 @@
       radial-gradient(45% 40% at 60% 100%, rgba(59, 130, 246, 0.16), transparent 70%),
       radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1.4px) 0 0 / 22px 22px; }
   .lp { background: transparent; }
+  html:has(body.landing) { background: #000; }
+  body.landing::before { content: ""; position: fixed; z-index: 25; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); background: #000; pointer-events: none; }
   .lp-btn { border-radius: 12px; text-transform: none; letter-spacing: 0; font: 600 16px var(--font-ui); min-height: 50px; padding: 0 22px; gap: 10px; }
   .lp-btn.white { background: #2563eb; color: #fff; box-shadow: none; }
   .lp-btn.white:hover { background: #1d4ed8; }
@@ -1030,13 +1032,14 @@
   .lp-btn.small { min-height: 40px; padding: 0 16px; font-size: 14px; border-radius: 10px; }
   .lp-btn svg { width: 20px; height: 20px; }
   .vcol.us li b { background: #2563eb; color: #fff; }
-  .stage3d { position: relative; display: grid; place-items: center; width: 100%; min-height: 560px; perspective: 1600px; }
+  .stage3d { position: relative; display: grid; place-items: center; width: 100%; min-height: 560px; }
   .behind { position: absolute; left: 50%; top: 50%; transform: translate(-58%, -50%); margin: 0; z-index: 0; white-space: nowrap; pointer-events: none;
     font: 700 clamp(64px, 10vw, 150px)/0.86 var(--font-ui); letter-spacing: -0.055em; text-transform: uppercase;
     color: transparent; -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.55); }
   .phone3d { position: relative; z-index: 1; }
-  .stage3d .phone { --rx: 0deg; --ry: 0deg; transform-style: preserve-3d;
-    transform: rotateY(calc(-24deg + var(--ry))) rotateX(calc(10deg + var(--rx))) rotateZ(3deg);
+  /* perspective is part of the transform (not the parent) and the phone is one layer: iPhone Safari drew only part of the picture otherwise */
+  .stage3d .phone { --rx: 0deg; --ry: 0deg; will-change: transform; -webkit-backface-visibility: hidden; backface-visibility: hidden;
+    transform: perspective(1600px) rotateY(calc(-24deg + var(--ry))) rotateX(calc(10deg + var(--rx))) rotateZ(3deg);
     transition: transform .5s cubic-bezier(.2, .8, .2, 1);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16),
       1px 1px 0 #3c3d43, 2px 2px 0 #34353a, 3px 3px 0 #2d2e33, 4px 4px 0 #27282c, 5px 5px 0 #222326, 6px 6px 0 #1d1e21, 7px 7px 0 #18191b, 8px 8px 0 #141416,
@@ -1044,7 +1047,8 @@
   .stage3d .phone::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
     background: linear-gradient(115deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 32%, rgba(255, 255, 255, 0) 70%, rgba(255, 255, 255, 0.06) 100%); }
   .stage3d .phone-screen { padding: 0; }
-  .stage3d .phone-screen img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: top; border-radius: inherit; }
+  .stage3d .phone-screen img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: top; border-radius: inherit; transform: translateZ(0); }
+  .stage3d .phone-screen { -webkit-mask-image: -webkit-radial-gradient(white, black); isolation: isolate; }
   .stage3d .phone-screen::before { z-index: 2; }
   @media (prefers-reduced-motion: reduce) { .stage3d .phone { transition: none; } }
   @media (max-width: 899px) { .stage3d { min-height: 0; padding: 30px 0 10px; } .behind { font-size: 19vw; } .stage3d .phone { width: min(270px, 70vw); } }
@@ -3095,9 +3099,13 @@ function render() {
   renderTop(); renderTabbar(); renderRail();
   if (screen !== "loading") hideSplash();
   const app = document.getElementById("app");
-  document.body.classList.toggle("landing", screen === "signin");
   const legal = legalOpen() && screen !== "loading" && screen !== "setup";
-  document.body.classList.toggle("landing", screen === "signin" || legal);
+  const landingNow = screen === "signin" || legal;
+  if (landingNow !== document.body.classList.contains("landing")) {
+    document.body.classList.toggle("landing", landingNow);
+    if (landingNow) document.querySelectorAll('meta[name="theme-color"]').forEach(m => { m.removeAttribute("media"); m.content = "#000000"; });
+    else applyTheme();
+  }
   if (legal) { document.getElementById("topbar").hidden = true; document.getElementById("tabbar").hidden = true; app.innerHTML = renderLanding(); revealLanding(); return; }
   if (screen !== "app") { app.innerHTML = renderGate(); if (screen === "signin") revealLanding(); return; }
   let html;
