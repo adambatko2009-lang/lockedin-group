@@ -1472,6 +1472,8 @@ function openSettings() {
 // ---------------------------------------------------------------- weekly reflection
 // Each member writes their own for the current week (Friday's day stays open until Monday 09:00 New York).
 const pendingRefl = {}, reflTimers = {};
+// The weekly reflection is written on the last trading day of the week (Friday, or earlier if Friday is a holiday).
+const isRecapDay = k => isTradingDay(k) && mondayOf(nextTrading(k)) !== mondayOf(k);
 const canEditReflection = (week, key) => !!key && (isAdmin || (key === myKey() && week === mondayOf(today)));
 function editReflection(week, key, field, value) {
   if (!canEditReflection(week, key)) return;
@@ -1498,13 +1500,14 @@ function renderReflections() {
   const label = `${fmtDay(week, { weekday: undefined })} – ${fmtDay(addDays(week, 4), { weekday: undefined })}`;
   const mineRow = reflections[week + "|" + me] || {};
   // You write it in your ✎ panel; this card is for reading everyone's.
-  const form = editable && canEdit(today, me) ? `<button class="reflect-nudge" id="goto-reflect" style="margin:0 0 6px">${ic("pen", 16)}${mineRow.went_well || mineRow.to_fix ? "Edit" : "Write"} your reflection</button>` : "";
+  const form = editable && canEdit(today, me) && isRecapDay(today) ? `<button class="reflect-nudge" id="goto-reflect" style="margin:0 0 6px">${ic("pen", 16)}${mineRow.went_well || mineRow.to_fix ? "Edit" : "Write"} your reflection</button>` : "";
   const entries = activeMembers().map(m => {
     const r = reflections[week + "|" + m.key];
     if (!r || !(r.went_well || r.to_fix)) return "";
     return `<div class="rentry"><div class="who">${avatarHtml(m, 24)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === me ? `<span class="you">YOU</span>` : ""}</div>
       ${r.went_well ? `<h3 class="rh">Went well</h3><p>${linkify(r.went_well)}</p>` : ""}${r.to_fix ? `<h3 class="rh">To fix</h3><p>${linkify(r.to_fix)}</p>` : ""}</div>`;
   }).join("");
+  if (!form && !entries) return "";   // nothing to read yet, and it's not the day to write one
   return `<div class="card reflect" id="reflect"><div class="cardhead"><h2>Weekly reflection · ${label}</h2></div>
     ${form}${entries || `<p class="empty">No reflections for this week yet.</p>`}</div>`;
 }
@@ -1717,7 +1720,7 @@ function openPanel(day, key) {
     <h3>Rule breaks today</h3>
     <p class="sub-hint">Be honest: it never costs points, and it helps you spot patterns.</p>
     <div id="panel-tags">${tagPickHtml(rec)}</div>
-    ${(wk => canEditReflection(wk, key) ? `<h3 id="panel-refl">Weekly reflection · ${fmtDay(wk, { weekday: undefined })} – ${fmtDay(addDays(wk, 4), { weekday: undefined })}</h3>
+    ${(wk => canEditReflection(wk, key) && isRecapDay(day) ? `<h3 id="panel-refl">Weekly reflection · ${fmtDay(wk, { weekday: undefined })} – ${fmtDay(addDays(wk, 4), { weekday: undefined })}</h3>
     <div class="reflect">
       <label for="panel-refl-well">What went well</label>
       <textarea id="panel-refl-well" data-refl="went_well" data-week="${wk}" data-key="${key}" maxlength="600" placeholder="Patience on entries, followed the plan…">${esc((reflections[wk + "|" + key] || {}).went_well)}</textarea>
@@ -2073,7 +2076,7 @@ function renderDay() {
     ? `<div class="urgent-banner" role="alert">${ic("clock", 18)}${mins} min left to finish your homework</div>` : "";
   // Fridays: a reminder to write the weekly reflection, until you've written one.
   const ownRefl = myKey() ? reflections[mondayOf(today) + "|" + myKey()] : null;
-  const nudge = k === today && parse(today).getUTCDay() === 5 && myKey() && !(ownRefl && (ownRefl.went_well || ownRefl.to_fix))
+  const nudge = k === today && isRecapDay(today) && myKey() && !(ownRefl && (ownRefl.went_well || ownRefl.to_fix))
     ? `<button class="reflect-nudge" id="goto-reflect">${ic("pen", 16)}Write your weekly reflection</button>` : "";
 
   const counts = {};
@@ -3166,7 +3169,7 @@ function tourSteps() {
         + (bonus.length ? ` ${esc(listText(bonus))} ${bonus.length > 1 ? "are bonus boxes" : "is a bonus box"}: extra points.` : "")
         + ` You can tick until ${hh(CUTOFF_HOUR)} ${esc(tzCity(TZ))} time on the next trading day.` },
     mine && { el: wide ? q(`[data-edit="${me}"]`) : q(".quick .qnote"), title: "Note & pictures",
-      text: "Write your note, add chart screenshots" + (wide ? " (you can paste them with ⌘V / Ctrl+V)" : "") + ", tag rule breaks, mark a no-trade day and write your weekly reflection. Everything saves by itself." },
+      text: "Write your note, add chart screenshots" + (wide ? " (you can paste them with ⌘V / Ctrl+V)" : "") + ", tag rule breaks, mark a no-trade day, and on Fridays write your weekly reflection. Everything saves by itself." },
     { el: () => { const t = document.querySelector("#app .track"); return t && t.closest(".card"); }, title: "Time left today",
       text: "How many of you are done and how much time is left. In the last hour the timer turns red, and you get a reminder if you're not done yet." },
     { el: () => { const m = [...document.querySelectorAll("#app .member")].find(x => !x.querySelector(`[data-edit="${me}"]`)); return m; }, title: "Everyone's day",
