@@ -1023,6 +1023,7 @@
       radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1.4px) 0 0 / 22px 22px; }
   .lp { background: transparent; }
   html:has(body.landing) { background: #000; }
+  body.landing { background: transparent; }   /* see-through, so the blue glow and dots (drawn behind the page) show */
   /* behind the iPhone status bar: black that fades into the page, so there's no hard edge */
   body.landing::before { content: ""; position: fixed; z-index: 19; top: 0; left: 0; right: 0; height: calc(env(safe-area-inset-top, 0px) + 56px); pointer-events: none;
     background: linear-gradient(180deg, #000 0, #000 env(safe-area-inset-top, 0px), rgba(0, 0, 0, 0.6) calc(env(safe-area-inset-top, 0px) + 22px), transparent); }
