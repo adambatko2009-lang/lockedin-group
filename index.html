@@ -424,6 +424,8 @@
   .panel .sub-hint { font-size: 13px; color: var(--muted); margin: -4px 0 10px; }
   .segset { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; background: var(--surface-2); border-radius: 11px; padding: 3px; }
   .segset.four { grid-template-columns: repeat(4, 1fr); margin-top: 8px; }
+  .segset.two { grid-template-columns: 1fr 1fr; }
+  .gsettings { max-width: 760px; }
   .segset button { min-height: 38px; border: 0; border-radius: 8px; background: transparent; color: var(--text-2); font-size: 15px; font-weight: 600; cursor: pointer; }
   .segset button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22); }
   .bcount { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -777,7 +779,7 @@
     body { padding-bottom: 32px; }
     main { max-width: 1240px; }
     .tabbar { display: none; }
-    .topbar { grid-template-columns: 1fr auto 1fr; padding: 6px 8px 6px 20px; }
+    .topbar { grid-template-columns: 1fr auto 1fr; padding: 6px 8px 6px 20px; min-height: 58px; }   /* same height on every page */
     .topbar .brand { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
     .topbar > .gname { font-size: 17px; justify-self: start; color: var(--text); }
     .topbar > .gname span { font-weight: 700; letter-spacing: -0.01em; }
@@ -913,10 +915,10 @@
   /* computers: a slim icon bar on the left */
   .rail { display: none; }
   @media (min-width: 960px) {
-    body.has-rail { padding-left: calc(100px + env(safe-area-inset-left, 0px)); }
+    body.has-rail { padding-left: calc(252px + env(safe-area-inset-left, 0px)); }
     /* liquid glass: see-through and frosted, a light rim where "light" catches the edge, and a soft glow that follows the pointer */
-    .rail { position: fixed; z-index: 7; left: 16px; top: 16px; bottom: 16px; width: 64px; display: flex; flex-direction: column; align-items: center; gap: 6px;
-      padding: 12px 0; border-radius: 24px; background: var(--lg-fill); border: 1px solid var(--lg-edge); isolation: isolate; overflow: hidden;
+    .rail { position: fixed; z-index: 7; left: 16px; top: 16px; bottom: 16px; width: 216px; display: flex; flex-direction: column; align-items: stretch; gap: 2px;
+      padding: 14px 10px; overflow-y: auto; scrollbar-width: none; border-radius: 24px; background: var(--lg-fill); border: 1px solid var(--lg-edge); isolation: isolate; overflow: hidden;
       -webkit-backdrop-filter: blur(26px) saturate(190%); backdrop-filter: blur(26px) saturate(190%);
       box-shadow: inset 0 1px 0 var(--lg-rim), inset 1px 0 0 color-mix(in srgb, var(--lg-rim) 45%, transparent), inset 0 -1px 0 color-mix(in srgb, var(--lg-rim) 30%, transparent), var(--lg-shadow); }
     .rail::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
@@ -926,18 +928,21 @@
     .rail::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
       background: linear-gradient(115deg, transparent 35%, color-mix(in srgb, var(--lg-glow) 35%, transparent) 50%, transparent 65%); opacity: 0.6; }
     .rail[hidden] { display: none !important; }
-    .rail .rail-logo { width: 38px; height: 38px; border-radius: 28%; display: block; margin-bottom: 10px; }
-    .rail button { position: relative; width: 44px; height: 44px; border: 0; border-radius: 13px; background: transparent; color: var(--rail-icon);
-      display: grid; place-items: center; cursor: pointer; transition: background-color .2s, color .2s, transform .15s; }
-    .rail button svg { width: 21px; height: 21px; }
+    .rail .rail-brand { display: flex; align-items: center; gap: 10px; padding: 2px 8px 12px; font-size: 16px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
+    .rail .rail-logo { width: 30px; height: 30px; border-radius: 28%; display: block; flex: none; }
+    .rail .rail-h { margin: 14px 10px 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .rail button { position: relative; width: 100%; min-height: 40px; flex: none; border: 0; border-radius: 12px; background: transparent; color: var(--rail-icon);
+      display: flex; align-items: center; gap: 11px; padding: 0 10px; font: inherit; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer; transition: background-color .2s, color .2s, transform .15s; }
+    .rail button > svg, .rail button > .meav { flex: none; }
+    .rail button svg { width: 19px; height: 19px; }
     .rail button:hover { background: var(--rail-hover); color: var(--text); }
     /* the selected page: a lens of tinted glass in the group's color */
     .rail button[aria-current="page"] { color: var(--on-accent);
       background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 80%, white), var(--accent));
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -1px 0 rgba(0, 0, 0, 0.12), 0 6px 16px -6px color-mix(in srgb, var(--accent) 70%, transparent); }
-    .rail .meav { width: 28px; height: 28px; box-shadow: 0 0 0 2px var(--lg-edge); }
-    .rail .rail-sep { flex: 1; }
-    .rail .count { position: absolute; top: 4px; right: 3px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--crit); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+    .rail .meav { width: 22px; height: 22px; box-shadow: 0 0 0 2px var(--lg-edge); }
+    .rail .rail-sep { flex: 1; min-height: 14px; }
+    .rail .count { margin-left: auto; min-width: 19px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--crit); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
     .rail button:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
     /* people who ask for less transparency or more contrast get a solid bar */
     @media (prefers-reduced-transparency: reduce) { .rail { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; } .rail::before, .rail::after { display: none; } }
@@ -1182,6 +1187,8 @@ const STATUS_ORDER = ["COMPLETE", "PARTIAL", "MISSING", "WAITING", "UNLOGGED", "
 const STATUS_COLOR = { COMPLETE: "var(--good)", PARTIAL: "var(--warn)", MISSING: "var(--crit)", WAITING: "var(--line)", UNLOGGED: "var(--line)", EXCUSED: "var(--muted)" };
 // Outline icons (no emoji): decorative next to text, so hidden from screen readers.
 const ICON_PATHS = {
+  book: '<path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19"/><path d="M9 7.5h6"/>',
+  layers: '<path d="M12 3 3 8l9 5 9-5-9-5z"/><path d="m3 13 9 5 9-5"/>',
   alert: '<path d="M12 4 2.8 20h18.4L12 4z"/><path d="M12 10v4.5M12 17.4v.1"/>',
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/>',
   pen: '<path d="M4 20h4L19 9l-4-4L4 16v4z"/>',
@@ -2036,7 +2043,7 @@ function openPanel(day, key) {
 // "Your homework"). Settings, Groups and notes for other days still open as a window.
 var panelEl = document.getElementById("panel");
 var panelMode = "drawer";   // "inline" | "drawer" (var: render() can run before this line)
-const inlineOK = day => day === selected && screen === "app" && !profileKey && tab !== "admin" && tab !== "me" && (tab === "day" || isWide());
+const inlineOK = day => day === selected && screen === "app" && !profileKey && tab !== "admin" && tab !== "me" && tab === "day";
 const inlineHere = (key, k) => panelMode === "inline" && !!editing && editing.key === key && editing.day === k;
 function setPanelRole() {
   panelEl.setAttribute("role", panelMode === "inline" ? "region" : "dialog");
@@ -2289,6 +2296,7 @@ function morphNode(a, b) {
   if (a.tagName === "SELECT" && !typing) a.value = b.value;
 }
 
+const PAGE_TITLE = { day: "Today", week: "Week", board: "Ranking", journal: "Journal", me: "Me", admin: "Admin" };
 function renderTop() {
   renderNoteStatus();
   const top = document.getElementById("topbar");
@@ -2304,12 +2312,16 @@ function renderTop() {
   if (isWide()) {
     const status = error ? `<span class="err">${esc(error)}</span>` : saving || Object.keys(pending).length ? "Saving…" : "";
     morph(top, `${groupButton(24)}
-      <div class="center">${tab === "admin" || tab === "me" ? `<b>${tab === "me" ? "Me" : "Admin"}</b>` : `
+      <div class="center">${tab === "day" ? `
         <button class="round" id="prev" aria-label="Previous trading day">‹</button>
         ${datePickHtml()}
-        <button class="round" id="next" aria-label="Next trading day" ${selected >= today ? "disabled" : ""}>›</button>`}
+        <button class="round" id="next" aria-label="Next trading day" ${selected >= today ? "disabled" : ""}>›</button>` : tab === "week" ? `
+        <button class="round" id="pw" aria-label="Previous week">‹</button>
+        <b>${fmtDay(weekStart, { weekday: undefined })} – ${fmtDay(addDays(weekStart, 4), { weekday: undefined })}</b>
+        <button class="round" id="nw" aria-label="Next week" ${weekStart >= mondayOf(today) ? "disabled" : ""}>›</button>`
+        : `<b>${tab === "admin" ? (adminViews().find(v => v[0] === adminView) || ["", "Admin"])[1] : tab === "me" ? "Profile" : PAGE_TITLE[tab] || ""}</b>`}
       </div>
-      <div class="end"><span>${status}</span>${selected !== today && tab !== "admin" && tab !== "me" ? `<button id="gotoday">Today</button>` : ""}
+      <div class="end"><span>${status}</span>${tab === "day" && selected !== today ? `<button id="gotoday">Today</button>` : tab === "week" && weekStart !== mondayOf(today) ? `<button id="thisweek">This week</button>` : ""}
         </div>`);
     return;
   }
@@ -2323,8 +2335,8 @@ function renderTop() {
     next = `<button class="round" id="nw" aria-label="Next week" ${weekStart >= mondayOf(today) ? "disabled" : ""}>›</button>`;
     mid = `<b>${fmtDay(weekStart, { weekday: undefined })} – ${fmtDay(addDays(weekStart, 4), { weekday: undefined })}</b>${statusText()}`;
   } else {
-    mid = `<b>${{ admin: "Admin", board: "Ranking", me: "Me" }[tab] || ""}</b>${statusText()}`;
-    if (tab === "admin" || tab === "me") next = `<button class="round" id="close-admin" aria-label="Close ${tab === "me" ? "Me" : "Admin"}">${SYM.x}</button>`;
+    mid = `<b>${PAGE_TITLE[tab] || ""}</b>${statusText()}`;
+    if (tab === "admin" || tab === "me" || tab === "journal") next = `<button class="round" id="close-admin" aria-label="Close ${PAGE_TITLE[tab]}">${SYM.x}</button>`;
   }
   morph(top, prev + `<div class="mid">${groupButton(16)}${mid}</div>` + next);
 }
@@ -2340,31 +2352,49 @@ function renderTop() {
   });
   bar.addEventListener("pointerleave", () => { bar.style.setProperty("--glow-x", "-300px"); bar.style.setProperty("--glow-y", id === "rail" ? "-200px" : "50%"); });
 });
-// Computers: the slim icon bar on the left (Day, Me, Admin, Settings).
+// Computers: the sidebar on the left. One page per thing, grouped: your group, you, and (for admins) running the group.
+function adminViews() {
+  return [["people", "People"], isGroupOwner() && ["group", "Group settings"], isAppOwner && ["all", "All groups"]].filter(Boolean);
+}
+function fixAdminView() { if (!adminViews().some(v => v[0] === adminView)) adminView = "people"; }
 function renderRail() {
   const rail = document.getElementById("rail");
   const on = screen === "app" && isWide() && !legalOpen();
   rail.hidden = !on; document.body.classList.toggle("has-rail", on);
   if (!on) return;
-  const cur = t => (t === "day" ? tab !== "admin" && tab !== "me" && !profileKey : tab === t && !profileKey) ? ' aria-current="page"' : "";
-  morph(rail, `<span class="rail-ind" aria-hidden="true"></span><img class="rail-logo" src="icons/icon-192.png" alt="">
-    <button data-tab="day"${cur("day")} aria-label="Day" title="Day">${SVG.day}</button>
-    <button id="toggleme" data-tab="me"${cur("me")} aria-label="Me" title="Me">${meIcon()}</button>
-    ${isAdmin ? `<button id="toggleadmin" data-tab="admin"${cur("admin")} aria-label="Admin${pendingCount() ? `, ${pendingCount()} waiting` : ""}" title="Admin">${SVG.gear}${pendingCount() ? `<span class="count" aria-hidden="true">${pendingCount()}</span>` : ""}</button>` : ""}
+  fixAdminView();
+  const here = (t, v) => !profileKey && tab === t && (!v || adminView === v);
+  const item = (t, v, icon, label, extra = "", id = "") => `<button ${id ? `id="${id}" ` : ""}data-nav="${t}${v ? ":" + v : ""}"${here(t, v) ? ' aria-current="page"' : ""}>${icon}<span>${label}</span>${extra}</button>`;
+  const badge = n => n ? `<span class="count" aria-label="${n} waiting">${n}</span>` : "";
+  const reqs = isAppOwner ? requests.filter(r => r.status === "pending").length : 0;
+  const g = group();
+  morph(rail, `<span class="rail-ind" aria-hidden="true"></span>
+    <div class="rail-brand"><img class="rail-logo" src="icons/icon-192.png" alt="">LockedIn</div>
+    <p class="rail-h">${esc(g ? g.name : "Group")}</p>
+    ${item("day", "", SVG.day, "Today")}
+    ${item("week", "", SVG.week, "Week")}
+    ${item("board", "", SVG.board, "Ranking")}
+    <p class="rail-h">You</p>
+    ${item("me", "", meIcon(), "Profile", "", "toggleme")}
+    ${item("journal", "", ic("book", 19), "Journal")}
+    ${isAdmin ? `<p class="rail-h">Admin</p>
+    ${item("admin", "people", SVG.admin, "People", badge(pendingCount()), "toggleadmin")}
+    ${isGroupOwner() ? item("admin", "group", SVG.gear, "Group settings") : ""}
+    ${isAppOwner ? item("admin", "all", ic("layers", 19), "All groups", badge(reqs)) : ""}` : ""}
     <span class="rail-sep"></span>
-    <button data-rail="groups" aria-label="Groups" title="Groups">${ic("users", 21)}</button>
-    <button data-rail="settings" aria-label="Settings" title="Settings">${ic("sliders", 21)}</button>`);
+    <button data-rail="groups">${ic("users", 19)}<span>Groups</span></button>
+    <button data-rail="settings">${ic("sliders", 19)}<span>Settings</span></button>`);
   const ind = rail.querySelector(".rail-ind"), cur2 = rail.querySelector('[aria-current="page"]');
-  if (ind) { ind.style.opacity = cur2 ? "1" : "0"; if (cur2) ind.style.transform = `translateY(${cur2.offsetTop + 12}px)`; }
+  if (ind) { ind.style.opacity = cur2 ? "1" : "0"; if (cur2) ind.style.transform = `translateY(${cur2.offsetTop + cur2.offsetHeight / 2 - 10}px)`; }
 }
 function renderTabbar() {
   const bar = document.getElementById("tabbar");
   bar.hidden = screen !== "app";
   if (screen !== "app") return;
   const list = tabsList(), labels = { day: "Day", week: "Week", board: "Ranking", admin: "Admin", me: "Me" };
-  const i = Math.max(0, list.indexOf(tab));
+  const cur = tab === "journal" ? "me" : tab, i = Math.max(0, list.indexOf(cur));
   morph(bar, `<div class="pill" style="width:calc((100% - 10px) / ${list.length});transform:translateX(${i * 100}%)" aria-hidden="true"></div>` +
-    list.map(t => `<button data-tab="${t}"${t === tab ? ' aria-current="page"' : ""} aria-label="${labels[t]}">${t === "admin" ? SVG.gear : t === "me" ? meIcon() : SVG[t]}<span>${labels[t]}</span>
+    list.map(t => `<button data-tab="${t}"${t === cur ? ' aria-current="page"' : ""} aria-label="${labels[t]}">${t === "admin" ? SVG.gear : t === "me" ? meIcon() : SVG[t]}<span>${labels[t]}</span>
       ${t === "admin" && pendingCount() ? `<i class="badge">${pendingCount()}</i>` : ""}</button>`).join(""));
 }
 
@@ -2452,11 +2482,7 @@ function renderWeek() {
     const st = statusOf(k, m.key), tip = `${m.name}, ${fmtDay(k)}: ${LABEL[st]}`;
     return `<td><button class="cell ${st} ${k === today ? "today" : ""}" data-day="${k}" title="${esc(tip)}" aria-label="${esc(tip)}">${ICON[st]}</button></td>`;
   }).join("")}</tr>`).join("");
-  const head2 = isWide() ? `<div class="cardhead"><h2>Week</h2><div class="nav">
-      <button class="round" id="pw" aria-label="Previous week">‹</button>
-      <span>${fmtDay(weekStart, { weekday: undefined })} – ${fmtDay(addDays(weekStart, 4), { weekday: undefined })}</span>
-      <button class="round" id="nw" aria-label="Next week" ${weekStart >= mondayOf(today) ? "disabled" : ""}>›</button></div></div>` : "";
-  return `<div class="card">${head2}<div class="grid-wrap"><table class="grid"><thead><tr><th class="who"><span class="sr-only">Member</span></th>${head}</tr></thead><tbody>${body}</tbody></table></div></div>`;
+  return `<div class="card"><div class="grid-wrap"><table class="grid"><thead><tr><th class="who"><span class="sr-only">Member</span></th>${head}</tr></thead><tbody>${body}</tbody></table></div></div>`;
 }
 
 // Everyone's points, streaks and badges. Remembered until the next change (the ranking asks for every member).
@@ -2550,7 +2576,9 @@ function roleForKey(key) {
   if (!p) return "";
   return p.user_id === g.owner_id ? "Owner" : p.role === "admin" ? "Admin" : "Member";
 }
-function renderProfile(key) {
+let profilePart = "profile";   // someone else's profile: "profile" or "journal"
+// Profile and Journal of one person. withTabs adds the small switch between the two (someone else's page, or Me on phones).
+function renderProfile(key, part = "profile", withTabs = false) {
   const m = members.find(x => x.key === key);
   if (!m) return `<div class="card"><p class="msg">Member not found.</p></div>`;
   const s = stats(key), badges = badgesFor(s), earned = badges.filter(b => b.earned).length;
@@ -2608,9 +2636,16 @@ function renderProfile(key) {
   const reflCard = refl.length ? `<div class="card reflect"><div class="cardhead"><h2>Weekly reflections</h2></div>${refl.map(r => `<div class="rentry">
       <div class="who"><small>Week of ${fmtDay(r.week_start, { weekday: undefined })}</small></div>
       ${r.went_well ? `<h3 class="rh">Went well</h3><p>${linkify(r.went_well)}</p>` : ""}${r.to_fix ? `<h3 class="rh">To fix</h3><p>${linkify(r.to_fix)}</p>` : ""}</div>`).join("")}</div>` : "";
-  return isWide()
-    ? `<div class="desk"><div class="maincol">${head}${ach}</div><div class="side">${heat}${breaksCard}${journal}${reflCard}</div></div>`
-    : head + ach + heat + breaksCard + journal + reflCard;
+  const own = key === myKey() && !profileKey;
+  const tabs = withTabs ? `<div class="segset two" role="group" aria-label="Show">
+      <button ${own ? 'data-tab="me"' : 'data-part="profile"'} aria-pressed="${part === "profile"}">Profile</button>
+      <button ${own ? 'data-tab="journal"' : 'data-part="journal"'} aria-pressed="${part === "journal"}">Journal</button></div>` : "";
+  if (part === "journal") return tabs + (isWide()
+    ? `<div class="desk"><div class="maincol">${journal}</div><div class="side">${breaksCard}${reflCard}</div></div>`
+    : journal + breaksCard + reflCard);
+  return tabs + (isWide()
+    ? `${head}<div class="desk"><div class="maincol">${ach}</div><div class="side">${heat}</div></div>`
+    : head + heat + ach);
 }
 
 // Pop up "Achievement unlocked" when you earn a new badge (remembered per browser).
@@ -2651,7 +2686,6 @@ function renderBoard() {
       <span class="pts" aria-label="${r.points} points">${r.points}</span></li>`;
   }).join("");
   return `<div class="card">
-    ${isWide() ? `<div class="cardhead"><h2>Ranking</h2></div>` : ""}
     <ol class="lb">${items}</ol>
     <details>
       <summary>Scoring</summary>
@@ -2714,7 +2748,7 @@ function renderAdmin() {
   const cols = [
     `${codeCard}<div class="card"><div class="cardhead"><h2>Waiting for approval</h2></div>${waitingHtml}</div>
      <div class="card"><div class="cardhead"><h2>Approved</h2></div>${approvedHtml}</div>${rejectedHtml}`,
-    `${isOwnerHere ? groupSettingsHtml(g) : ""}<div class="card"><div class="cardhead"><h2>Members</h2></div>${membersHtml}
+    `<div class="card"><div class="cardhead"><h2>Names in the group</h2></div>${membersHtml}
       <div class="addrow"><input class="field" id="newmember" placeholder="New member name" maxlength="40" aria-label="New member name">
       <button class="btn primary small" id="addmember">Add</button></div>
       <p class="empty" style="margin-top:10px">Removing a member hides them; their history is kept.</p></div>`,
@@ -2722,13 +2756,16 @@ function renderAdmin() {
   const note = flash ? `<div class="card"><p class="msg">${esc(flash)}</p></div>` : error ? `<div class="card"><p class="msg err">${esc(error)}</p></div>` : "";
   const paused = g && g.status === "paused" ? `<div class="card"><p class="msg err">This group is paused by the app owner. Nobody can tick or change anything until it's resumed.</p></div>` : "";
   const owner = isAppOwner ? ownerDashboardHtml() : "";
-  const segs = isAppOwner ? `<div class="segset adminseg" role="group" aria-label="Admin view">
-      <button data-admin-view="group" aria-pressed="${adminView === "group"}">${esc(g ? g.name : "Group")}</button>
-      <button data-admin-view="all" aria-pressed="${adminView === "all"}">All groups${requests.some(r => r.status === "pending") ? ` <span class="count">${requests.filter(r => r.status === "pending").length}</span>` : ""}</button></div>` : "";
-  if (isAppOwner && adminView === "all") return segs + note + owner;
+  fixAdminView();
+  const views = adminViews(), reqN = requests.filter(r => r.status === "pending").length;
+  // Phones: a switch at the top. Computers use the sidebar.
+  const segs = !isWide() && views.length > 1 ? `<div class="segset adminseg" style="grid-template-columns:repeat(${views.length},1fr)" role="group" aria-label="Admin view">
+      ${views.map(([v, l]) => `<button data-admin-view="${v}" aria-pressed="${adminView === v}">${l === "Group settings" ? "Settings" : l}${v === "people" && pendingCount() ? ` <span class="count">${pendingCount()}</span>` : v === "all" && reqN ? ` <span class="count">${reqN}</span>` : ""}</button>`).join("")}</div>` : "";
+  if (adminView === "all") return segs + note + owner;
+  if (adminView === "group") return segs + note + paused + groupSettingsHtml(g);
   return segs + note + paused + (isWide() ? `<div class="admin-grid"><div>${cols[0]}</div><div>${cols[1]}</div></div>` : cols.join(""));
 }
-let adminView = "group";
+let adminView = "people";
 
 // Group owner: everything about how the group works. Saved together with one button.
 function groupSettingsHtml(g) {
@@ -3108,7 +3145,7 @@ function revealLanding() {
 }
 
 // The Me tab: your own profile with badges, then your account (groups, settings, tutorial, sign out) at the bottom.
-function renderMe() {
+function renderMe(part = "profile") {
   const g = group(), m = members.find(x => x.key === myKey());
   const chev = `<svg class="chev" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M4.5 2.5 8 6l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   const tile = name => `<span class="meicon">${ic(name, 18)}</span>`;
@@ -3120,8 +3157,10 @@ function renderMe() {
       ${row("start-tour", tile("target"), "Tutorial", "A one-minute tour of the app")}
     </div>
     <div class="account"><span>Signed in as <b>${esc(who)}</b></span><button class="linkbtn" id="signout">Sign out</button></div></div>`;
-  const prof = m ? renderProfile(m.key) : `<div class="card"><p class="msg">You don't have a name in ${esc(g ? g.name : "this group")}, so there's no profile here.</p></div>`;
-  return prof + account;
+  if (!m) return `<div class="card"><p class="msg">You don't have a name in ${esc(g ? g.name : "this group")}, so there's no profile${part === "journal" ? " or journal" : ""} here.</p></div>` + (part === "profile" ? account : "");
+  // On computers the sidebar switches between Profile and Journal; on phones a small switch at the top does.
+  const prof = renderProfile(m.key, part, !isWide());
+  return part === "profile" ? prof + account : prof;
 }
 
 function render() {
@@ -3140,15 +3179,12 @@ function render() {
   if (screen !== "app") { app.innerHTML = renderGate(); if (screen === "signin") revealLanding(); return; }
   let html;
   if (tab === "admin" && isAdmin) html = renderAdmin();
-  else if (tab === "me" && !profileKey) html = renderMe();
-  else if (profileKey) html = renderProfile(profileKey);
-  else if (isWide()) {
-    const d = renderDay();
-    html = `<div class="desk"><div class="maincol">${d.summary}${d.list}</div><div class="side">${renderWeek()}${renderReflections()}${renderBoard()}</div></div>`;
-  } else if (tab === "week") html = renderWeek() + renderReflections();
+  else if ((tab === "me" || tab === "journal") && !profileKey) html = renderMe(tab === "journal" ? "journal" : "profile");
+  else if (profileKey) html = renderProfile(profileKey, profilePart, true);
+  else if (tab === "week") html = renderWeek() + renderReflections();
   else if (tab === "board") html = renderBoard();
   else { const d = renderDay(); html = d.summary + d.list; }
-  const pageName = profileKey ? ((members.find(x => x.key === profileKey) || {}).name || "Profile") : { day: "Day", week: "Week", board: "Ranking", admin: "Admin", me: "Me" }[tab] || "Day";
+  const pageName = profileKey ? ((members.find(x => x.key === profileKey) || {}).name || "Profile") : PAGE_TITLE[tab] || "Today";
   morph(app, `<h1 class="sr-only">${esc(pageName)}, ${esc((group() || {}).name || "LockedIn")}</h1>` + offlineBar() + html);
   mountInline();
   renderPanelPics();
@@ -3218,7 +3254,9 @@ document.addEventListener("click", async e => {
   if (!t) return;
   const d = t.dataset;
   if (d.tab) return setTab(d.tab);
-  if (d.profile) { profileKey = d.profile; if (tab === "admin") tab = "day"; render(); requestAnimationFrame(pageEnter); return window.scrollTo(0, 0); }
+  if (d.nav) { const [t2, v] = d.nav.split(":"); if (v) { adminView = v; error = ""; } return setTab(t2); }   // the sidebar
+  if (d.part) { profilePart = d.part; render(); requestAnimationFrame(pageEnter); return; }
+  if (d.profile) { profileKey = d.profile; profilePart = "profile"; if (tab === "admin") tab = "day"; render(); requestAnimationFrame(pageEnter); return window.scrollTo(0, 0); }
   if (t.id === "goto-reflect") {
     openPanel(today, myKey());
     const el = document.getElementById("panel-refl");
@@ -3293,7 +3331,7 @@ document.addEventListener("click", async e => {
     document.getElementById("viewer").close();
     return v && removeShot(v.day, v.key, v.path);
   }
-  if (d.day) { selected = d.day; if (isWide()) { if (tab === "admin") tab = "day"; render(); } else setTab("day"); return; }
+  if (d.day) { const k = d.day; setTab("day"); selected = k; return render(); }
   if (d.approve) {
     const key = document.getElementById("pick-" + d.approve).value;
     if (!key) { flash = ""; error = "Choose a name first."; return render(); }
@@ -3310,7 +3348,7 @@ document.addEventListener("click", async e => {
   if (d.adminView) { adminView = d.adminView; flash = ""; error = ""; return render(); }
   if (d.approveReq) return adminDo(sb.rpc("approve_group_request", { request_id: +d.approveReq }), "Group created. Its owner can open it now and share the join code.");
   if (d.rejectReq) return adminDo(sb.from("group_requests").update({ status: "rejected" }).eq("id", +d.rejectReq), "Request rejected.");
-  if (d.openGroup) { adminView = "group"; return switchGroup(d.openGroup); }
+  if (d.openGroup) { adminView = "people"; return switchGroup(d.openGroup); }
   if (d.pauseGroup) {
     const x = groups.find(y => y.id === d.pauseGroup);
     return adminDo(sb.from("groups").update({ status: x.status === "paused" ? "active" : "paused" }).eq("id", x.id), x.status === "paused" ? `${x.name} is active again.` : `${x.name} is paused.`);
@@ -3407,6 +3445,7 @@ document.addEventListener("click", async e => {
     case "prev": selected = prevTrading(selected); weekStart = mondayOf(selected); return render();
     case "next": selected = nextTrading(selected); weekStart = mondayOf(selected); return render();
     case "gotoday": selected = today; weekStart = mondayOf(today); return render();
+    case "thisweek": weekStart = mondayOf(today); return render();
     case "pw": weekStart = addDays(weekStart, -7); return render();
     case "nw": weekStart = addDays(weekStart, 7); return render();
   }
@@ -3456,7 +3495,7 @@ document.addEventListener("keydown", e => {
   if (e.key !== "Escape" || document.getElementById("viewer").open || tour) return;
   if (editing || settingsOpen) return closePanel();
   if (profileKey) { profileKey = null; render(); return window.scrollTo(0, 0); }
-  if (tab === "admin" || tab === "me") setTab("day");
+  if (tab === "admin" || tab === "me" || tab === "journal") setTab("day");
   if (e.key === "Enter" && e.target.id === "newmember") document.getElementById("addmember").click();
   if (e.key === "Enter" && e.target.id === "joincode") { e.preventDefault(); joinWithCode(); }
   if (e.key === "Enter" && e.target.id === "newbreak") { e.preventDefault(); addCustomBreak(); }
@@ -3550,7 +3589,7 @@ function tourSteps() {
   const tabEl = t => wide ? null : q(`.tabbar [data-tab="${t}"]`);
   const myRow = () => { const b = document.querySelector(`.member [data-tick^="${me}:"]`) || document.querySelector(`[data-edit="${me}"]`); return b && b.closest(".member"); };
   const steps = [
-    { title: `Welcome to ${g ? g.name : "LockedIn"}`, text: "Here's a quick tour of everything: about a minute. Skip it with the close button in the corner, and replay it any time from the Me tab." },
+    { title: `Welcome to ${g ? g.name : "LockedIn"}`, text: "Here's a quick tour of everything: about a minute. Skip it with the close button in the corner, and replay it any time from " + (wide ? "Profile" : "the Me tab") + "." },
     mine && { el: wide ? myRow : q(".quick .qgrid"), title: "Tick your homework",
       text: `Tap a box when it's done. Required: ${esc(listText(req))}. All required ticked = Complete (green circle).`
         + (bonus.length ? ` ${esc(listText(bonus))} ${bonus.length > 1 ? "are bonus boxes" : "is a bonus box"}: extra points.` : "")
@@ -3564,12 +3603,13 @@ function tourSteps() {
     { el: q(".topbar .datepick"), title: "Change the day",
       text: "Tap the date to jump to any day." + (wide ? " Or use the ‹ › arrows." : " Or use ‹ ›, or swipe left and right on the page.") },
     { el: q("#open-groups"), title: "Your groups", text: "Tap the group name to switch groups, join another one with a code, or start your own group." },
-    { el: wide ? () => { const c = document.querySelector(".side .grid"); return c && c.closest(".card"); } : tabEl("week"), title: "Week",
+    { el: wide ? q('#rail [data-nav="week"]') : tabEl("week"), title: "Week",
       text: "The whole week at a glance. Tap any square to open that day. Everyone's weekly reflections are there too." },
-    { el: wide ? () => { const c = document.querySelector(".side .lb"); return c && c.closest(".card"); } : tabEl("board"), title: "Ranking",
+    { el: wide ? q('#rail [data-nav="board"]') : tabEl("board"), title: "Ranking",
       text: `Points: Complete ${POINTS.COMPLETE}, Partial ${POINTS.PARTIAL}${bonus.length ? `, +${POINTS.bonus} for each bonus box` : ""}. Your streak is Complete days in a row. Earn badges for streaks, notes, pictures and more.` },
     { el: wide ? q("#toggleme") : tabEl("me"), title: "Me",
-      text: "Your profile and badges, Settings (light or dark mode, confetti, your own rule-break tags, the app icon for your phone), sign out, and this tutorial again." },
+      text: (wide ? "Your profile and badges. Journal has your notes, pictures, rule breaks and reflections. " : "Your profile and badges, and your Journal: notes, pictures, rule breaks and reflections. ")
+        + "Settings has light or dark mode, confetti, your own rule-break tags and the app icon for your phone. Sign out and this tutorial are at the bottom of " + (wide ? "Profile." : "Me.") },
     isAdmin && { el: wide ? q("#toggleadmin") : tabEl("admin"), title: "Admin",
       text: `You help run ${esc(g ? g.name : "this group")}: share the join code, approve people and give them a name, excuse days${isGroupOwner() ? ", and change the group's settings (boxes, points, time, color, logo)" : ""}.` },
     { title: "You're all set", text: (wide ? "" : "Tip: pull down at the top of the page to refresh. ") + "Good luck today, and stay locked in." },
