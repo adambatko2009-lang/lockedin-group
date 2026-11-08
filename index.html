@@ -877,8 +877,10 @@
   /* opening screen: the logo on a dark background, then the app opens up from the middle in a growing circle */
   @property --hole { syntax: "<length>"; inherits: false; initial-value: 0px; }
   #splash { position: fixed; inset: 0; z-index: 100; display: grid; place-content: center; justify-items: center; gap: 14px;
-    background: radial-gradient(60% 50% at 50% 48%, #0f2f29 0%, #06100e 55%, #030605 100%); color: #e6f4f0; font: 600 15px var(--font-ui); letter-spacing: 0.04em; }
-  #splash img { width: 68px; height: 68px; border-radius: 28%; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 24px 70px rgba(20, 184, 166, 0.35); animation: splash-in .6s cubic-bezier(.2, .8, .2, 1) both; }
+    background: radial-gradient(55% 45% at 50% 46%, color-mix(in srgb, var(--acc) 30%, transparent), transparent 70%),
+      radial-gradient(55% 45% at 8% 4%, var(--wash-a), transparent 70%), radial-gradient(50% 45% at 96% 30%, var(--wash-b), transparent 70%), var(--base);
+    color: var(--text); font: 600 15px var(--font-ui); letter-spacing: 0.04em; }
+  #splash img { width: 68px; height: 68px; border-radius: 28%; box-shadow: 0 0 0 1px var(--card-line), 0 24px 70px color-mix(in srgb, var(--acc) 40%, transparent); animation: splash-in .6s cubic-bezier(.2, .8, .2, 1) both; }
   #splash span { opacity: 0.85; animation: splash-in .6s .12s cubic-bezier(.2, .8, .2, 1) both; }
   @keyframes splash-in { from { opacity: 0; transform: scale(0.86) translateY(6px); } }
   #splash.opening { -webkit-mask: radial-gradient(circle at 50% 50%, transparent var(--hole), #000 calc(var(--hole) + 1px));
@@ -912,9 +914,15 @@
 <body>
 <div id="splash" aria-hidden="true"><img src="icons/icon-192.png" alt=""><span>LockedIn</span></div>
 <script>
-  // The opening screen shows every time the page opens or reloads, but never for people who prefer less motion.
-  try { if (matchMedia("(prefers-reduced-motion: reduce)").matches) document.getElementById("splash").remove(); }
-  catch (e) { document.getElementById("splash").remove(); }
+  // Before anything is drawn: your group's color and light/dark mode (remembered on this device), so the
+  // opening screen matches your group. It shows on every open and reload, but never if you prefer less motion.
+  try {
+    const root = document.documentElement, accent = localStorage.getItem("accent");
+    if (/^[a-z]{3,12}$/.test(accent || "")) root.dataset.accent = accent;
+    const theme = (JSON.parse(localStorage.getItem("mnq-settings") || "{}").theme) || "dark";
+    if (theme === "light" || theme === "dark") root.dataset.theme = theme;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) document.getElementById("splash").remove();
+  } catch (e) { const sp = document.getElementById("splash"); if (sp) sp.remove(); }
 </script>
 <main>
   <nav class="rail" id="rail" aria-label="Main" hidden></nav>
@@ -968,7 +976,9 @@ function applyGroupRules(g) {
   POINTS = { COMPLETE: p.complete, PARTIAL: p.partial, MISSING: 0, bonus: p.bonus };
   CUTOFF_HOUR = g ? g.cutoff_hour : 9;
   TZ = g ? g.timezone : "America/New_York";
-  document.documentElement.dataset.accent = g ? g.color : "blue";
+  let saved = null;
+  try { saved = localStorage.getItem("accent"); if (g) localStorage.setItem("accent", g.color); } catch (e) {}
+  document.documentElement.dataset.accent = g ? g.color : saved || "blue";   // remembered, so the intro matches your group
 }
 applyGroupRules(null);
 const tzCity = tz => tz.split("/").pop().replace(/_/g, " ");
