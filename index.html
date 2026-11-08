@@ -1013,6 +1013,41 @@
     .bigsteps.cols > div { border-top: 1px solid rgba(255, 255, 255, 0.14); border-bottom: 0; }
     .lp .versus { grid-template-columns: 1fr 1fr; gap: 20px; }
   }
+
+  /* front page, round 2: app-style buttons, dot texture with blue glow, 3D phone */
+  body.landing::after { display: block; content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(55% 45% at 85% 8%, rgba(37, 99, 235, 0.30), transparent 70%),
+      radial-gradient(50% 45% at 0% 55%, rgba(29, 78, 216, 0.22), transparent 70%),
+      radial-gradient(45% 40% at 60% 100%, rgba(59, 130, 246, 0.16), transparent 70%),
+      radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1.4px) 0 0 / 22px 22px; }
+  .lp { background: transparent; }
+  .lp-btn { border-radius: 12px; text-transform: none; letter-spacing: 0; font: 600 16px var(--font-ui); min-height: 50px; padding: 0 22px; gap: 10px; }
+  .lp-btn.white { background: #2563eb; color: #fff; box-shadow: none; }
+  .lp-btn.white:hover { background: #1d4ed8; }
+  .lp-btn.ghost { background: rgba(255, 255, 255, 0.10); color: #fff; border: 0; }
+  .lp-btn.ghost:hover { background: rgba(255, 255, 255, 0.18); color: #fff; }
+  .lp-btn.small { min-height: 40px; padding: 0 16px; font-size: 14px; border-radius: 10px; }
+  .lp-btn svg { width: 20px; height: 20px; }
+  .vcol.us li b { background: #2563eb; color: #fff; }
+  .stage3d { position: relative; display: grid; place-items: center; width: 100%; min-height: 560px; perspective: 1600px; }
+  .behind { position: absolute; left: 50%; top: 50%; transform: translate(-58%, -50%); margin: 0; z-index: 0; white-space: nowrap; pointer-events: none;
+    font: 700 clamp(64px, 10vw, 150px)/0.86 var(--font-ui); letter-spacing: -0.055em; text-transform: uppercase;
+    color: transparent; -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.55); }
+  .phone3d { position: relative; z-index: 1; }
+  .stage3d .phone { --rx: 0deg; --ry: 0deg; transform-style: preserve-3d;
+    transform: rotateY(calc(-24deg + var(--ry))) rotateX(calc(10deg + var(--rx))) rotateZ(3deg);
+    transition: transform .5s cubic-bezier(.2, .8, .2, 1);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+      1px 1px 0 #3c3d43, 2px 2px 0 #34353a, 3px 3px 0 #2d2e33, 4px 4px 0 #27282c, 5px 5px 0 #222326, 6px 6px 0 #1d1e21, 7px 7px 0 #18191b, 8px 8px 0 #141416,
+      40px 60px 100px -30px rgba(0, 0, 0, 0.9), -30px 0 120px -40px rgba(37, 99, 235, 0.45); }
+  .stage3d .phone::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background: linear-gradient(115deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 32%, rgba(255, 255, 255, 0) 70%, rgba(255, 255, 255, 0.06) 100%); }
+  .stage3d .phone-screen { padding: 0; }
+  .stage3d .phone-screen img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: top; border-radius: inherit; }
+  .stage3d .phone-screen::before { z-index: 2; }
+  @media (prefers-reduced-motion: reduce) { .stage3d .phone { transition: none; } }
+  @media (max-width: 899px) { .stage3d { min-height: 0; padding: 30px 0 10px; } .behind { font-size: 19vw; } .stage3d .phone { width: min(270px, 70vw); } }
 </style>
 <script src="config.js"></script>
 <script src="vendor/supabase-2.57.4.js"></script>
@@ -2812,10 +2847,10 @@ function goLandPage(p) {
 window.addEventListener("popstate", () => { render(); window.scrollTo(0, 0); });
 function renderLanding() {
   const page = landPage(), inApp = !!session && screen !== "signin";   // signed in, reading the Privacy or Terms page
-  // Square buttons with brackets, like [ SIGN IN WITH DISCORD → ]
-  const signin = (id = "signin", label = "Sign in with Discord") => `<button class="lp-btn white" id="${id}"><span class="br" aria-hidden="true">[</span>${SVG.discord}${label}<span class="br" aria-hidden="true">→ ]</span></button>`;
+  // Buttons look the same as inside the app.
+  const signin = (id = "signin", label = "Sign in with Discord") => `<button class="lp-btn white" id="${id}">${SVG.discord}${label}</button>`;
   const link = (p, label, cls = "") => `<a href="${p === "home" ? "./" : "?p=" + p}" data-land="${p}" class="${cls}"${page === p ? ' aria-current="page"' : ""}>${label}</a>`;
-  const blink = (p, label) => link(p, `<span class="br" aria-hidden="true">[</span>${label}<span class="br" aria-hidden="true">→ ]</span>`, "lp-btn ghost");
+  const blink = (p, label) => link(p, label, "lp-btn ghost");
   const person = (name, color, chips, last) => `<div class="mock-row${last ? " late" : ""}"><span class="av" style="background:${color}">${name[0]}</span><b>${name}</b>
     <span class="chips">${chips.map((c, i) => `<i class="${c ? "on" : ""}${last && i === 1 ? " late-box" : ""}"></i>`).join("")}</span>
     <span class="st">${last ? `<span class="warn">${SYM.half}</span><span class="good late-st">${SYM.check}</span>` : `<span class="good">${SYM.check}</span>`}</span></div>`;
@@ -2828,13 +2863,13 @@ function renderLanding() {
   const rows = `<div class="mock-top"><span><b><span class="count-old">4</span><span class="count-new">5</span></b>/5 done</span><span>1h 12m left</span></div>
       <div class="mock-bar"><i></i></div>
       ${person("Alex", "#2563eb", [1, 1, 1])}${person("Sam", "#0e7490", [1, 1, 1])}${person("Riley", "#0d9488", [1, 1, 1])}${person("Morgan", "#ea580c", [1, 1, 1])}${person("Jordan", "#db2777", [1, 0, 1], true)}`;
-  // The app, shown inside a phone.
-  const phone = `<div class="phone rv in d2" aria-hidden="true"><div class="phone-screen">
-      <div class="phone-top"><span class="phone-brand"><img src="icons/icon-192.png" alt="">LockedIn</span><span class="phone-menu"><i></i><i></i></span></div>
-      <div class="mock">${rows}</div>
-      <p class="phone-big">Tick it.<br>See it.<br>Lock in.</p>
-      <span class="phone-btn">[ Today&rsquo;s homework → ]</span>
-    </div></div>`;
+  // The real app (a demo group) in a tilted 3D phone, with big text behind it.
+  const phone = `<div class="stage3d">
+      <p class="behind" aria-hidden="true">Tick it.<br>See it.<br>Lock in.</p>
+      <div class="phone3d rv in d2"><div class="phone"><div class="phone-screen">
+        <img src="assets/app-day.jpg" width="781" height="1690" alt="The LockedIn app with a demo group: today's homework, ticked boxes, notes and chart pictures">
+      </div></div></div>
+    </div>`;
   const own = `<div class="lp-own rv">
       <div><p class="mono">Run a trading group?</p><h2>Start your own group.</h2>
         <p>Sign in and tap <b>Start your own group</b>. Once approved you get your own join code, homework boxes, points, time zone, color and logo. You decide who gets in.</p></div>
@@ -3001,6 +3036,15 @@ function renderLanding() {
       <p>Signing in with Discord shares your Discord username, profile picture, email address and account ID with LockedIn. We never see your messages, servers or password. LockedIn is a free project run by Adam Batko, Norway.${cfg.contactEmail ? ` Contact: <a href="mailto:${esc(cfg.contactEmail)}">${esc(cfg.contactEmail)}</a>` : ""}</p></footer>
   </div>`;
 }
+// The 3D phone on the front page turns a little toward the mouse.
+document.addEventListener("pointermove", e => {
+  const st = e.target.closest && e.target.closest(".stage3d");
+  document.querySelectorAll(".stage3d .phone").forEach(ph => {
+    if (!st || !st.contains(ph) || matchMedia("(prefers-reduced-motion: reduce)").matches) { ph.style.setProperty("--rx", "0deg"); ph.style.setProperty("--ry", "0deg"); return; }
+    const r = st.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+    ph.style.setProperty("--ry", (x * 16).toFixed(1) + "deg"); ph.style.setProperty("--rx", (-y * 10).toFixed(1) + "deg");
+  });
+});
 // Fade sections in as they scroll into view (everything shows at once if motion is reduced).
 function revealLanding() {
   const els = document.querySelectorAll(".lp .rv:not(.in), .lp .stage:not(.in)");
