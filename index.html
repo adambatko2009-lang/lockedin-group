@@ -1017,16 +1017,13 @@
   /* front page, round 2: app-style buttons, dot texture with blue glow, 3D phone */
   body.landing::after { display: block; content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
     background:
-      radial-gradient(55% 45% at 85% 8%, rgba(37, 99, 235, 0.30), transparent 70%),
-      radial-gradient(50% 45% at 0% 55%, rgba(29, 78, 216, 0.22), transparent 70%),
-      radial-gradient(45% 40% at 60% 100%, rgba(59, 130, 246, 0.16), transparent 70%),
+      radial-gradient(70% 60% at 82% 12%, rgba(37, 99, 235, 0.42), transparent 70%),
+      radial-gradient(60% 55% at 8% 62%, rgba(29, 78, 216, 0.32), transparent 70%),
+      radial-gradient(55% 45% at 55% 100%, rgba(59, 130, 246, 0.22), transparent 70%),
       radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1.4px) 0 0 / 22px 22px; }
   .lp { background: transparent; }
   html:has(body.landing) { background: #000; }
   body.landing { background: transparent; }   /* see-through, so the blue glow and dots (drawn behind the page) show */
-  /* behind the iPhone status bar: black that fades into the page, so there's no hard edge */
-  body.landing::before { content: ""; position: fixed; z-index: 19; top: 0; left: 0; right: 0; height: calc(env(safe-area-inset-top, 0px) + 56px); pointer-events: none;
-    background: linear-gradient(180deg, #000 0, #000 env(safe-area-inset-top, 0px), rgba(0, 0, 0, 0.6) calc(env(safe-area-inset-top, 0px) + 22px), transparent); }
   .lp-btn { border-radius: 12px; text-transform: none; letter-spacing: 0; font: 600 16px var(--font-ui); min-height: 50px; padding: 0 22px; gap: 10px; }
   .lp-btn.white { background: #2563eb; color: #fff; box-shadow: none; }
   .lp-btn.white:hover { background: #1d4ed8; }
@@ -1081,7 +1078,7 @@
     /* same glass as the tracker, with a darker tint so the white text stays readable over the white band */
     background: linear-gradient(180deg, rgba(44, 45, 52, 0.66), rgba(16, 17, 20, 0.66)); border: 1px solid rgba(255, 255, 255, 0.12);
     -webkit-backdrop-filter: blur(26px) saturate(190%); backdrop-filter: blur(26px) saturate(190%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 1px 0 0 rgba(255, 255, 255, 0.10), inset 0 -1px 0 rgba(255, 255, 255, 0.07), 0 24px 50px -20px rgba(0, 0, 0, 0.75); }
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 1px 0 0 rgba(255, 255, 255, 0.10), inset 0 -1px 0 rgba(255, 255, 255, 0.07), 0 10px 24px -14px rgba(0, 0, 0, 0.35); }
   .lp-tabs a { color: #c9c9d1; }
   .lp-nav { border-radius: 20px; padding: 6px 6px 6px 16px; }
   .lp-tabs { border-radius: 16px; }
