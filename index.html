@@ -944,6 +944,75 @@
     @media (prefers-contrast: more) { .rail { background: var(--surface); border-color: var(--text-2); } .rail::before, .rail::after { display: none; } }
     @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .rail { background: var(--surface); } }
   }
+
+  /* ================================================================ front page: bold black-and-white editorial look */
+  .lp { background: #000; }
+  .lp h1, .lp h2, .lp-hero h1 { text-transform: uppercase; font-weight: 700; letter-spacing: -0.045em; line-height: 0.9; }
+  .lp .dim { display: block; color: #74747e; }
+  .lp-hero h1 { font-size: clamp(42px, 7.2vw, 96px); }
+  .lp h2 { font-size: clamp(34px, 6vw, 76px); }
+  .lp .lead, .lp .sub { color: rgba(245, 245, 247, 0.72); }
+  /* square buttons with brackets */
+  .lp-btn { border-radius: 2px; text-transform: uppercase; letter-spacing: 0.06em; font: 600 13.5px var(--font-ui); min-height: 50px; padding: 0 20px; gap: 9px; }
+  .lp-btn .br { font-weight: 500; opacity: 0.85; }
+  .lp-btn.white { background: #fff; color: #000; box-shadow: none; }
+  .lp-btn.white:hover { background: #e9e9ee; box-shadow: none; transform: none; }
+  .lp-btn.ghost { background: transparent; color: #fff; border: 1px solid rgba(255, 255, 255, 0.45); }
+  .lp-btn.ghost:hover { background: #fff; color: #000; }
+  .lp-btn svg { width: 18px; height: 18px; }
+  .lp-btn.small { min-height: 38px; padding: 0 14px; font-size: 12px; }
+  .lp-nav { border-radius: 4px; background: rgba(0, 0, 0, 0.6); border-color: rgba(255, 255, 255, 0.12); }
+  .lp-tabs { border-radius: 4px; } .lp-tabs a { border-radius: 2px; }
+  /* home: text on the left, the app in a phone on the right */
+  .lp-hero.home { display: grid; gap: 56px; align-items: center; justify-items: start; text-align: left; max-width: 1180px; margin: 0 auto; padding: 150px 20px 80px; min-height: auto; }
+  .lp-hero.home .lp-cta { justify-content: flex-start; }
+  .lp-hero.home .lead { margin-left: 0; }
+  .phone { justify-self: center; width: min(320px, 84vw); aspect-ratio: 9 / 19; padding: 11px; border-radius: 48px;
+    background: linear-gradient(145deg, #4a4b52, #121216 38%, #2b2c31 62%, #0b0b0e);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 50px 120px -40px rgba(255, 255, 255, 0.12), 0 40px 80px -30px rgba(0, 0, 0, 0.9); }
+  .phone-screen { position: relative; height: 100%; border-radius: 38px; background: #050506; padding: 44px 16px 18px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+  .phone-screen::before { content: ""; position: absolute; top: 12px; left: 50%; width: 92px; height: 24px; margin-left: -46px; border-radius: 14px; background: #000; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06); }
+  .phone-top { display: flex; align-items: center; justify-content: space-between; }
+  .phone-brand { display: flex; align-items: center; gap: 8px; font: 700 13px var(--font-ui); letter-spacing: 0.02em; text-transform: uppercase; }
+  .phone-brand img { width: 22px; height: 22px; border-radius: 28%; }
+  .phone-menu { display: grid; gap: 4px; } .phone-menu i { display: block; width: 18px; height: 1.5px; background: #fff; }
+  .phone .mock { width: 100%; padding: 0; gap: 7px; background: none; border: 0; box-shadow: none; transform: none; }
+  .phone .mock-top b { font-size: 24px; }
+  .phone .mock-row { padding-top: 7px; } .phone .mock-row .av { width: 24px; height: 24px; font-size: 11px; } .phone .mock-row > b { font-size: 13px; }
+  .phone .mock-row .chips i { width: 16px; height: 16px; border-radius: 4px; } .phone .mock-row .st { width: 20px; height: 20px; }
+  .phone-big { margin: auto 0 0; font: 700 26px/0.92 var(--font-ui); letter-spacing: -0.04em; text-transform: uppercase; }
+  .phone-btn { align-self: flex-start; background: #fff; color: #000; font: 600 11px var(--font-ui); letter-spacing: 0.06em; text-transform: uppercase; padding: 10px 12px; border-radius: 2px; }
+  /* the giant tilted LockedIn with a white strip */
+  .band { position: relative; overflow: hidden; padding: 70px 0 90px; }
+  .band-tilt { transform: rotate(-7deg); width: 140%; margin-left: -20%; }
+  .band-meta { display: flex; justify-content: flex-end; gap: 18px; margin: 0 22% 6px 0; font: 500 11px var(--font-data); letter-spacing: 0.16em; text-transform: uppercase; color: #a3a3ad; }
+  .band-word { font: 700 clamp(80px, 17vw, 260px)/0.8 var(--font-ui); letter-spacing: -0.07em; text-transform: uppercase; color: #fff; padding-left: 16%; white-space: nowrap; }
+  .band-white { background: #fff; color: #000; padding: 26px 0 30px 18%; margin-top: 10px; }
+  .band-small { margin: 0; font: 700 clamp(18px, 2.4vw, 30px) var(--font-ui); letter-spacing: -0.02em; text-transform: uppercase; }
+  .band-big { margin: 0; font: 700 clamp(34px, 9.5vw, 150px)/0.86 var(--font-ui); letter-spacing: -0.055em; text-transform: uppercase; white-space: nowrap; }
+  /* text sections */
+  .lp-sec.split { display: grid; gap: 28px; align-items: end; }
+  .bigsteps { display: grid; gap: 0; border-top: 1px solid rgba(255, 255, 255, 0.14); }
+  .bigsteps > div { padding: 22px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.14); }
+  .bigsteps b { display: block; font: 700 clamp(24px, 3.2vw, 36px)/1 var(--font-ui); letter-spacing: -0.035em; text-transform: uppercase; margin-bottom: 10px; }
+  .bigsteps p { margin: 0; color: rgba(245, 245, 247, 0.68); font-size: 16px; line-height: 1.5; max-width: 44ch; }
+  .frow { grid-template-columns: 1fr; }
+  .frow b { font-size: clamp(22px, 2.6vw, 30px); letter-spacing: -0.03em; text-transform: uppercase; font-weight: 700; }
+  .frow p { grid-column: 1; }
+  .vcol { border-radius: 4px; } .vcol h2 { font-size: 28px !important; }
+  .vcol.us { background: #fff; color: #000; border-color: #fff; box-shadow: none; }
+  .vcol.us .mono { color: #555; } .vcol.us li { color: #222; } .vcol.us li b { background: #000; color: #4ade80; }
+  .lp-own { border-radius: 4px; background: #0b0b0d; border-color: rgba(255, 255, 255, 0.14); }
+  .lp-own h2 { font-size: clamp(30px, 4.4vw, 52px) !important; }
+  .lp-final { padding-top: 110px; }
+  .lp-final h2 { font-size: clamp(48px, 11vw, 140px); }
+  @media (min-width: 900px) {
+    .lp-hero.home { grid-template-columns: 1.15fr 0.85fr; padding-top: 170px; }
+    .lp-sec.split { grid-template-columns: 1.2fr 1fr; }
+    .bigsteps.cols { grid-template-columns: repeat(3, 1fr); column-gap: 32px; border-top: 0; }
+    .bigsteps.cols > div { border-top: 1px solid rgba(255, 255, 255, 0.14); border-bottom: 0; }
+    .lp .versus { grid-template-columns: 1fr 1fr; gap: 20px; }
+  }
 </style>
 <script src="config.js"></script>
 <script src="vendor/supabase-2.57.4.js"></script>
@@ -2743,80 +2812,83 @@ function goLandPage(p) {
 window.addEventListener("popstate", () => { render(); window.scrollTo(0, 0); });
 function renderLanding() {
   const page = landPage(), inApp = !!session && screen !== "signin";   // signed in, reading the Privacy or Terms page
-  const signin = (id = "signin", label = "Sign in with Discord") => `<button class="lp-btn white" id="${id}">${SVG.discord}${label}</button>`;
-  const smoke = `<div class="smoke" aria-hidden="true"><i></i><i></i><i></i><i></i></div>`;
+  // Square buttons with brackets, like [ SIGN IN WITH DISCORD → ]
+  const signin = (id = "signin", label = "Sign in with Discord") => `<button class="lp-btn white" id="${id}"><span class="br" aria-hidden="true">[</span>${SVG.discord}${label}<span class="br" aria-hidden="true">→ ]</span></button>`;
   const link = (p, label, cls = "") => `<a href="${p === "home" ? "./" : "?p=" + p}" data-land="${p}" class="${cls}"${page === p ? ' aria-current="page"' : ""}>${label}</a>`;
+  const blink = (p, label) => link(p, `<span class="br" aria-hidden="true">[</span>${label}<span class="br" aria-hidden="true">→ ]</span>`, "lp-btn ghost");
   const person = (name, color, chips, last) => `<div class="mock-row${last ? " late" : ""}"><span class="av" style="background:${color}">${name[0]}</span><b>${name}</b>
     <span class="chips">${chips.map((c, i) => `<i class="${c ? "on" : ""}${last && i === 1 ? " late-box" : ""}"></i>`).join("")}</span>
     <span class="st">${last ? `<span class="warn">${SYM.half}</span><span class="good late-st">${SYM.check}</span>` : `<span class="good">${SYM.check}</span>`}</span></div>`;
-  const row = (n, title, text) => `<div class="frow rv"><span class="mono">${n}</span><b>${title}</b><p>${text}</p></div>`;
+  const row = (title, text) => `<div class="frow rv"><b>${title}</b><p>${text}</p></div>`;
   const li = (mark, text) => `<li><b aria-hidden="true">${mark}</b><span>${text}</span></li>`;
   const errMsg = error ? `<p class="msg err" style="margin-top:16px">${esc(error)}</p>` : "";
-  // A page's opening: smoke, small label, big title, one line under it.
-  const head = (label, title, sub) => `<header class="lp-hero pagehead">${smoke}<div>
+  // A page's opening: small label, huge uppercase title, one line under it.
+  const head = (label, title, sub) => `<header class="lp-hero pagehead"><div>
       <p class="mono rv in">${label}</p><h1 class="rv in d1">${title}</h1><p class="lead rv in d2">${sub}</p></div></header>`;
-  const mock = `<div class="stage rv d1" aria-hidden="true"><div class="mock">
-      <div class="mock-top"><span><b><span class="count-old">4</span><span class="count-new">5</span></b>/5 done</span><span>1h 12m left</span></div>
+  const rows = `<div class="mock-top"><span><b><span class="count-old">4</span><span class="count-new">5</span></b>/5 done</span><span>1h 12m left</span></div>
       <div class="mock-bar"><i></i></div>
-      ${person("Alex", "#2563eb", [1, 1, 1])}${person("Sam", "#0e7490", [1, 1, 1])}${person("Riley", "#0d9488", [1, 1, 1])}${person("Morgan", "#ea580c", [1, 1, 1])}${person("Jordan", "#db2777", [1, 0, 1], true)}
+      ${person("Alex", "#2563eb", [1, 1, 1])}${person("Sam", "#0e7490", [1, 1, 1])}${person("Riley", "#0d9488", [1, 1, 1])}${person("Morgan", "#ea580c", [1, 1, 1])}${person("Jordan", "#db2777", [1, 0, 1], true)}`;
+  // The app, shown inside a phone.
+  const phone = `<div class="phone rv in d2" aria-hidden="true"><div class="phone-screen">
+      <div class="phone-top"><span class="phone-brand"><img src="icons/icon-192.png" alt="">LockedIn</span><span class="phone-menu"><i></i><i></i></span></div>
+      <div class="mock">${rows}</div>
+      <p class="phone-big">Tick it.<br>See it.<br>Lock in.</p>
+      <span class="phone-btn">[ Today&rsquo;s homework → ]</span>
     </div></div>`;
   const own = `<div class="lp-own rv">
-      <div><p class="mono">Run a trading group?</p><h2>Start your <span class="serif">own</span> group.</h2>
+      <div><p class="mono">Run a trading group?</p><h2>Start your own group.</h2>
         <p>Sign in and tap <b>Start your own group</b>. Once approved you get your own join code, homework boxes, points, time zone, color and logo. You decide who gets in.</p></div>
       ${signin("signin-own", "Sign in to start")}
     </div>`;
   const next = (p, label) => `<div class="lp-next rv">${link(p, `<span class="mono">Next</span><b>${label}</b><span class="arrow" aria-hidden="true">→</span>`, "nextlink")}</div>`;
+  const goal = `<section class="lp-sec center">
+      <p class="mono rv">The daily goal</p>
+      <div class="chrome rv d1" aria-label="5 out of 5">5/5</div>
+      <p class="sub rv d2">Every member ticks every required box before the cutoff.</p>`;
   let body;
-  if (page === "why") body = head("Why LockedIn", `Everyone says they'll journal. <span class="serif">Nobody checks.</span>`,
+  if (page === "why") body = head("Why LockedIn", `Everyone says they'll journal.<span class="dim">Nobody checks.</span>`,
       "Homework done alone quietly stops by Wednesday. A red circle next to your name, in front of your group, doesn't let it.") + `
-    <section class="lp-sec center">
+    <section class="lp-sec">
       <div class="versus" style="margin-top:0">
         <div class="vcol them rv"><p class="mono">On your own</p><h2>Good intentions</h2><ul>
           ${li(SYM.x, "Skip the journal \"just today\"")}${li(SYM.x, "Nobody notices the missed days")}${li(SYM.x, "Repeat the same revenge trade next week")}${li(SYM.x, "Motivation gone by midweek")}</ul></div>
-        <span class="vs rv d1">VS</span>
-        <div class="vcol us rv d2"><p class="mono">In a LockedIn group</p><h2>Proof, every day</h2><ul>
+        <div class="vcol us rv d1"><p class="mono">In a LockedIn group</p><h2>Proof, every day</h2><ul>
           ${li(SYM.check, "Everyone sees who's done before the cutoff")}${li(SYM.check, "Streaks you really don't want to break")}${li(SYM.check, "Notes and charts your group learns from")}${li(SYM.check, "A reminder before the day closes")}</ul></div>
       </div>
     </section>
-    <section class="lp-sec center">
-      <p class="mono rv">The daily goal</p>
-      <div class="chrome rv d1" aria-label="5 out of 5">5/5</div>
-      <p class="sub rv d2">Every member ticks every required box before the cutoff.</p>
+    ${goal}
       ${next("how", "How it works")}
     </section>`;
-  else if (page === "how") body = head("How it works", `Three boxes. <span class="serif">One tap each.</span>`,
+  else if (page === "how") body = head("How it works", `Three boxes.<span class="dim">One tap each.</span>`,
       "Your group picks the homework. You tick it off after your session, before the day closes.") + `
     <section class="lp-sec"><div class="ritual">
-      <div>
-        <p class="mono rv">The daily ritual</p>
-        <div class="steps3 stack">
-          <div class="rv"><span class="mono">01</span><b>Trade your session</b><p>Take your setups. Or sit out on purpose: that counts too.</p></div>
-          <div class="rv d1"><span class="mono">02</span><b>Do the homework</b><p>Chart with execution, journal, HTF. Add a note and screenshots.</p></div>
-          <div class="rv d2"><span class="mono">03</span><b>Beat the cutoff</b><p>All boxes ticked = green. Your streak grows. The group sees it.</p></div>
-        </div>
+      <div class="bigsteps">
+        <div class="rv"><b>Trade your session.</b><p>Take your setups. Or sit out on purpose: that counts too.</p></div>
+        <div class="rv d1"><b>Do the homework.</b><p>Chart with execution, journal, HTF. Add a note and screenshots.</p></div>
+        <div class="rv d2"><b>Beat the cutoff.</b><p>All boxes ticked turns your circle green. Your streak grows, and the group sees it.</p></div>
       </div>
-      ${mock}
+      ${phone}
     </div></section>
     <section class="lp-sec">
       <p class="mono rv">Getting in</p>
-      <h2 class="rv d1">Three steps <span class="serif">to join.</span></h2>
-      <div class="steps3">
-        <div class="rv"><span class="mono">01</span><b>Sign in with Discord</b><p>No new password to remember. Your Discord account is your login.</p></div>
-        <div class="rv d1"><span class="mono">02</span><b>Type the join code</b><p>Your group's owner gives you a code like LOCK-7K2P.</p></div>
-        <div class="rv d2"><span class="mono">03</span><b>Get approved</b><p>The owner lets you in and gives you your name. Then you're on the board.</p></div>
+      <h2 class="rv d1">Join your group<span class="dim">in a minute.</span></h2>
+      <div class="bigsteps cols">
+        <div class="rv"><b>Sign in with Discord.</b><p>No new password to remember. Your Discord account is your login.</p></div>
+        <div class="rv d1"><b>Type the join code.</b><p>Your group's owner gives you a code like LOCK-7K2P.</p></div>
+        <div class="rv d2"><b>Get approved.</b><p>The owner lets you in and gives you your name. Then you're on the board.</p></div>
       </div>
       ${next("features", "Features")}
     </section>`;
-  else if (page === "features") body = head("Features", `Built for traders <span class="serif">who show up.</span>`,
+  else if (page === "features") body = head("Features", `Built for traders<span class="dim">who show up.</span>`,
       "What's in the app, from daily ticks to reminders.") + `
     <section class="lp-sec">
       <div class="flist" style="margin-top:0">
-        ${row("01", "Daily homework", "One tap per box. Your group decides the boxes: chart with execution, journal, HTF, or your own.")}
-        ${row("02", "Notes &amp; chart pictures", "Write what happened and paste screenshots of your trades. Tap any picture to zoom in.")}
-        ${row("03", "Streaks, points &amp; badges", "A ranking for your group, streaks for days in a row, and 31 badges to unlock.")}
-        ${row("04", "Reminders", "A notification on your phone before the day closes, only if your homework isn't done yet.")}
-        ${row("05", "Works like an app", "Add it to your home screen. It opens full screen and keeps working with bad signal.")}
-        ${row("06", "Kept inside your group", "Other groups can't see your ticks, notes or pictures. Only your group, its owner and the app owner can.")}
+        ${row("Daily homework", "One tap per box. Your group decides the boxes: chart with execution, journal, HTF, or your own.")}
+        ${row("Notes &amp; chart pictures", "Write what happened and paste screenshots of your trades. Tap any picture to zoom in.")}
+        ${row("Streaks, points &amp; badges", "A ranking for your group, streaks for days in a row, and 31 badges to unlock.")}
+        ${row("Reminders", "A notification on your phone before the day closes, only if your homework isn't done yet.")}
+        ${row("Works like an app", "Add it to your home screen. It opens full screen and keeps working with bad signal.")}
+        ${row("Kept inside your group", "Other groups can't see your ticks, notes or pictures. Only your group, its owner and the app owner can.")}
       </div>
       ${own}
     </section>`;
@@ -2882,43 +2954,43 @@ function renderLanding() {
       ${sec("Changes and contact", `<p>If these terms change, we update this page and the date at the top. Questions: ${mail}.</p>`)}
     </article>`;
   }
-  else body = `<header class="lp-hero">${smoke}
-      <div>
+  else body = `<header class="lp-hero home">
+      <div class="hero-text">
         <p class="mono rv in">For trading groups on Discord</p>
-        <h1 class="rv in d1">Daily trading homework, <span class="serif">tracked as a group.</span></h1>
+        <h1 class="rv in d1">Daily trading homework.<span class="dim">Tracked as a group.</span></h1>
         <p class="lead rv in d2">Your group picks the boxes, like chart, journal and HTF. Everyone ticks them off after their session, and everyone can see who did.</p>
-        <div class="lp-cta rv in d3">${signin()}${link("how", "See how it works", "lp-btn ghost")}</div>
+        <div class="lp-cta rv in d3">${signin()}${blink("how", "How it works")}</div>
         ${errMsg}
         <p class="fine rv in d3">Free. You'll need a join code from your group's owner.</p>
         <p class="fine rv in d3">By signing in you agree to the ${link("terms", "Terms")} and the ${link("privacy", "Privacy policy")}.</p>
       </div>
+      ${phone}
     </header>
-    <section class="lp-sec"><div class="ritual">
-      <div>
-        <p class="mono rv">Every trading day</p>
-        <h2 class="rv d1">Discipline is a <span class="serif">group sport.</span></h2>
-        <p class="sub rv d2" style="margin:0 0 26px">Your group sees who's done before the cutoff. Nobody wants to be the red circle.</p>
-        <div class="rv d2">${link("how", "See how it works", "lp-btn ghost")}</div>
+    <section class="band" aria-label="Built for trading groups">
+      <div class="band-tilt">
+        <p class="band-meta" aria-hidden="true"><span>[ Charts ]</span><span>[ Journals ]</span><span>[ HTF ]</span><span>[ Streaks ]</span></p>
+        <div class="band-word" aria-hidden="true">LockedIn</div>
+        <div class="band-white"><p class="band-small">Built for</p><p class="band-big">Trading groups</p></div>
       </div>
-      ${mock}
-    </div></section>
-    <section class="lp-sec center">
-      <p class="mono rv">The daily goal</p>
-      <div class="chrome rv d1" aria-label="5 out of 5">5/5</div>
-      <p class="sub rv d2">Every member ticks every required box before the cutoff.</p>
+    </section>
+    <section class="lp-sec split">
+      <h2 class="rv">Discipline is<span class="dim">a group sport.</span></h2>
+      <div class="rv d1"><p class="sub" style="margin:0 0 24px">Your group sees who's done before the cutoff. Nobody wants to be the red circle.</p>${blink("why", "Why it works")}</div>
+    </section>
+    ${goal}
     </section>
     <section class="lp-sec">${own}</section>`;
   return `<div class="lp">
     <nav class="lp-nav" aria-label="LockedIn">
       ${link("home", `<img src="icons/icon-192.png" alt="">LockedIn`, "brand")}
       ${inApp ? "" : `<span class="links">${link("why", "Why")}${link("how", "How it works")}${link("features", "Features")}</span>`}
-      ${inApp ? link("home", "Open app", "lp-btn white small") : signin("signin-nav", "Sign in").replace("lp-btn white", "lp-btn white small")}
+      ${inApp ? link("home", "Open app", "lp-btn white small") : `<button class="lp-btn white small" id="signin-nav">${SVG.discord}Sign in</button>`}
     </nav>
     ${inApp ? "" : `<div class="lp-tabs" role="navigation" aria-label="Pages">${link("why", "Why")}${link("how", "How it works")}${link("features", "Features")}</div>`}
     ${body}
-    ${LEGAL.includes(page) ? "" : `<section class="lp-final">${smoke}
+    ${LEGAL.includes(page) ? "" : `<section class="lp-final">
       <p class="mono rv">Ready?</p>
-      <h2 class="rv d1">Stop trading <span class="serif">alone.</span></h2>
+      <h2 class="rv d1">Stop trading<span class="dim">alone.</span></h2>
       <div class="lp-cta rv d2" style="margin-top:30px">${signin("signin-end")}</div>
       ${page !== "home" ? errMsg : ""}
       <p class="fine rv d3">Sign in, type your group's join code, and the owner lets you in.</p>
