@@ -1048,6 +1048,26 @@
   .stage3d .phone-screen::before { z-index: 2; }
   @media (prefers-reduced-motion: reduce) { .stage3d .phone { transition: none; } }
   @media (max-width: 899px) { .stage3d { min-height: 0; padding: 30px 0 10px; } .behind { font-size: 19vw; } .stage3d .phone { width: min(270px, 70vw); } }
+
+  /* ================================================================ Apple-style button corners
+     Rounder corners, and where the browser can draw it, Apple's smooth "squircle" curve (continuous corners). Never full pills. */
+  .btn, .lp-btn { border-radius: 15px; }
+  .btn.small, .lp-btn.small, .topbar .end button, .tagpick button { border-radius: 12px; }
+  .t { border-radius: 13px; } .q { border-radius: 18px; } .gitem { border-radius: 16px; }
+  .reflect-nudge, .switchrow, .addpic { border-radius: 15px; }
+  .segset { border-radius: 14px; } .segset button { border-radius: 11px; } .cell { border-radius: 10px; }
+  .rail button { border-radius: 15px; } .tabbar button, .tabbar .pill { border-radius: 18px; }
+  @supports (corner-shape: squircle) {
+    .btn, .lp-btn, .t, .q, .gitem, .reflect-nudge, .switchrow, .addpic, .segset, .segset button, .cell, .tagpick button,
+    .topbar .end button, .rail button, .tabbar button, .tabbar .pill, .merow { corner-shape: squircle; }
+    /* the squircle curve is gentler, so it needs a larger radius to look as round */
+    .btn, .lp-btn { border-radius: 22px; }
+    .btn.small, .lp-btn.small, .topbar .end button, .tagpick button { border-radius: 17px; }
+    .t { border-radius: 19px; } .q { border-radius: 26px; } .gitem { border-radius: 23px; }
+    .reflect-nudge, .switchrow, .addpic { border-radius: 22px; }
+    .segset { border-radius: 20px; } .segset button { border-radius: 16px; } .cell { border-radius: 14px; }
+    .rail button { border-radius: 21px; } .tabbar button, .tabbar .pill { border-radius: 25px; }
+  }
 </style>
 <script src="config.js"></script>
 <script src="vendor/supabase-2.57.4.js"></script>
