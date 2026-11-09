@@ -473,7 +473,10 @@
     padding: 4px 10px 4px 5px; min-height: 30px; border-radius: 9px; background: var(--glass-pill); color: var(--text); font-weight: 600; }
   .topbar .mid .datepick { padding: 4px 8px; }
   .topbar .mid .gname .glogo { border-radius: 30%; }
-  .gate.lobby { max-width: 420px; }
+  .gate.lobby { max-width: 440px; }
+  .lobby-switch { margin: 0 0 12px; }
+  .lobby-switch button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+  .lobby-status { margin-top: 14px; padding-top: 4px; border-top: 1px solid var(--line); }
   .termsgate { max-width: 460px; text-align: left; padding: 24px; }
   .termsgate h1 { margin-bottom: 10px; }
   .termsgate p { margin: 0 0 12px; }
@@ -1273,6 +1276,44 @@
     background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.05) 50%, transparent 70%); }
   @supports (corner-shape: squircle) { .lp-nav { corner-shape: squircle; border-radius: 21px; } .lp-tabs { corner-shape: squircle; border-radius: 23px; } .lp-tabs a { corner-shape: squircle; border-radius: 16px; } }
   @media (prefers-reduced-transparency: reduce) { .lp-nav, .lp-tabs { background: #16171b; -webkit-backdrop-filter: none; backdrop-filter: none; } .lp-nav::before, .lp-tabs::before, .lp-nav::after, .lp-tabs::after { display: none; } }
+  /* ================================================================ front page: try it yourself */
+  .tryit { display: grid; gap: 32px; align-items: center; }
+  @media (min-width: 900px) { .tryit { grid-template-columns: 1fr 1fr; gap: 56px; } }
+  .try-text .sub { margin: 0; max-width: 40ch; text-align: left; }
+  .lp-sec.tryit .try-text { text-align: left; }
+  .try-card { border-radius: 22px; padding: 20px; background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)), #0b0b0d;
+    border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 30px 80px -40px rgba(0, 0, 0, 0.9); text-align: left; }
+  .try-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .try-clock { display: inline-flex; align-items: center; gap: 6px; font: 500 13px var(--font-data); color: var(--lp-2); }
+  .try-clock b { color: #fff; font-weight: 600; }
+  .try-clock.urgent, .try-clock.urgent b { color: #f87171; }
+  .try-track { height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.08); margin: 12px 0 16px; overflow: hidden; }
+  .try-track i { display: block; height: 100%; background: rgba(255, 255, 255, 0.55); border-radius: inherit; transition: width .6s ease; }
+  .try-me { display: flex; align-items: center; gap: 10px; padding-bottom: 14px; }
+  .try-me b { font-size: 16px; }
+  .try-av { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: #3b82f6; color: #fff; font-size: 13px; font-weight: 700; }
+  .try-st { margin-left: auto; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 700;
+    transition: background-color .3s, color .3s; }
+  .try-st.MISSING { background: #ef4444; color: #fff; }
+  .try-st.PARTIAL { background: #fbbf24; color: #422006; }
+  .try-st.COMPLETE { background: #22c55e; color: #052e16; }
+  .try-boxes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .try-box { display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 12px; border-radius: 16px; border: 1.5px solid rgba(255, 255, 255, 0.16);
+    background: transparent; color: #e5e7eb; font: inherit; text-align: left; cursor: pointer; transition: background-color .2s, border-color .2s, color .2s, transform .15s; }
+  .try-box.bonus { border-style: dashed; }
+  .try-box:hover { border-color: rgba(255, 255, 255, 0.32); }
+  .try-box:active { transform: scale(0.97); }
+  .try-box .c { width: 24px; height: 24px; flex: none; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.35); display: grid; place-items: center; font-size: 12px; }
+  .try-box b { display: block; font-size: 14.5px; line-height: 1.2; font-weight: 600; }
+  .try-box small { display: block; font-size: 12px; color: var(--lp-2); margin-top: 2px; }
+  .try-box[aria-pressed="true"] { background: #2563eb; border-color: #2563eb; color: #fff; }
+  .try-box[aria-pressed="true"] small { color: rgba(255, 255, 255, 0.8); }
+  .try-box[aria-pressed="true"] .c { background: #fff; border-color: #fff; color: #2563eb; }
+  .try-foot { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--lp-line); font-size: 14.5px; color: #e5e7eb; }
+  .try-pts { font: 600 15px var(--font-data); color: #fff; white-space: nowrap; }
+  .try-note { margin: 12px 0 0; font-size: 12.5px; color: var(--lp-2); }
+  @supports (corner-shape: squircle) { .try-box { corner-shape: squircle; border-radius: 22px; } }
+
   /* front page bar: a short centred bar, 300px wide */
   .lp-nav { width: min(300px, calc(100% - var(--lp-pad) * 2)); }
 </style>
@@ -3037,7 +3078,43 @@ function openGroupsPanel() {
   document.body.style.overflow = "hidden";
 }
 
-// Join a group with a code, or ask for your own. Shown when you're in no group yet, and in the Groups sheet.
+// After signing in, with no group yet: two clear choices, join with a code or start a group.
+let lobbyMode = "join";
+function joinCodeHtml() {
+  return `<div class="joinbox">
+      <label for="joincode">Join code</label>
+      <p class="sub-hint" style="margin:0 0 10px">Ask your group's owner for it. It looks like ABCD-1234.</p>
+      <div class="addrow"><input class="field code" id="joincode" placeholder="ABCD-1234" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <button class="btn primary small" id="join">Join</button></div>
+      <p class="sub-hint" id="join-msg" role="status" style="margin:10px 0 0">${esc(joinMsg)}</p>
+      <p class="sub-hint" style="margin:10px 0 0">The owner approves you and gives you your name. Then you're in.</p>
+    </div>`;
+}
+function createHtml() {
+  return `<div class="reqbox">
+      <label class="flabel" for="req-name" style="margin-top:0">Group name</label>
+      <input class="field" id="req-name" maxlength="40" placeholder="Group name" style="width:100%">
+      <label class="flabel" for="req-note">Who is it for? <span style="text-transform:none;letter-spacing:0">(optional)</span></label>
+      <textarea class="field" id="req-note" maxlength="300" placeholder="For example: our NQ group on Discord" style="width:100%;min-height:70px;padding:8px 10px"></textarea>
+      <button class="btn primary small" id="send-request" style="margin-top:12px">Send request</button>
+      <p class="sub-hint" role="status" style="margin:10px 0 0">${esc(joinMsg)}</p>
+      <p class="sub-hint" style="margin:10px 0 0">The app owner checks every new group. Once it's approved you're its owner: you get your own join code, boxes, points, time zone, color and logo, and you decide who gets in.</p>
+    </div>`;
+}
+// Where your join requests and group requests stand.
+function lobbyStatus() {
+  const waiting = myMemberships.filter(m => m.status !== "approved").map(m => {
+    const g = groups.find(x => x.id === m.group_id);
+    return `<p class="lobby-line">${m.status === "pending" ? ic("clock", 15) + `Waiting for approval in <b>${esc(g ? g.name : m.group_id)}</b>`
+      : ic("alert", 15) + `Not accepted in <b>${esc(g ? g.name : m.group_id)}</b>`}</p>`;
+  }).join("");
+  const mine = requests.filter(r => session && r.user_id === session.user.id && r.status !== "approved");
+  const reqs = mine.map(r => `<p class="lobby-line">${r.status === "pending" ? ic("clock", 15) + `Your request for <b>${esc(r.name)}</b> is waiting for the app owner`
+      : ic("alert", 15) + `Your request for <b>${esc(r.name)}</b> wasn't accepted`}</p>`).join("");
+  return waiting || reqs ? `<div class="lobby-status">${waiting}${reqs}</div>` : "";
+}
+
+// Join a group with a code, or ask for your own. Shown in the Groups sheet.
 function joinHtml() {
   const waiting = myMemberships.filter(m => m.status !== "approved").map(m => {
     const g = groups.find(x => x.id === m.group_id);
@@ -3083,8 +3160,11 @@ function renderGate() {
   if (screen === "offline") return `<div class="gate card"><h1>You're offline</h1><p>Connect to the internet once to load your group. After that, LockedIn opens even without internet.</p>
     <button class="btn primary" onclick="location.reload()">Try again</button></div>`;
   if (screen === "lobby") return `<div class="gate lobby">${avatar ? `<img class="avatar" src="${esc(avatar)}" alt="">` : ""}
-    <h1>Join a group</h1><p>Signed in as <b>${esc(name)}</b>. Type the join code you got from your group's owner.</p>
-    <div class="card" style="text-align:left">${joinHtml()}</div>
+    <h1>Welcome${name ? ", " + esc(name) : ""}</h1><p>Join your group with a code, or start your own.</p>
+    <div class="segset two lobby-switch" role="group" aria-label="Join or start a group">
+      <button data-lobby="join" aria-pressed="${lobbyMode === "join"}">${ic("users", 16)}Join with a code</button>
+      <button data-lobby="create" aria-pressed="${lobbyMode === "create"}">${ic("target", 16)}Start a group</button></div>
+    <div class="card lobby-card" style="text-align:left">${lobbyMode === "create" ? createHtml() : joinCodeHtml()}${lobbyStatus()}</div>
     <button class="btn plain" id="signout" style="margin-top:18px">Sign out</button></div>`;
   return `<div class="card"><p class="msg">Loading…</p></div>`;
 }
@@ -3282,6 +3362,14 @@ function renderLanding() {
         <div class="floaters fg" id="fl-fg" aria-hidden="true"></div>
       </div>
     </section>
+    <section class="lp-sec tryit" aria-labelledby="try-title">
+      <div class="try-text">
+        <p class="mono rv">Try it yourself</p>
+        <h2 class="rv d1" id="try-title">Tick your<span class="dim">own boxes</span></h2>
+        <p class="sub rv d2">This is your row in LockedIn. Tick the boxes and watch your circle change. Nothing here is saved.</p>
+      </div>
+      <div class="try-card rv d1" id="try-card">${tryCardHtml()}</div>
+    </section>
     <section class="band" aria-label="Built for trading groups">
       <div class="band-tilt">
         <p class="band-meta" aria-hidden="true"><span>[ Charts ]</span><span>[ Journals ]</span><span>[ HTF ]</span><span>[ Streaks ]</span></p>
@@ -3344,6 +3432,64 @@ document.addEventListener("pointermove", e => {
     ph.style.setProperty("--ry", (x * 16).toFixed(1) + "deg"); ph.style.setProperty("--rx", (-y * 10).toFixed(1) + "deg");
   });
 });
+
+
+// ---------------------------------------------------------------- front page: try it yourself (nothing is saved)
+const TRY_BOXES = [["chart", "Chart with execution", "Required"], ["journal", "Journal", "Required"], ["review", "HTF", "Required"], ["social", "Social", "Bonus"]];
+const tryState = { chart: false, journal: false, review: false, social: false, celebrated: false };
+function tryStatus() {
+  const req = TRY_BOXES.filter(b => b[2] === "Required"), done = req.filter(b => tryState[b[0]]).length;
+  return done === req.length ? "COMPLETE" : done ? "PARTIAL" : "MISSING";
+}
+// "Fri 6 Nov closes in 2h 14m": the same cutoff as the app (09:00 New York, next trading day)
+function tryClock() {
+  const day = currentTradingDay(), mins = Math.max(0, Math.round((closesAt(day) - Date.now()) / 60000));
+  const open = opensAt(day), close = closesAt(day), frac = Math.min(1, Math.max(0, (Date.now() - open) / (close - open)));
+  return { day, text: `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, "0")}m`, frac, urgent: mins <= 60 };
+}
+function tryCardHtml() {
+  const st = tryStatus(), c = tryClock(), req = TRY_BOXES.filter(b => b[2] === "Required");
+  const left = req.filter(b => !tryState[b[0]]).length, bonus = tryState.social ? POINTS.bonus : 0;
+  const pts = (st === "COMPLETE" ? POINTS.COMPLETE : st === "PARTIAL" ? POINTS.PARTIAL : 0) + bonus;
+  const msg = st === "COMPLETE" ? (tryState.social ? "Complete, with the bonus. Your circle is green." : "Complete. Your circle is green.")
+    : st === "PARTIAL" ? `${left} more required ${left === 1 ? "box" : "boxes"} to go green.` : "Tick a box to start your day.";
+  return `<div class="try-top"><span class="mono">Homework for ${esc(fmtDay(c.day))}</span>
+      <span class="try-clock${c.urgent ? " urgent" : ""}" id="try-clock">${ic("clock", 15)}Closes in <b>${c.text}</b></span></div>
+    <div class="try-track" aria-hidden="true"><i id="try-fill" style="width:${(c.frac * 100).toFixed(1)}%"></i></div>
+    <div class="try-me"><span class="try-av" aria-hidden="true">Y</span><b>You</b>
+      <span class="try-st ${st}" role="img" aria-label="Your status: ${LABEL[st] || st}">${ICON[st]}</span></div>
+    <div class="try-boxes">${TRY_BOXES.map(([k, l, kind]) => `<button type="button" class="try-box${kind === "Bonus" ? " bonus" : ""}" data-try="${k}" aria-pressed="${tryState[k]}">
+        <span class="c" aria-hidden="true">${tryState[k] ? SYM.check : ""}</span><span><b>${l}</b><small>${kind}</small></span></button>`).join("")}</div>
+    <div class="try-foot" role="status" aria-live="polite"><span>${msg}</span><span class="try-pts">+${pts} ${pts === 1 ? "point" : "points"}</span></div>
+    <p class="try-note">Cutoff: 09:00 New York time on the next trading day. Each group can choose its own time and boxes.</p>`;
+}
+function tryRender(pop) {
+  const card = document.getElementById("try-card");
+  if (!card) return;
+  morph(card, tryCardHtml());
+  if (pop && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const st = card.querySelector(".try-st");
+    if (st && st.animate) st.animate([{ transform: "scale(0.7)" }, { transform: "scale(1.15)" }, { transform: "scale(1)" }], { duration: 420, easing: "cubic-bezier(.2,.8,.2,1)" });
+  }
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest && e.target.closest("[data-try]");
+  if (!b) return;
+  const before = tryStatus();
+  tryState[b.dataset.try] = !tryState[b.dataset.try];
+  const after = tryStatus();
+  tryRender(before !== after);
+  if (after === "COMPLETE" && !tryState.celebrated) { tryState.celebrated = true; celebrate(); }
+  if (after !== "COMPLETE") tryState.celebrated = false;
+});
+// keep the timer live (only while the card is on screen)
+setInterval(() => {
+  const el = document.getElementById("try-clock");
+  if (!el) return;
+  const c = tryClock(), fill = document.getElementById("try-fill");
+  el.innerHTML = `${ic("clock", 15)}Closes in <b>${c.text}</b>`; el.classList.toggle("urgent", c.urgent);
+  if (fill) fill.style.width = (c.frac * 100).toFixed(1) + "%";
+}, 15000);
 
 // ---------------------------------------------------------------- front page menu (top right)
 function landMenu(open) {
@@ -3690,6 +3836,7 @@ document.addEventListener("click", async e => {
   if (!t) return;
   const d = t.dataset;
   if (d.tab) return setTab(d.tab);
+  if (d.lobby) { lobbyMode = d.lobby; joinMsg = ""; render(); const f = document.getElementById(d.lobby === "create" ? "req-name" : "joincode"); if (f) f.focus(); return; }
   if (d.nav) { const [t2, v] = d.nav.split(":"); if (v) { adminView = v; error = ""; } return setTab(t2); }   // the sidebar
   if (d.part) { profilePart = d.part; render(); requestAnimationFrame(pageEnter); return; }
   if (d.profile) { profileKey = d.profile; profilePart = "profile"; if (tab === "admin") tab = "day"; render(); requestAnimationFrame(pageEnter); return window.scrollTo(0, 0); }
