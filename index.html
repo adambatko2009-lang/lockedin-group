@@ -1187,8 +1187,8 @@
   .ma-tabbar .hl { position: absolute; top: 5px; bottom: 5px; width: calc(25% - 6px); left: 5px; border-radius: 17px; background: #2563eb; transition: transform .5s var(--ex); z-index: -1; }
   .ma-toast { position: absolute; left: 14px; right: 14px; top: 46px; z-index: 6; display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 18px;
     background: rgba(28, 29, 35, 0.92); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border: 1px solid rgba(251, 191, 36, 0.45);
-    transform: translateY(-140%); transition: transform .6s var(--ex); }
-  .ma-toast.on { transform: none; }
+    transform: translateY(calc(-100% - 60px)); opacity: 0; visibility: hidden; transition: transform .6s var(--ex), opacity .3s, visibility 0s .6s; }
+  .ma-toast.on { transform: none; opacity: 1; visibility: visible; transition: transform .6s var(--ex), opacity .3s; }
   .ma-toast .md { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 35% 30%, #fde68a, #d97706); color: #451a03; flex: none; }
   .ma-toast .md svg { width: 20px; height: 20px; }
   .ma-toast b { display: block; font-size: 14px; } .ma-toast span { font-size: 12px; color: #d1d5db; }
@@ -3276,7 +3276,6 @@ function renderLanding() {
   return `<div class="lp">
     <nav class="lp-nav" aria-label="LockedIn">
       ${link("home", `<img src="icons/icon-192.png" alt="">LockedIn`, "brand")}
-      ${inApp ? "" : `<span class="links">${link("why", "Why")}${link("how", "How it works")}${link("features", "Features")}</span>`}
       <span class="nav-end">${inApp ? link("home", "Open app", "lp-btn white small") : `<button class="lp-btn white small" id="signin-nav">${SVG.discord}Sign in</button>`}
         <button class="lp-burger" id="lp-menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="lp-menu"><span class="lines"><i></i><i style="margin-top:5px"></i></span><svg class="x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>
     </nav>
