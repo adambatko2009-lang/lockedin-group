@@ -1081,6 +1081,159 @@
     .rail button { border-radius: 21px; } .tabbar button, .tabbar .pill { border-radius: 25px; }
   }
 
+
+  /* ================================================================ front page: the scroll story (the phone stays put while the app inside it plays out) */
+  .story { --st-bg: #020817; --st-glow: rgba(37, 99, 235, 0.5); --ex: cubic-bezier(0.16, 1, 0.3, 1); --qt: cubic-bezier(0.25, 1, 0.5, 1);
+    position: relative; height: 420vh; background: var(--st-bg); }
+  .story-pin { position: sticky; top: 0; height: 100svh; overflow: hidden; isolation: isolate; }
+  .story-pin::before { content: ""; position: absolute; inset: 0; z-index: -2;
+    background: radial-gradient(42% 52% at 50% 52%, var(--st-glow), transparent 70%),
+                radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1.4px) 0 0 / 22px 22px; }
+  .story-pin::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: linear-gradient(180deg, #000 0%, transparent 14%, transparent 86%, #000 100%); }
+  .story-grid { position: relative; height: 100%; display: grid; grid-template-rows: auto 1fr auto; padding: 92px 20px 20px; gap: 6px; }
+  @media (min-width: 900px) { .story-grid { grid-template-columns: 1fr auto 1fr; grid-template-rows: 1fr; align-items: center; padding: 90px 40px 40px; gap: 32px; max-width: 1400px; margin: 0 auto; } }
+  .story-text { position: relative; z-index: 120; max-width: 420px; }
+  .lp .story-text h2 { font-size: clamp(34px, 4.6vw, 64px); margin: 12px 0 0; }
+  .st-clip { display: block; overflow: hidden; padding-bottom: 0.1em; margin-bottom: -0.1em; }
+  .st-clip > span { display: inline-block; transform: translateY(115%); opacity: 0; transition: transform 800ms var(--ex) var(--delay, 0ms), opacity 800ms var(--ex) var(--delay, 0ms); }
+  .story-text.play .st-clip > span { transform: none; opacity: 1; }
+  .story-text p.st-body { font-size: 16px; color: var(--lp-2); margin: 16px 0 0; max-width: 360px; line-height: 1.55; min-height: 3em; }
+  .st-body .w { display: inline-block; opacity: 0; transform: translateY(12px); transition: opacity .5s var(--qt) var(--delay, 0ms), transform .5s var(--qt) var(--delay, 0ms); }
+  .story-text.play .st-body .w { opacity: 1; transform: none; }
+  .st-chapters { display: none; position: relative; z-index: 120; justify-self: end; width: 240px; list-style: none; margin: 0; padding: 0; }
+  @media (min-width: 900px) { .st-chapters { display: grid; } }
+  .st-chapters li { display: grid; grid-template-columns: 32px 1fr; align-items: center; padding: 11px 0; border-top: 1px solid var(--lp-line); color: #6b6b75; font-size: 14px; transition: color .3s; }
+  .st-chapters li span { font: 500 11px var(--font-data); letter-spacing: 0.1em; }
+  .st-chapters li[aria-current="step"] { color: #fff; }
+  .st-chapters .bar { grid-column: 1 / -1; height: 2px; margin-top: 10px; background: rgba(255, 255, 255, 0.1); border-radius: 1px; overflow: hidden; }
+  .st-chapters .bar i { display: block; height: 100%; background: #fff; transform: scaleX(0); transform-origin: left; }
+  .st-dots { display: flex; justify-content: center; gap: 6px; position: relative; z-index: 120; }
+  .st-dots i { width: 6px; height: 6px; border-radius: 2px; background: rgba(255, 255, 255, 0.3); transition: width .35s var(--ex), background-color .2s; }
+  .st-dots i.on { width: 20px; background: #fff; }
+  @media (min-width: 900px) { .st-dots { display: none; } }
+  /* the phone: same frame as the one in the hero */
+  .s-stage { position: relative; z-index: 50; display: grid; place-items: center; min-height: 0; }
+  .s-phone { width: min(300px, 62vw); aspect-ratio: 9 / 19; padding: 11px; border-radius: 48px; position: relative; will-change: transform;
+    background: linear-gradient(145deg, #4a4b52, #121216 38%, #2b2c31 62%, #0b0b0e); -webkit-backface-visibility: hidden; backface-visibility: hidden;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+      1px 1px 0 #3c3d43, 2px 2px 0 #34353a, 3px 3px 0 #2d2e33, 4px 4px 0 #27282c, 5px 5px 0 #222326, 6px 6px 0 #1d1e21, 7px 7px 0 #18191b, 8px 8px 0 #141416,
+      40px 60px 100px -30px rgba(0, 0, 0, 0.9), -30px 0 120px -40px rgba(96, 165, 250, 0.5); }
+  @media (max-height: 760px) and (max-width: 899px) { .s-phone { width: min(230px, 50vw); } }
+  @media (min-width: 900px) { .s-phone { width: min(310px, 28vh + 70px); } }
+  .s-phone::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 3;
+    background: linear-gradient(115deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 32%, rgba(255, 255, 255, 0) 70%, rgba(255, 255, 255, 0.06) 100%); }
+  .s-screen { position: relative; height: 100%; border-radius: 38px; background: #0b0c0f; overflow: hidden; isolation: isolate; -webkit-mask-image: -webkit-radial-gradient(white, black); }
+  .s-screen::before { content: ""; position: absolute; top: 10px; left: 50%; width: 30%; height: 22px; transform: translateX(-50%); border-radius: 14px; background: #000; z-index: 5; }
+  .s-scale { position: absolute; left: 0; top: 0; width: 375px; transform-origin: 0 0; }
+  .s-feed { will-change: transform; padding: 54px 14px 120px; display: grid; gap: 12px; color: #f5f5f7; text-align: left; }
+  /* the app in miniature (made-up names) */
+  .ma-card { background: #17181d; border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 22px; padding: 16px; }
+  .ma-top { display: grid; justify-items: center; gap: 6px; background: linear-gradient(180deg, #1c2a55, #141823); }
+  .ma-chip { display: inline-flex; align-items: center; gap: 7px; background: rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 5px 10px; font-size: 14px; font-weight: 600; }
+  .ma-chip b { width: 18px; height: 18px; border-radius: 5px; background: #2563eb; display: grid; place-items: center; font-size: 10px; }
+  .ma-date { font-size: 19px; font-weight: 600; }
+  .ma-track { height: 5px; border-radius: 3px; background: #2a2b31; position: relative; }
+  .ma-track i { position: absolute; left: 0; top: 0; bottom: 0; width: 72%; background: #8b8d95; border-radius: 3px; }
+  .ma-meta { display: flex; justify-content: space-between; align-items: baseline; margin-top: 14px; }
+  .ma-count { font: 600 34px var(--font-data); letter-spacing: -0.04em; }
+  .ma-count small { font: 400 18px var(--font-ui); color: #9ca3af; letter-spacing: 0; }
+  .ma-left { font: 13px var(--font-data); }
+  .ma-stack { display: flex; gap: 3px; height: 6px; margin-top: 12px; }
+  .ma-stack i { border-radius: 3px; }
+  .ma-h { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #9ca3af; margin: 0 0 12px; }
+  .ma-boxes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ma-box { border-radius: 16px; padding: 14px 12px; display: flex; gap: 10px; align-items: center; border: 1.5px solid #34353c; color: #d1d5db; transition: background-color .35s, border-color .35s, color .35s, transform .35s var(--ex); }
+  .ma-box .c { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #4b4d55; display: grid; place-items: center; flex: none; transition: background-color .3s, border-color .3s; }
+  .ma-box .c svg { width: 14px; height: 14px; opacity: 0; transform: scale(0.4); transition: opacity .25s, transform .4s var(--ex); color: #2563eb; }
+  .ma-box b { display: block; font-size: 14px; line-height: 1.15; }
+  .ma-box small { display: block; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.75; margin-top: 2px; }
+  .ma-box.on { background: #2563eb; border-color: #2563eb; color: #fff; }
+  .ma-box.on .c { background: #fff; border-color: #fff; } .ma-box.on .c svg { opacity: 1; transform: none; }
+  .ma-box.pop { transform: scale(1.04); }
+  .ma-mem { display: grid; grid-template-columns: 30px 1fr 28px; align-items: center; gap: 10px; padding: 12px 0; border-top: 1px solid rgba(255, 255, 255, 0.07); }
+  .ma-mem:first-child { border-top: 0; padding-top: 0; }
+  .ma-av { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #fff; }
+  .ma-name { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .ma-you { font-size: 10px; border: 1px solid #60a5fa; color: #93c5fd; border-radius: 6px; padding: 1px 6px; }
+  .ma-st { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid #4b4d55; transition: background-color .35s, border-color .35s, transform .45s var(--ex); }
+  .ma-st svg { width: 15px; height: 15px; }
+  .ma-st.ok { background: #22c55e; border-color: #22c55e; color: #052e16; }
+  .ma-st.part { background: #fbbf24; border-color: #fbbf24; color: #422006; }
+  .ma-st.miss { background: #ef4444; border-color: #ef4444; color: #fff; }
+  .ma-st.flip { transform: rotateY(180deg) scale(1.15); }
+  .ma-note { grid-column: 2 / -1; font-size: 13.5px; line-height: 1.45; color: #d1d5db; min-height: 1.45em; margin: 0; }
+  .ma-note .caret { display: inline-block; width: 2px; height: 1em; background: #60a5fa; vertical-align: -2px; margin-left: 1px; animation: ma-blink 1s steps(1) infinite; }
+  @keyframes ma-blink { 50% { opacity: 0; } }
+  .ma-shots { grid-column: 2 / -1; display: flex; gap: 8px; }
+  .ma-shot { width: 64px; height: 64px; border-radius: 12px; background: #1e3a5f; border: 1px solid rgba(255, 255, 255, 0.08); position: relative; overflow: hidden; transform: scale(0.4); opacity: 0; transition: transform .5s var(--ex), opacity .3s; }
+  .ma-shot.on { transform: none; opacity: 1; }
+  .ma-shot svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .ma-week { display: grid; grid-template-columns: 54px repeat(5, 1fr); gap: 5px; font-size: 11px; align-items: center; }
+  .ma-week span { color: #9ca3af; text-align: center; }
+  .ma-week span.n { text-align: left; color: #e5e7eb; font-size: 12px; }
+  .ma-week i { height: 20px; border-radius: 6px; }
+  .ma-rank { list-style: none; margin: 0; padding: 0; }
+  .ma-rank li { display: grid; grid-template-columns: 22px 30px 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid rgba(255, 255, 255, 0.07); }
+  .ma-rank li:first-child { border-top: 0; }
+  .ma-rank .r { font: 13px var(--font-data); color: #9ca3af; }
+  .ma-rank b { font-size: 15px; } .ma-rank small { display: block; font-size: 11px; color: #9ca3af; }
+  .ma-rank .pts { font: 18px var(--font-data); }
+  .ma-tabbar { position: absolute; left: 12px; right: 12px; bottom: 12px; height: 62px; border-radius: 22px; z-index: 4; display: grid; grid-template-columns: repeat(4, 1fr);
+    background: rgba(30, 31, 38, 0.82); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); isolation: isolate; }
+  .ma-tabbar span { display: grid; place-items: center; align-content: center; gap: 3px; font-size: 10px; color: #c9c9d1; }
+  .ma-tabbar span svg { width: 20px; height: 20px; }
+  .ma-tabbar span.on { color: #fff; }
+  .ma-tabbar .hl { position: absolute; top: 5px; bottom: 5px; width: calc(25% - 6px); left: 5px; border-radius: 17px; background: #2563eb; transition: transform .5s var(--ex); z-index: -1; }
+  .ma-toast { position: absolute; left: 14px; right: 14px; top: 46px; z-index: 6; display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 18px;
+    background: rgba(28, 29, 35, 0.92); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border: 1px solid rgba(251, 191, 36, 0.45);
+    transform: translateY(-140%); transition: transform .6s var(--ex); }
+  .ma-toast.on { transform: none; }
+  .ma-toast .md { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 35% 30%, #fde68a, #d97706); color: #451a03; flex: none; }
+  .ma-toast .md svg { width: 20px; height: 20px; }
+  .ma-toast b { display: block; font-size: 14px; } .ma-toast span { font-size: 12px; color: #d1d5db; }
+  /* things floating around the phone */
+  .floaters { position: absolute; inset: 0; pointer-events: none; }
+  .floaters.bg { z-index: 10; } .floaters.fg { z-index: 110; }
+  .fl { position: absolute; left: 0; top: 0; will-change: transform; filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.45)); }
+  .fl > div { display: grid; place-items: center; }
+  .fl .circ { border-radius: 50%; box-shadow: inset 0 -6px 12px rgba(0, 0, 0, 0.25), inset 0 6px 10px rgba(255, 255, 255, 0.35); }
+  .fl .circ svg { width: 50%; height: 50%; }
+  .fl .tile { border-radius: 26%; box-shadow: inset 0 -6px 12px rgba(0, 0, 0, 0.3), inset 0 4px 8px rgba(255, 255, 255, 0.18); }
+  .fl .tile svg { width: 100%; height: 100%; }
+  .fl .tile.box svg { width: 46%; height: 46%; }
+  @media (max-width: 899px) { .fl.far { display: none; } }
+
+  /* front page: the menu in the top right */
+  .lp-nav .nav-end { display: flex; align-items: center; gap: 6px; }
+  .lp-burger { width: 40px; height: 40px; display: grid; place-content: center; gap: 5px; border: 0; border-radius: 12px; cursor: pointer;
+    background: rgba(255, 255, 255, 0.1); transition: background-color .2s; }
+  .lp-burger:hover { background: rgba(255, 255, 255, 0.18); }
+  .lp-burger i { display: block; width: 16px; height: 1.5px; border-radius: 1px; background: #fff; }
+  @supports (corner-shape: squircle) { .lp-burger { corner-shape: squircle; border-radius: 18px; } }
+  .lp-menu { position: fixed; inset: 0; z-index: 19; display: flex; flex-direction: column; visibility: hidden; pointer-events: none; }
+  .lp-menu.open { visibility: visible; pointer-events: auto; }
+  .lp-menu .bg { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.82); -webkit-backdrop-filter: blur(24px) saturate(1.4); backdrop-filter: blur(24px) saturate(1.4); opacity: 0; transition: opacity .35s; }
+  .lp-menu.open .bg { opacity: 1; }
+  .lp-menu .bg::before { content: ""; position: absolute; inset: 0; background: radial-gradient(60% 50% at 80% 10%, rgba(37, 99, 235, 0.35), transparent 70%), radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1.4px) 0 0 / 22px 22px; }
+  .lp-menu .in { position: relative; flex: 1; display: flex; flex-direction: column; width: min(1120px, calc(100% - 24px)); margin: 0 auto;
+    padding: calc(max(12px, env(safe-area-inset-top, 0px)) + 78px) 16px calc(28px + env(safe-area-inset-bottom, 0px)); }
+  .lp-menu nav { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+  .lp-menu nav a { color: #fff; text-decoration: none; font: 700 clamp(44px, 9vw, 96px)/1 var(--font-ui); letter-spacing: -0.045em; text-transform: uppercase; width: fit-content;
+    opacity: 0; transform: translateY(28px); transition: opacity .5s var(--ex, ease) var(--delay, 0ms), transform .6s cubic-bezier(0.16, 1, 0.3, 1) var(--delay, 0ms), color .2s; }
+  .lp-menu nav a:hover, .lp-menu nav a[aria-current="page"] { color: var(--lp-blue); }
+  .lp-menu.open nav a { opacity: 1; transform: none; }
+  .lp-menu .mfoot { border-top: 1px solid var(--lp-line); padding-top: 22px; display: flex; flex-wrap: wrap; gap: 14px 20px; align-items: center; justify-content: space-between;
+    opacity: 0; transition: opacity .4s .25s; }
+  .lp-menu.open .mfoot { opacity: 1; }
+  .lp-menu .mfoot .small-links { display: flex; gap: 20px; }
+  .lp .lp-menu .mfoot .small-links a { color: var(--lp-2); text-decoration: none; font: 500 11px var(--font-data); letter-spacing: 0.18em; text-transform: uppercase; }
+  .lp .lp-menu .mfoot .small-links a:hover { color: #fff; }
+  .lp-burger .x { display: none; } .menu-on .lp-burger .lines { display: none; } .menu-on .lp-burger .x { display: block; }
+  .lp-burger svg { width: 18px; height: 18px; color: #fff; }
+  html.menu-on, html.menu-on body { overflow: hidden; }
+  @media (prefers-reduced-motion: reduce) { .lp-menu nav a, .lp-menu .bg, .lp-menu .mfoot, .st-clip > span, .st-body .w { transition: none; } }
+
   /* front page menu bar: the same liquid glass bar as in the tracker */
   .lp-nav, .lp-tabs { isolation: isolate;
     /* same glass as the tracker, with a darker tint so the white text stays readable over the white band */
@@ -3083,6 +3236,29 @@ function renderLanding() {
       </div>
       ${phone}
     </header>
+    <section class="story" id="story" aria-labelledby="story-title">
+      <div class="story-pin">
+        <div class="floaters bg" id="fl-bg" aria-hidden="true"></div>
+        <div class="story-grid">
+          <div class="story-text" id="story-text" aria-live="polite">
+            <p class="mono" id="story-num">01 / 04</p>
+            <h2 id="story-title">Tick your homework</h2>
+            <p class="st-body" id="story-body"></p>
+          </div>
+          <div class="s-stage" aria-hidden="true">
+            <div class="s-phone" id="s-phone"><div class="s-screen" id="s-screen">
+              <div class="ma-toast" id="ma-toast"><span class="md">${ic("flame", 20)}</span><div><b>Achievement unlocked</b><span>20 day streak</span></div></div>
+              <div class="s-scale" id="s-scale"><div class="s-feed" id="s-feed"></div></div>
+              <div class="ma-tabbar" id="ma-tabbar"><i class="hl" id="ma-hl"></i>
+                <span class="on">${SVG.day}Day</span><span>${SVG.week}Week</span><span>${SVG.board}Ranking</span><span>${SVG.me}Me</span></div>
+            </div></div>
+          </div>
+          <ol class="st-chapters" id="st-chapters"></ol>
+          <div class="st-dots" id="st-dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="floaters fg" id="fl-fg" aria-hidden="true"></div>
+      </div>
+    </section>
     <section class="band" aria-label="Built for trading groups">
       <div class="band-tilt">
         <p class="band-meta" aria-hidden="true"><span>[ Charts ]</span><span>[ Journals ]</span><span>[ HTF ]</span><span>[ Streaks ]</span></p>
@@ -3101,9 +3277,19 @@ function renderLanding() {
     <nav class="lp-nav" aria-label="LockedIn">
       ${link("home", `<img src="icons/icon-192.png" alt="">LockedIn`, "brand")}
       ${inApp ? "" : `<span class="links">${link("why", "Why")}${link("how", "How it works")}${link("features", "Features")}</span>`}
-      ${inApp ? link("home", "Open app", "lp-btn white small") : `<button class="lp-btn white small" id="signin-nav">${SVG.discord}Sign in</button>`}
+      <span class="nav-end">${inApp ? link("home", "Open app", "lp-btn white small") : `<button class="lp-btn white small" id="signin-nav">${SVG.discord}Sign in</button>`}
+        <button class="lp-burger" id="lp-menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="lp-menu"><span class="lines"><i></i><i style="margin-top:5px"></i></span><svg class="x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>
     </nav>
-    ${inApp ? "" : `<div class="lp-tabs" role="navigation" aria-label="Pages">${link("why", "Why")}${link("how", "How it works")}${link("features", "Features")}</div>`}
+    <div class="lp-menu" id="lp-menu" role="dialog" aria-modal="true" aria-label="Menu">
+      <div class="bg" data-menu-close></div>
+      <div class="in">
+        <nav aria-label="Pages">${[["home", "Home"], ["why", "Why"], ["how", "How it works"], ["features", "Features"]].map(([p2, l], i) => link(p2, l).replace("<a ", `<a style="--delay:${80 + i * 60}ms" `)).join("")}</nav>
+        <div class="mfoot">
+          ${inApp ? link("home", "Back to the app", "lp-btn white") : `<button class="lp-btn white" id="signin-menu">${SVG.discord}Sign in with Discord</button>`}
+          <span class="small-links">${link("privacy", "Privacy")}${link("terms", "Terms")}${cfg.contactEmail ? `<a href="mailto:${esc(cfg.contactEmail)}">Contact</a>` : ""}</span>
+        </div>
+      </div>
+    </div>
     ${body}
     ${LEGAL.includes(page) ? "" : `<section class="lp-final">
       <p class="mono rv">Ready?</p>
@@ -3136,8 +3322,215 @@ document.addEventListener("pointermove", e => {
     ph.style.setProperty("--ry", (x * 16).toFixed(1) + "deg"); ph.style.setProperty("--rx", (-y * 10).toFixed(1) + "deg");
   });
 });
+
+// ---------------------------------------------------------------- front page menu (top right)
+function landMenu(open) {
+  const m = document.getElementById("lp-menu"), b = document.getElementById("lp-menu-btn");
+  if (!m) { document.documentElement.classList.remove("menu-on"); return; }
+  m.classList.toggle("open", open); document.documentElement.classList.toggle("menu-on", open);
+  if (b) { b.setAttribute("aria-expanded", String(open)); b.setAttribute("aria-label", open ? "Close menu" : "Menu"); }
+  if (open) setTimeout(() => { const a = m.querySelector("nav a"); if (a) a.focus({ preventScroll: true }); }, 60);
+}
+document.addEventListener("click", e => {
+  if (e.target.closest("#lp-menu-btn")) return landMenu(!document.getElementById("lp-menu").classList.contains("open"));
+  if (e.target.closest("[data-menu-close]")) return landMenu(false);
+}, true);
+document.addEventListener("keydown", e => { if (e.key === "Escape" && document.documentElement.classList.contains("menu-on")) { landMenu(false); const b = document.getElementById("lp-menu-btn"); if (b) b.focus(); } });
+
+// ---------------------------------------------------------------- front page scroll story
+// The phone stays in place while the app inside it plays one day: tick, notes, everyone done, ranking.
+// Made-up names only. The phone turns toward the mouse and the floating shapes move out of its way (computers only, not with reduced motion).
+let story = null;
+const storyMouse = { x: 0, y: 0, px: -9999, py: -9999 };
+addEventListener("pointermove", e => {
+  if (e.pointerType !== "mouse") return;
+  storyMouse.x = e.clientX / innerWidth - 0.5; storyMouse.y = e.clientY / innerHeight - 0.5; storyMouse.px = e.clientX; storyMouse.py = e.clientY;
+}, { passive: true });
+function initStory() {
+  const root = document.getElementById("story");
+  if (!root) { story = null; return; }
+  if (story && story.root === root) return;
+  const q = sel => root.querySelector(sel), qa = sel => [...root.querySelectorAll(sel)];
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches, fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const CH = [
+    { t: ["Tick your", "homework"], b: "One tap per box after your session. All required boxes ticked turns your circle green.", bg: [2, 8, 23], glow: "rgba(37, 99, 235, 0.5)", hl: 0 },
+    { t: ["Show your", "work"], b: "Write what happened and add chart screenshots. Your group reads it and learns from it.", bg: [2, 16, 28], glow: "rgba(14, 165, 233, 0.42)", hl: 0 },
+    { t: ["Beat the", "cutoff"], b: "Everyone sees who's done before the day closes. Nobody wants to be the red circle.", bg: [2, 20, 14], glow: "rgba(34, 197, 94, 0.38)", hl: 1 },
+    { t: ["Climb the", "ranking"], b: "Points, streaks for days in a row, and 31 badges to unlock. Every day counts.", bg: [10, 10, 16], glow: "rgba(251, 191, 36, 0.28)", hl: 2 },
+  ];
+  const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>';
+  const XS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg>';
+  const HALF = '<svg viewBox="0 0 24 24"><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>';
+  const LINE = '<svg viewBox="0 0 64 64" preserveAspectRatio="none"><path d="M4 46 L18 40 L28 28 L40 36 L60 18" fill="none" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const icon = st => st === "ok" ? CHECK : st === "part" ? HALF : st === "miss" ? XS : "";
+  const MEM = [["Taylor", "#3b82f6", null, true], ["Alex", "#b45309", "ok"], ["Sam", "#be185d", "ok"], ["Morgan", "#0f766e", "ok"], ["Riley", "#1d4ed8", "part"], ["Jordan", "#15803d", "miss"], ["Casey", "#047857", "miss"]];
+  const BOX = [["Chart with execution", "Required"], ["Journal", "Required"], ["HTF", "Required"], ["Social", "Bonus"]];
+  const RANK = [["Alex", "#b45309", 118, "47-day best streak"], ["Taylor", "#3b82f6", 103, "20-day streak"], ["Sam", "#be185d", 81, "68% complete"], ["Morgan", "#0f766e", 60, "12-day streak"], ["Riley", "#1d4ed8", 32, "41% complete"]];
+  const NOTE = "Waited for the 9:45 retest and took 1R. Stopped after two trades.";
+  const weekRow = (n, cells) => `<span class="n">${n}</span>` + cells.map(c => `<i style="background:${{ o: "#22c55e", p: "#fbbf24", m: "#ef4444", e: "#2a2b31" }[c]}"></i>`).join("");
+  q("#s-feed").innerHTML = `
+    <div class="ma-card ma-top"><span class="ma-chip"><b>L</b>LockedIn</span><span class="ma-date">Fri 6 Nov</span></div>
+    <div class="ma-card"><div class="ma-track"><i></i></div>
+      <div class="ma-meta"><span class="ma-count"><span id="ma-done">3</span><small>/7 done</small></span><span class="ma-left">2h 30m left</span></div>
+      <div class="ma-stack" id="ma-stack"></div></div>
+    <div class="ma-card"><p class="ma-h">Your homework</p><div class="ma-boxes">${BOX.map(([l, k]) => `<div class="ma-box"><span class="c">${CHECK}</span><span><b>${l}</b><small>${k}</small></span></div>`).join("")}</div></div>
+    <div class="ma-card">${MEM.map(([n, col, st, you]) => `<div class="ma-mem">
+        <span class="ma-av" style="background:${col}">${n[0]}</span><span class="ma-name">${n}${you ? '<span class="ma-you">YOU</span>' : ""}</span>
+        <span class="ma-st ${st || ""}">${icon(st)}</span>
+        ${you ? `<p class="ma-note" id="ma-note"></p><div class="ma-shots"><span class="ma-shot">${LINE}</span><span class="ma-shot">${LINE}</span></div>` : ""}</div>`).join("")}</div>
+    <div class="ma-card"><p class="ma-h">This week</p><div class="ma-week"><span></span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span>
+      ${weekRow("Taylor", ["o", "o", "o", "o", "e"])}${weekRow("Alex", ["o", "o", "o", "o", "o"])}${weekRow("Sam", ["o", "p", "o", "o", "o"])}${weekRow("Morgan", ["p", "o", "o", "m", "o"])}${weekRow("Riley", ["m", "o", "p", "o", "e"])}</div></div>
+    <div class="ma-card"><p class="ma-h">Ranking</p><ol class="ma-rank">${RANK.map(([n, col, pts, d], i) => `<li><span class="r">${i + 1}</span><span class="ma-av" style="background:${col}">${n[0]}</span><span><b>${n}</b><small>${d}</small></span><span class="pts" data-pts="${pts}">${pts - 6}</span></li>`).join("")}</ol></div>`;
+  const feed = q("#s-feed"), scaleBox = q("#s-scale"), screenEl = q("#s-screen"), pin = q(".story-pin"), phoneEl = q("#s-phone");
+  const boxes = qa(".ma-box"), mems = qa(".ma-mem"), note = q("#ma-note"), shots = qa(".ma-shot"), pts = qa(".pts");
+  const sText = q("#story-text"), sTitle = q("#story-title"), sBody = q("#story-body");
+  q("#st-chapters").innerHTML = CH.map((c, i) => `<li><span>0${i + 1}</span>${c.t.join(" ")}<div class="bar"><i></i></div></li>`).join("");
+  const chLis = qa("#st-chapters li"), chBars = qa("#st-chapters .bar i"), dots = qa("#st-dots i"), tabs = qa("#ma-tabbar span");
+  const S = { root, chap: -1, feedY: 0, smoothY: 0, spin: 0, spinV: 0, visible: false, green: false, anchors: [0, 0, 0, 0], cm: { x: 0, y: 0 }, last: performance.now() };
+  function measure() {
+    const sc = screenEl.clientWidth / 375;
+    scaleBox.style.transform = `scale(${sc})`;
+    const viewH = screenEl.clientHeight / sc, maxY = Math.max(0, feed.scrollHeight - viewH);
+    S.anchors = [0, Math.min(maxY, mems[0].offsetTop - 100), Math.min(maxY, mems[3].offsetTop - 60), maxY];
+  }
+  // floating shapes: they stay around the phone, clear of the text and the chapter list
+  const SPOTS = [[0.36, 0.16, 60, "fg"], [0.65, 0.84, 56, "fg"], [0.37, 0.8, 70, "fg"], [0.66, 0.22, 64, "fg"], [0.31, 0.42, 38, "bg"], [0.71, 0.56, 42, "bg"],
+                 [0.46, 0.06, 34, "bg"], [0.55, 0.95, 36, "bg"], [0.14, 0.14, 52, "far"], [0.86, 0.13, 56, "far"], [0.14, 0.86, 62, "far"], [0.86, 0.88, 58, "far"]];
+  const SETS = [
+    ["box", "ok", "box", "part", "ok", "box", "ok", "box", "part", "ok", "box", "ok"],
+    ["chart", "ok", "chart", "chart", "ok", "chart", "part", "chart", "ok", "chart", "ok", "chart"],
+    ["miss", "ok", "miss", "ok", "miss", "ok", "miss", "ok", "ok", "miss", "ok", "miss"],
+    ["medal", "ok", "medal", "ok", "medal", "ok", "medal", "ok", "medal", "ok", "medal", "ok"],
+  ];
+  const look = t => ({
+    ok: `<div class="circ" style="background:radial-gradient(circle at 35% 30%,#86efac,#16a34a);color:#052e16">${CHECK}</div>`,
+    part: `<div class="circ" style="background:radial-gradient(circle at 35% 30%,#fde68a,#d97706);color:#451a03">${HALF}</div>`,
+    miss: `<div class="circ" style="background:radial-gradient(circle at 35% 30%,#fca5a5,#dc2626);color:#fff">${XS}</div>`,
+    box: `<div class="tile box" style="background:linear-gradient(160deg,#60a5fa,#1d4ed8);color:#fff">${CHECK}</div>`,
+    chart: `<div class="tile" style="background:linear-gradient(160deg,#1e3a5f,#0f1f36)">${LINE}</div>`,
+    medal: `<div class="circ" style="background:radial-gradient(circle at 35% 30%,#fde68a,#b45309);color:#451a03">${ic("flame", 24)}</div>`,
+  })[t];
+  const spot = (f, W) => W < 900 ? [f.x < 0.5 ? 0.06 + f.x * 0.2 : 0.94 - (1 - f.x) * 0.2, 0.42 + f.y * 0.52] : [f.x, f.y];
+  const setLook = (f, kind) => { f.el.innerHTML = look(kind); f.el.firstElementChild.style.width = f.el.firstElementChild.style.height = (f.sz || f.size) + "px"; };
+  const fls = SPOTS.map(([x, y, size, layer], i) => {
+    const el = document.createElement("div");
+    el.className = "fl" + (layer === "far" ? " far" : "");
+    q(layer === "fg" ? "#fl-fg" : "#fl-bg").appendChild(el);
+    const f = { el, x, y, size, angle: Math.random() * 30 - 15, rx: 0, ry: 0, bx: 0, by: 0, s: 1, o: 1, hold: false, extra: 0, depth: layer === "fg" ? 1 : -0.5 };
+    setLook(f, SETS[0][i]);
+    return f;
+  });
+  // implode toward the phone, swap, then burst back out to a new spot
+  function burst(kinds) {
+    fls.forEach((f, i) => {
+      if (reduce) return setLook(f, kinds[i]);
+      f.hold = true;
+      const t0 = performance.now(), d1 = 420, d2 = 260, d3 = 820, nbx = (Math.random() - 0.5) * 120, nby = (Math.random() - 0.5) * 120, sbx = f.bx, sby = f.by;
+      const W = pin.clientWidth, H = pin.clientHeight, [sx, sy] = spot(f, W), cx = W / 2 - sx * W, cy = (W < 900 ? 0.62 : 0.5) * H - sy * H;
+      let swapped = false;
+      const step = now => {
+        const t = now - t0 - i * 18;
+        if (t < 0) return requestAnimationFrame(step);
+        if (t < d1) { const k = (t / d1) ** 2; f.bx = sbx + (cx - sbx) * k; f.by = sby + (cy - sby) * k; f.s = 1 - 0.9 * k; f.o = 1 - k; }
+        else if (t < d1 + d2) { if (!swapped) { swapped = true; setLook(f, kinds[i]); } }
+        else if (t < d1 + d2 + d3) { const u = (t - d1 - d2) / d3, c = 1.5, k = 1 + (c + 1) * (u - 1) ** 3 + c * (u - 1) ** 2;
+          f.bx = cx + (nbx - cx) * k; f.by = cy + (nby - cy) * k; f.s = 0.1 + 0.9 * k; f.o = Math.min(1, u * 2); }
+        else { f.bx = nbx; f.by = nby; f.s = 1; f.o = 1; f.hold = false; return; }
+        requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+  }
+  function setChapter(i) {
+    if (i === S.chap) return;
+    const first = S.chap === -1; S.chap = i;
+    const c = CH[i];
+    q("#story-num").textContent = `0${i + 1} / 04`;
+    sTitle.setAttribute("aria-label", c.t.join(" "));
+    sTitle.innerHTML = c.t.map((l, j) => `<span class="st-clip" aria-hidden="true"><span style="--delay:${j * 90}ms">${l}</span></span>`).join("");
+    sBody.innerHTML = c.b.split(" ").map((w, j) => `<span class="w" style="--delay:${200 + j * 22}ms">${w}</span>`).join(" ");
+    sText.classList.remove("play"); void sText.offsetWidth;
+    requestAnimationFrame(() => sText.classList.add("play"));
+    chLis.forEach((li, j) => j === i ? li.setAttribute("aria-current", "step") : li.removeAttribute("aria-current"));
+    dots.forEach((d, j) => d.classList.toggle("on", j === i));
+    q("#ma-hl").style.transform = `translateX(calc(${c.hl * 100}% + ${c.hl * 6}px))`;
+    tabs.forEach((t2, j) => t2.classList.toggle("on", j === c.hl));
+    if (!first) { S.spinV += 900; burst(SETS[i]); }
+  }
+  const lerp = (a, b, t) => a + (b - a) * t, clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v)), ease = t => t * t * (3 - 2 * t);
+  function apply(p) {
+    const ci = Math.min(3, Math.floor(p * 4)), local = clamp(p * 4 - ci);
+    setChapter(ci);
+    chBars.forEach((b, j) => b.style.transform = `scaleX(${j < ci ? 1 : j === ci ? local : 0})`);
+    const nxt = CH[Math.min(3, ci + 1)], mix = ci < 3 ? ease(clamp((local - 0.7) / 0.3)) : 0;
+    root.style.setProperty("--st-bg", `rgb(${CH[ci].bg.map((v, j) => Math.round(lerp(v, nxt.bg[j], mix)))})`);
+    root.style.setProperty("--st-glow", mix > 0.5 ? nxt.glow : CH[ci].glow);
+    S.feedY = ci < 3 ? lerp(S.anchors[ci], S.anchors[ci + 1], ease(clamp((local - 0.75) / 0.25))) : S.anchors[3];
+    const ticks = ci > 0 ? 4 : Math.floor(clamp((local - 0.1) / 0.6) * 4.999);
+    boxes.forEach((bx, j) => { const on = j < ticks; if (on !== bx.classList.contains("on")) { bx.classList.toggle("on", on); if (on) { bx.classList.add("pop"); setTimeout(() => bx.classList.remove("pop"), 260); } } });
+    const youDone = ticks >= 3, fixed = ci > 2 ? 3 : ci === 2 ? Math.floor(clamp((local - 0.15) / 0.55) * 3.999) : 0;
+    mems.forEach((m, j) => {
+      const st = j === 0 ? (youDone ? "ok" : null) : (j >= 4 && j - 4 < fixed ? "ok" : MEM[j][2]);
+      const dot = m.querySelector(".ma-st"), cur = ["ok", "part", "miss"].find(k => dot.classList.contains(k)) || null;
+      if (cur !== st) { dot.className = "ma-st " + (st || "") + " flip"; dot.innerHTML = icon(st); setTimeout(() => dot.classList.remove("flip"), 30); }
+    });
+    const done = 3 + (youDone ? 1 : 0) + fixed;
+    q("#ma-done").textContent = done;
+    const part = fixed >= 1 ? 0 : 1, miss = Math.max(0, 2 - Math.max(0, fixed - 1)), none = youDone ? 0 : 1;
+    q("#ma-stack").innerHTML = [["#22c55e", done], ["#fbbf24", part], ["#ef4444", miss], ["#2a2b31", none]].filter(x => x[1]).map(([c2, n]) => `<i style="flex-grow:${n};background:${c2}"></i>`).join("");
+    if (ci === 2 && fixed === 3 && !S.green) { S.green = true; burst(SETS[2].map(() => "ok")); }
+    if (ci < 2) S.green = false;
+    const chars = ci > 1 ? NOTE.length : ci === 1 ? Math.floor(clamp((local - 0.08) / 0.5) * NOTE.length) : 0;
+    note.innerHTML = NOTE.slice(0, chars) + (ci === 1 && chars < NOTE.length ? '<span class="caret"></span>' : "");
+    shots.forEach((s2, j) => s2.classList.toggle("on", ci > 1 || (ci === 1 && local > 0.6 + j * 0.08)));
+    const k = ci === 3 ? ease(clamp(local / 0.5)) : 0;
+    pts.forEach(el => el.textContent = Math.round(+el.dataset.pts - 6 + 6 * k));
+    q("#ma-toast").classList.toggle("on", ci === 3 && local > 0.45 && local < 0.95);
+  }
+  S.frame = now => {
+    const dt = Math.min(0.05, (now - S.last) / 1000); S.last = now;
+    if (!S.visible) return;
+    const r = root.getBoundingClientRect(), total = r.height - innerHeight, pr = clamp(-r.top / total);
+    apply(pr);
+    S.smoothY += (S.feedY - S.smoothY) * (reduce ? 1 : 0.12);
+    feed.style.transform = `translate3d(0, ${(-S.smoothY).toFixed(1)}px, 0)`;
+    const mx = fine && !reduce ? storyMouse.x : 0, my = fine && !reduce ? storyMouse.y : 0;
+    S.cm.x += (mx - S.cm.x) * 0.05; S.cm.y += (my - S.cm.y) * 0.05;
+    S.spinV += (-170 * S.spin - 22 * S.spinV) * dt; S.spin += S.spinV * dt;   // a quick turn at a new chapter, settling back like a spring
+    const t = now / 1000, ry = -22 + pr * 34 + S.cm.x * 26 + (reduce ? 0 : S.spin * 0.8), rx = 8 + S.cm.y * -14, bob = reduce ? 0 : Math.sin(t * 1.05) * 8;
+    phoneEl.style.transform = `translateY(${bob.toFixed(1)}px) perspective(1600px) rotateY(${ry.toFixed(2)}deg) rotateX(${rx.toFixed(2)}deg) rotateZ(${(3 - pr * 6).toFixed(2)}deg)`;
+    phoneEl.style.filter = !reduce && Math.abs(S.spinV) > 150 ? `blur(${Math.min(2.5, Math.abs(S.spinV) / 500).toFixed(2)}px)` : "none";
+    const W = pin.clientWidth, H = pin.clientHeight, pb = pin.getBoundingClientRect();
+    fls.forEach((f, i) => {
+      const per = [5, 7, 6, 8, 5.5, 6.5, 9, 11, 10][i % 9], ph = (t + i * 0.7) * (Math.PI * 2 / per);
+      const sz = W < 900 ? f.size * 0.6 : f.size;
+      if (f.sz !== sz) { f.sz = sz; f.el.firstElementChild.style.width = f.el.firstElementChild.style.height = sz + "px"; }
+      const [sx, sy] = spot(f, W), baseX = sx * W - sz / 2, baseY = sy * H - sz / 2;
+      let tx = 0, ty = 0, spd = 1;
+      if (fine && !reduce && !f.hold) {
+        const ex = pb.left + baseX + f.bx + sz / 2, ey = pb.top + baseY + f.by + sz / 2, dx = storyMouse.px - ex, dy = storyMouse.py - ey, dist = Math.hypot(dx, dy);
+        if (dist < 260 && dist > 0) { const force = (260 - dist) / 260; tx = dx / dist * force * -70; ty = dy / dist * force * -70; spd = 1 + force * 4; }
+      }
+      f.rx += (tx - f.rx) * 0.1; f.ry += (ty - f.ry) * 0.1;
+      f.extra = (f.extra + (spd - 1) * 0.8 * (i % 2 ? 1 : -1)) * 0.97;
+      const fy = reduce ? 0 : Math.sin(ph) * 12, fa = reduce ? 0 : Math.cos(ph) * 6, par = S.cm.x * 50 * f.depth, par2 = S.cm.y * 50 * f.depth;
+      f.el.style.transform = `translate3d(${(baseX + f.bx + f.rx + par).toFixed(1)}px, ${(baseY + f.by + f.ry + fy + par2).toFixed(1)}px, 0) rotate(${(f.angle + fa + f.extra).toFixed(1)}deg) scale(${f.s.toFixed(3)})`;
+      f.el.style.opacity = f.o.toFixed(3);
+    });
+  };
+  if ("IntersectionObserver" in window) new IntersectionObserver(l => l.forEach(e => { S.visible = e.isIntersecting; })).observe(root); else S.visible = true;
+  S.measure = measure;
+  measure(); if (document.fonts) document.fonts.ready.then(() => story === S && measure());
+  apply(0);
+  story = S;
+}
+addEventListener("resize", () => { if (story && story.root.isConnected) story.measure(); });
+(function storyLoop(now) { if (story && story.root.isConnected) story.frame(now); else if (story) story = null; requestAnimationFrame(storyLoop); })(performance.now());
+
 // Fade sections in as they scroll into view (everything shows at once if motion is reduced).
 function revealLanding() {
+  landMenu(false);
+  initStory();
   const els = document.querySelectorAll(".lp .rv:not(.in), .lp .stage:not(.in)");
   if (!("IntersectionObserver" in window) || matchMedia("(prefers-reduced-motion: reduce)").matches) { els.forEach(el => el.classList.add("in")); return; }
   const io = new IntersectionObserver(list => list.forEach(x => { if (x.isIntersecting) { x.target.classList.add("in"); io.unobserve(x.target); } }), { threshold: 0.18 });
@@ -3395,6 +3788,7 @@ document.addEventListener("click", async e => {
   }
   switch (t.id) {
     case "signin-end":
+    case "signin-menu":
     case "signin-nav":
     case "signin-own":
     case "signin": {
