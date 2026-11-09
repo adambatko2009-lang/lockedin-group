@@ -425,7 +425,7 @@
   .segset { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; background: var(--surface-2); border-radius: 11px; padding: 3px; }
   .segset.four { grid-template-columns: repeat(4, 1fr); margin-top: 8px; }
   .segset.two { grid-template-columns: 1fr 1fr; }
-  .gsettings { max-width: 760px; }
+  .gsettings > * { max-width: 720px; }   /* the card is full width like the others; the form inside stays readable */
   .segset button { min-height: 38px; border: 0; border-radius: 8px; background: transparent; color: var(--text-2); font-size: 15px; font-weight: 600; cursor: pointer; }
   .segset button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22); }
   .bcount { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -777,7 +777,7 @@
   /* ---------- monitor: everything visible at once, no tab bar ---------- */
   @media (min-width: 960px) {
     body { padding-bottom: 32px; }
-    main { max-width: 1240px; }
+    main { max-width: 1240px; gap: 16px; }
     .tabbar { display: none; }
     .topbar { grid-template-columns: 1fr auto 1fr; padding: 6px 8px 6px 20px; min-height: 58px; }   /* same height on every page */
     .topbar .brand { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
@@ -1007,10 +1007,10 @@
   .frow { grid-template-columns: 1fr; }
   .frow b { font-size: clamp(22px, 2.6vw, 30px); letter-spacing: -0.03em; text-transform: uppercase; font-weight: 700; }
   .frow p { grid-column: 1; }
-  .vcol { border-radius: 4px; } .vcol h2 { font-size: 28px !important; }
+  .vcol { border-radius: 18px; } .vcol h2 { font-size: 28px !important; }
   .vcol.us { background: #fff; color: #000; border-color: #fff; box-shadow: none; }
   .vcol.us .mono { color: #555; } .vcol.us li { color: #222; } .vcol.us li b { background: #000; color: #4ade80; }
-  .lp-own { border-radius: 4px; background: #0b0b0d; border-color: rgba(255, 255, 255, 0.14); }
+  .lp-own { border-radius: 18px; background: #0b0b0d; border-color: rgba(255, 255, 255, 0.14); }
   .lp-own h2 { font-size: clamp(30px, 4.4vw, 52px) !important; }
   .lp-final { padding-top: 110px; }
   .lp-final h2 { font-size: clamp(48px, 11vw, 140px); }
@@ -1084,13 +1084,11 @@
 
   /* ================================================================ front page: the scroll story (the phone stays put while the app inside it plays out) */
   .story { --st-bg: #020817; --st-glow: rgba(37, 99, 235, 0.5); --ex: cubic-bezier(0.16, 1, 0.3, 1); --qt: cubic-bezier(0.25, 1, 0.5, 1);
-    position: relative; height: 420vh; background: var(--st-bg); }
+    position: relative; height: 420vh; background: linear-gradient(180deg, transparent, var(--st-bg) 60vh, var(--st-bg) calc(100% - 60vh), transparent); }
   .story-pin { position: sticky; top: 0; height: 100svh; overflow: hidden; isolation: isolate; }
   .story-pin::before { content: ""; position: absolute; inset: 0; z-index: -2;
     background: radial-gradient(42% 52% at 50% 52%, var(--st-glow), transparent 70%),
                 radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1.4px) 0 0 / 22px 22px; }
-  .story-pin::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-    background: linear-gradient(180deg, #000 0%, transparent 14%, transparent 86%, #000 100%); }
   .story-grid { position: relative; height: 100%; display: grid; grid-template-rows: auto 1fr auto; padding: 92px 20px 20px; gap: 6px; }
   @media (min-width: 900px) { .story-grid { grid-template-columns: 1fr auto 1fr; grid-template-rows: 1fr; align-items: center; padding: 90px 40px 40px; gap: 32px; max-width: 1400px; margin: 0 auto; } }
   .story-text { position: relative; z-index: 120; max-width: 420px; }
@@ -1234,6 +1232,29 @@
   html.menu-on, html.menu-on body { overflow: hidden; }
   @media (prefers-reduced-motion: reduce) { .lp-menu nav a, .lp-menu .bg, .lp-menu .mfoot, .st-clip > span, .st-body .w { transition: none; } }
 
+  /* ================================================================ front page: one column and a smaller bar
+     Everything starts at the same left edge as the bar: 1120px wide at most, 20px from the screen edge on phones, 32px on bigger screens. */
+  .lp { --lp-pad: 20px; --lp-max: 1120px; }
+  @media (min-width: 760px) { .lp { --lp-pad: 32px; } }
+  .lp-nav { width: min(var(--lp-max), calc(100% - var(--lp-pad) * 2)); padding: 4px 4px 4px 12px; }
+  .lp-nav .brand { font-size: 14px; gap: 8px; }
+  .lp-nav .brand img { width: 22px; height: 22px; }
+  .lp-nav .lp-btn.small { min-height: 34px; padding: 0 12px; font-size: 13px; gap: 7px; }
+  .lp-nav .lp-btn.small svg { width: 16px; height: 16px; }
+  .lp-burger { width: 34px; height: 34px; border-radius: 10px; gap: 4px; }
+  .lp-burger i { width: 14px; }
+  .lp-burger .lines i + i { margin-top: 4px !important; }
+  .lp-nav { border-radius: 14px; }
+  @supports (corner-shape: squircle) { .lp-nav { border-radius: 21px; } .lp-burger { border-radius: 15px; } .lp-nav .lp-btn.small { border-radius: 15px; } }
+  .lp-hero.home, .lp-sec, .lp-foot { max-width: calc(var(--lp-max) + var(--lp-pad) * 2); padding-left: var(--lp-pad); padding-right: var(--lp-pad); }
+  .lp-hero.home { grid-template-columns: 1fr !important; padding-bottom: 72px; }
+  .lp-hero.home h1 { font-size: clamp(44px, 8.6vw, 124px); }
+  .lp-hero.home .lead { max-width: 44ch; }
+  .story-grid { padding: 76px var(--lp-pad) 20px; }
+  @media (min-width: 900px) { .story-grid { max-width: calc(var(--lp-max) + var(--lp-pad) * 2); padding: 76px var(--lp-pad) 40px; } }
+  .lp-menu .in { width: min(var(--lp-max), calc(100% - var(--lp-pad) * 2)); padding-left: 12px; padding-right: 12px;
+    padding-top: calc(max(12px, env(safe-area-inset-top, 0px)) + 66px); }
+
   /* front page menu bar: the same liquid glass bar as in the tracker */
   .lp-nav, .lp-tabs { isolation: isolate;
     /* same glass as the tracker, with a darker tint so the white text stays readable over the white band */
@@ -1241,7 +1262,7 @@
     -webkit-backdrop-filter: blur(26px) saturate(190%); backdrop-filter: blur(26px) saturate(190%);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 1px 0 0 rgba(255, 255, 255, 0.10), inset 0 -1px 0 rgba(255, 255, 255, 0.07), 0 10px 24px -14px rgba(0, 0, 0, 0.35); }
   .lp-tabs a { color: #c9c9d1; }
-  .lp-nav { border-radius: 20px; padding: 6px 6px 6px 16px; }
+  .lp-nav { border-radius: 14px; padding: 4px 4px 4px 12px; }
   .lp-tabs { border-radius: 16px; }
   .lp-tabs a { border-radius: 11px; }
   .lp-nav::before, .lp-tabs::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
@@ -1249,7 +1270,7 @@
                 radial-gradient(150px 90px at var(--glow-x, -300px) var(--glow-y, 50%), rgba(255, 255, 255, 0.16), transparent 70%); }
   .lp-nav::after, .lp-tabs::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
     background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.05) 50%, transparent 70%); }
-  @supports (corner-shape: squircle) { .lp-nav { corner-shape: squircle; border-radius: 28px; } .lp-tabs { corner-shape: squircle; border-radius: 23px; } .lp-tabs a { corner-shape: squircle; border-radius: 16px; } }
+  @supports (corner-shape: squircle) { .lp-nav { corner-shape: squircle; border-radius: 21px; } .lp-tabs { corner-shape: squircle; border-radius: 23px; } .lp-tabs a { corner-shape: squircle; border-radius: 16px; } }
   @media (prefers-reduced-transparency: reduce) { .lp-nav, .lp-tabs { background: #16171b; -webkit-backdrop-filter: none; backdrop-filter: none; } .lp-nav::before, .lp-tabs::before, .lp-nav::after, .lp-tabs::after { display: none; } }
 </style>
 <script src="config.js"></script>
@@ -3234,7 +3255,6 @@ function renderLanding() {
         <p class="fine rv in d3">Free. You'll need a join code from your group's owner.</p>
         <p class="fine rv in d3">By signing in you agree to the ${link("terms", "Terms")} and the ${link("privacy", "Privacy policy")}.</p>
       </div>
-      ${phone}
     </header>
     <section class="story" id="story" aria-labelledby="story-title">
       <div class="story-pin">
@@ -3267,8 +3287,8 @@ function renderLanding() {
       </div>
     </section>
     <section class="lp-sec split">
-      <h2 class="rv">Discipline is<span class="dim">a group sport.</span></h2>
-      <div class="rv d1"><p class="sub" style="margin:0 0 24px">Your group sees who's done before the cutoff. Nobody wants to be the red circle.</p>${blink("why", "Why it works")}</div>
+      <div><p class="mono rv">Why it works</p><h2 class="rv d1">Discipline is<span class="dim">a group sport.</span></h2></div>
+      <div class="rv d2"><p class="sub" style="margin:0 0 24px">Your group sees who's done before the cutoff. Nobody wants to be the red circle.</p>${blink("why", "On your own vs. in a group")}</div>
     </section>
     ${goal}
     </section>
@@ -3354,7 +3374,7 @@ function initStory() {
   const CH = [
     { t: ["Tick your", "homework"], b: "One tap per box after your session. All required boxes ticked turns your circle green.", bg: [2, 8, 23], glow: "rgba(37, 99, 235, 0.5)", hl: 0 },
     { t: ["Show your", "work"], b: "Write what happened and add chart screenshots. Your group reads it and learns from it.", bg: [2, 16, 28], glow: "rgba(14, 165, 233, 0.42)", hl: 0 },
-    { t: ["Beat the", "cutoff"], b: "Everyone sees who's done before the day closes. Nobody wants to be the red circle.", bg: [2, 20, 14], glow: "rgba(34, 197, 94, 0.38)", hl: 1 },
+    { t: ["Beat the", "cutoff"], b: "Everyone sees who's done before the day closes. Turn on reminders and your phone nudges you first.", bg: [2, 20, 14], glow: "rgba(34, 197, 94, 0.38)", hl: 1 },
     { t: ["Climb the", "ranking"], b: "Points, streaks for days in a row, and 31 badges to unlock. Every day counts.", bg: [10, 10, 16], glow: "rgba(251, 191, 36, 0.28)", hl: 2 },
   ];
   const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>';
@@ -3392,9 +3412,10 @@ function initStory() {
     const viewH = screenEl.clientHeight / sc, maxY = Math.max(0, feed.scrollHeight - viewH);
     S.anchors = [0, Math.min(maxY, mems[0].offsetTop - 100), Math.min(maxY, mems[3].offsetTop - 60), maxY];
   }
-  // floating shapes: they stay around the phone, clear of the text and the chapter list
-  const SPOTS = [[0.36, 0.16, 60, "fg"], [0.65, 0.84, 56, "fg"], [0.37, 0.8, 70, "fg"], [0.66, 0.22, 64, "fg"], [0.31, 0.42, 38, "bg"], [0.71, 0.56, 42, "bg"],
-                 [0.46, 0.06, 34, "bg"], [0.55, 0.95, 36, "bg"], [0.14, 0.14, 52, "far"], [0.86, 0.13, 56, "far"], [0.14, 0.86, 62, "far"], [0.86, 0.88, 58, "far"]];
+  // floating shapes. On computers: x is a share of the free space between the text and the chapter list, y a share of the height;
+  // "far" ones sit above or below the text (left) and the chapter list (right). On phones they keep to the sides, below the text.
+  const SPOTS = [[0.04, 0.17, 60, "fg"], [0.96, 0.83, 56, "fg"], [0.06, 0.82, 70, "fg"], [0.94, 0.2, 64, "fg"], [0.14, 0.47, 38, "bg"], [0.86, 0.55, 42, "bg"],
+                 [0.4, 0.11, 34, "bg"], [0.6, 0.93, 36, "bg"], [0.2, 0.14, 52, "far"], [0.8, 0.13, 56, "far"], [0.2, 0.86, 62, "far"], [0.8, 0.88, 58, "far"]];
   const SETS = [
     ["box", "ok", "box", "part", "ok", "box", "ok", "box", "part", "ok", "box", "ok"],
     ["chart", "ok", "chart", "chart", "ok", "chart", "part", "chart", "ok", "chart", "ok", "chart"],
@@ -3409,13 +3430,31 @@ function initStory() {
     chart: `<div class="tile" style="background:linear-gradient(160deg,#1e3a5f,#0f1f36)">${LINE}</div>`,
     medal: `<div class="circ" style="background:radial-gradient(circle at 35% 30%,#fde68a,#b45309);color:#451a03">${ic("flame", 24)}</div>`,
   })[t];
-  const spot = (f, W) => W < 900 ? [f.x < 0.5 ? 0.06 + f.x * 0.2 : 0.94 - (1 - f.x) * 0.2, 0.42 + f.y * 0.52] : [f.x, f.y];
+  const textEl = q("#story-text"), chapEl = q("#st-chapters");
+  let zones = null;   // measured once per frame: where the text and the chapter list are, inside the pinned area
+  function measureZones() {
+    const pb = pin.getBoundingClientRect(), t = textEl.getBoundingClientRect(), c = chapEl.getBoundingClientRect();
+    zones = { W: pb.width, H: pb.height, tl: t.left - pb.left, tr: t.right - pb.left, tt: t.top - pb.top, tb: t.bottom - pb.top,
+      cl: c.left - pb.left, cr: c.right - pb.left, ct: c.top - pb.top, cb: c.bottom - pb.top };
+  }
+  // returns the centre of a shape in pixels
+  const spot = f => {
+    const z = zones, W = z.W, H = z.H;
+    if (W < 900) return [(f.x < 0.5 ? 0.06 + f.x * 0.2 : 0.94 - (1 - f.x) * 0.2) * W, (0.42 + f.y * 0.52) * H];
+    if (f.far) {   // above or below the text on the left, the chapter list on the right
+      const left = f.x < 0.5, x0 = left ? z.tl : z.cl, x1 = left ? z.tr : z.cr, top = left ? z.tt : z.ct, bot = left ? z.tb : z.cb;
+      const x = x0 + (x1 - x0) * (left ? 0.25 : 0.75);
+      return f.y < 0.5 ? [x, Math.max(90, top - 60) * (f.y / 0.15)] : [x, Math.min(H - 50, bot + 60 + (H - bot - 110) * ((f.y - 0.85) / 0.15))];
+    }
+    const L = z.tr + 40, R = z.cl - 40;
+    return [L + (R - L) * f.x, 70 + (H - 120) * f.y];
+  };
   const setLook = (f, kind) => { f.el.innerHTML = look(kind); f.el.firstElementChild.style.width = f.el.firstElementChild.style.height = (f.sz || f.size) + "px"; };
   const fls = SPOTS.map(([x, y, size, layer], i) => {
     const el = document.createElement("div");
     el.className = "fl" + (layer === "far" ? " far" : "");
     q(layer === "fg" ? "#fl-fg" : "#fl-bg").appendChild(el);
-    const f = { el, x, y, size, angle: Math.random() * 30 - 15, rx: 0, ry: 0, bx: 0, by: 0, s: 1, o: 1, hold: false, extra: 0, depth: layer === "fg" ? 1 : -0.5 };
+    const f = { el, x, y, size, far: layer === "far", angle: Math.random() * 30 - 15, rx: 0, ry: 0, bx: 0, by: 0, s: 1, o: 1, hold: false, extra: 0, depth: layer === "fg" ? 1 : -0.5 };
     setLook(f, SETS[0][i]);
     return f;
   });
@@ -3425,7 +3464,8 @@ function initStory() {
       if (reduce) return setLook(f, kinds[i]);
       f.hold = true;
       const t0 = performance.now(), d1 = 420, d2 = 260, d3 = 820, nbx = (Math.random() - 0.5) * 120, nby = (Math.random() - 0.5) * 120, sbx = f.bx, sby = f.by;
-      const W = pin.clientWidth, H = pin.clientHeight, [sx, sy] = spot(f, W), cx = W / 2 - sx * W, cy = (W < 900 ? 0.62 : 0.5) * H - sy * H;
+      if (!zones) measureZones();
+      const W = zones.W, H = zones.H, [sx, sy] = spot(f), cx = W / 2 - sx, cy = (W < 900 ? 0.62 : 0.5) * H - sy;
       let swapped = false;
       const step = now => {
         const t = now - t0 - i * 18;
@@ -3499,12 +3539,13 @@ function initStory() {
     const t = now / 1000, ry = -22 + pr * 34 + S.cm.x * 26 + (reduce ? 0 : S.spin * 0.8), rx = 8 + S.cm.y * -14, bob = reduce ? 0 : Math.sin(t * 1.05) * 8;
     phoneEl.style.transform = `translateY(${bob.toFixed(1)}px) perspective(1600px) rotateY(${ry.toFixed(2)}deg) rotateX(${rx.toFixed(2)}deg) rotateZ(${(3 - pr * 6).toFixed(2)}deg)`;
     phoneEl.style.filter = !reduce && Math.abs(S.spinV) > 150 ? `blur(${Math.min(2.5, Math.abs(S.spinV) / 500).toFixed(2)}px)` : "none";
-    const W = pin.clientWidth, H = pin.clientHeight, pb = pin.getBoundingClientRect();
+    measureZones();
+    const W = zones.W, pb = pin.getBoundingClientRect();
     fls.forEach((f, i) => {
       const per = [5, 7, 6, 8, 5.5, 6.5, 9, 11, 10][i % 9], ph = (t + i * 0.7) * (Math.PI * 2 / per);
       const sz = W < 900 ? f.size * 0.6 : f.size;
       if (f.sz !== sz) { f.sz = sz; f.el.firstElementChild.style.width = f.el.firstElementChild.style.height = sz + "px"; }
-      const [sx, sy] = spot(f, W), baseX = sx * W - sz / 2, baseY = sy * H - sz / 2;
+      const [sx, sy] = spot(f), baseX = sx - sz / 2, baseY = sy - sz / 2;
       let tx = 0, ty = 0, spd = 1;
       if (fine && !reduce && !f.hold) {
         const ex = pb.left + baseX + f.bx + sz / 2, ey = pb.top + baseY + f.by + sz / 2, dx = storyMouse.px - ex, dy = storyMouse.py - ey, dist = Math.hypot(dx, dy);
