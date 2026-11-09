@@ -1272,6 +1272,78 @@
     background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.05) 50%, transparent 70%); }
   @supports (corner-shape: squircle) { .lp-nav { corner-shape: squircle; border-radius: 21px; } .lp-tabs { corner-shape: squircle; border-radius: 23px; } .lp-tabs a { corner-shape: squircle; border-radius: 16px; } }
   @media (prefers-reduced-transparency: reduce) { .lp-nav, .lp-tabs { background: #16171b; -webkit-backdrop-filter: none; backdrop-filter: none; } .lp-nav::before, .lp-tabs::before, .lp-nav::after, .lp-tabs::after { display: none; } }
+  /* ================================================================ unslop pass (method: unslop by Damir Sokolovsky, @heydamir, CC BY 4.0)
+     Quiet chrome, one bright moment (the scroll phone). Kept on purpose: the glass bars with the pointer glow, the tilted band,
+     the floating shapes and the phone tilt. */
+  :root { --ease: cubic-bezier(0.22, 1, 0.36, 1); }
+
+  /* ---- front page: no colour washes or dot grid behind the page; the story keeps its glow (it is the moment) */
+  body.landing::after { background: none; }
+  .lp-menu .bg::before { background: none; }
+  .story-pin::before { background: radial-gradient(42% 52% at 50% 52%, var(--st-glow), transparent 70%); }
+  /* headings: normal case, medium weight, a few sizes */
+  .lp h1, .lp h2, .lp-hero h1 { text-transform: none; font-weight: 500; letter-spacing: -0.03em; line-height: 1.02; }
+  .lp-hero h1, .lp-hero.home h1 { font-size: clamp(40px, 6.4vw, 80px); }
+  .lp-hero.pagehead h1 { font-size: clamp(40px, 6vw, 72px); }
+  .lp h2 { font-size: clamp(32px, 4.6vw, 56px); }
+  .lp-final h2 { font-size: clamp(44px, 7vw, 88px); }
+  .lp .story-text h2 { font-size: clamp(32px, 3.8vw, 52px); }
+  .lp-own h2 { font-size: clamp(28px, 3.6vw, 44px) !important; }
+  .bigsteps b, .frow b { text-transform: none; font-weight: 500; letter-spacing: -0.02em; }
+  .lp-menu nav a { text-transform: none; font-weight: 500; letter-spacing: -0.03em; font-size: clamp(40px, 7vw, 72px); line-height: 1.1; }
+  /* small labels: sentence case, no wide tracking */
+  .lp .mono { font: 400 13px/1.4 var(--font-data); letter-spacing: 0.01em; text-transform: none; }
+  .foot-links a, .lp-nav .links a, .lp .lp-menu .mfoot .small-links a { font: 400 14px var(--font-ui); letter-spacing: 0; text-transform: none; }
+  .lp-btn { text-transform: none; letter-spacing: 0; }
+  .lp .lead, .lp .sub, .lp .fine { text-wrap: pretty; }
+  .lp-btn.white:hover { box-shadow: none; transform: none; }
+  /* the daily goal: solid figure, five real status circles under it */
+  .chrome { background: none; -webkit-background-clip: border-box; background-clip: border-box; color: #f5f5f7; font-weight: 500; letter-spacing: -0.04em;
+    font-size: clamp(96px, 16vw, 200px); }
+  .goal-dots { display: flex; justify-content: center; gap: 8px; margin: 8px 0 20px; }
+  .goal-dots i { width: 32px; height: 32px; border-radius: 50%; background: #22c55e; color: #052e16; display: grid; place-items: center; }
+  .goal-dots svg { width: 18px; height: 18px; }
+  /* no coloured shadows on the phones */
+  .s-phone, .stage3d .phone { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+      1px 1px 0 #3c3d43, 2px 2px 0 #34353a, 3px 3px 0 #2d2e33, 4px 4px 0 #27282c, 5px 5px 0 #222326, 6px 6px 0 #1d1e21, 7px 7px 0 #18191b, 8px 8px 0 #141416,
+      40px 60px 100px -30px rgba(0, 0, 0, 0.9); }
+  /* sections no longer fade in as you scroll; only the top of the page has one short entrance */
+  .lp .rv:not(.in) { opacity: 1; transform: none; transition: none; }
+  .lp .rv { transition-duration: .4s; transition-timing-function: var(--ease); }
+  /* the app inside the phone matches the tracker's new labels */
+  .ma-h, .ma-box small { text-transform: none; letter-spacing: 0; }
+  .ma-h { font-size: 13px; } .ma-box small { font-size: 11px; }
+
+  /* ---- tracker: plain background (the group colour shows in the accent, not behind the cards) */
+  body:not(.landing)::after { background: none; }
+  /* big numbers: solid text instead of chrome */
+  .meta .count, .pts, .tile b { background: none; -webkit-background-clip: border-box; background-clip: border-box; -webkit-text-fill-color: currentColor; color: var(--text); }
+  .meta .count span { -webkit-text-fill-color: var(--muted); }
+  /* labels: sentence case, no wide tracking */
+  .cardhead h2 { font-size: 13px; letter-spacing: 0; text-transform: none; }
+  .panel h3, .joinbox label, .flabel { font-size: 13px; letter-spacing: 0; text-transform: none; }
+  .rentry h4, .rentry .rh { font-size: 13px; letter-spacing: 0; text-transform: none; font-weight: 500; }
+  .q small { font-size: 12px; letter-spacing: 0; text-transform: none; }
+  @media (min-width: 960px) { .rail .rail-h { font-size: 12px; font-weight: 500; letter-spacing: 0; text-transform: none; } }
+  /* weights: 600 at most for headings and the wordmark */
+  .panel header b, .rail .rail-brand, .topbar .brand, .topbar > .gname span, .lp-nav .brand { font-weight: 600; }
+  /* the selected page: solid group colour, no gradient and no coloured glow */
+  @media (min-width: 960px) {
+    .rail button[aria-current="page"] { background: var(--accent); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18); }
+  }
+  /* motion: one ease-out curve, no overshoot, nothing that moves more than a couple of pixels on hover */
+  .tabbar .pill, .rail-ind { transition-timing-function: var(--ease) !important; }
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .tile:hover, .q:hover, .gitem:hover, .shot:hover, .lb li:hover { transform: none; }
+    .tile, .q, .merow, .lb li, .gitem, .shot { transition: background-color .15s var(--ease), box-shadow .15s var(--ease); }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .t:active:not(:disabled), .q:active, .btn:active, .icon:active { transform: scale(0.97); }
+  }
+  /* opening screen: logo on the plain background, then a short fade */
+  #splash { background: var(--base); }
+  #splash img { box-shadow: 0 0 0 1px var(--card-line); }
+  #splash.opening { -webkit-mask: none; mask: none; opacity: 0; transition: opacity .25s var(--ease); }
 </style>
 <script src="config.js"></script>
 <script src="vendor/supabase-2.57.4.js"></script>
@@ -3127,7 +3199,7 @@ function renderLanding() {
       </div></div></div>
     </div>`;
   const own = `<div class="lp-own rv">
-      <div><p class="mono">Run a trading group?</p><h2>Start your own group.</h2>
+      <div><p class="mono">Run a trading group?</p><h2>Start your own group</h2>
         <p>Sign in and tap <b>Start your own group</b>. Once approved you get your own join code, homework boxes, points, time zone, color and logo. You decide who gets in.</p></div>
       ${signin("signin-own", "Sign in to start")}
     </div>`;
@@ -3135,9 +3207,10 @@ function renderLanding() {
   const goal = `<section class="lp-sec center">
       <p class="mono rv">The daily goal</p>
       <div class="chrome rv d1" aria-label="5 out of 5">5/5</div>
-      <p class="sub rv d2">Every member ticks every required box before the cutoff.</p>`;
+      <div class="goal-dots rv d1" aria-hidden="true">${'<i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></i>'.repeat(5)}</div>
+      <p class="sub rv d2">Every member ticks every required box before the cutoff</p>`;
   let body;
-  if (page === "why") body = head("Why LockedIn", `Everyone says they'll journal.<span class="dim">Nobody checks.</span>`,
+  if (page === "why") body = head("Why LockedIn", `Everyone says they'll journal<span class="dim">Nobody checks</span>`,
       "Homework done alone quietly stops by Wednesday. A red circle next to your name, in front of your group, doesn't let it.") + `
     <section class="lp-sec">
       <div class="versus" style="margin-top:0">
@@ -3150,27 +3223,27 @@ function renderLanding() {
     ${goal}
       ${next("how", "How it works")}
     </section>`;
-  else if (page === "how") body = head("How it works", `Three boxes.<span class="dim">One tap each.</span>`,
+  else if (page === "how") body = head("How it works", `Three boxes<span class="dim">One tap each</span>`,
       "Your group picks the homework. You tick it off after your session, before the day closes.") + `
     <section class="lp-sec"><div class="ritual">
       <div class="bigsteps">
-        <div class="rv"><b>Trade your session.</b><p>Take your setups. Or sit out on purpose: that counts too.</p></div>
-        <div class="rv d1"><b>Do the homework.</b><p>Chart with execution, journal, HTF. Add a note and screenshots.</p></div>
-        <div class="rv d2"><b>Beat the cutoff.</b><p>All boxes ticked turns your circle green. Your streak grows, and the group sees it.</p></div>
+        <div class="rv"><b>Trade your session</b><p>Take your setups. Or sit out on purpose: that counts too.</p></div>
+        <div class="rv d1"><b>Do the homework</b><p>Chart with execution, journal, HTF. Add a note and screenshots.</p></div>
+        <div class="rv d2"><b>Beat the cutoff</b><p>All boxes ticked turns your circle green. Your streak grows, and the group sees it.</p></div>
       </div>
       ${phone}
     </div></section>
     <section class="lp-sec">
       <p class="mono rv">Getting in</p>
-      <h2 class="rv d1">Join your group<span class="dim">in a minute.</span></h2>
+      <h2 class="rv d1">Join your group<span class="dim">in a minute</span></h2>
       <div class="bigsteps cols">
-        <div class="rv"><b>Sign in with Discord.</b><p>No new password to remember. Your Discord account is your login.</p></div>
-        <div class="rv d1"><b>Type the join code.</b><p>Your group's owner gives you a code like LOCK-7K2P.</p></div>
-        <div class="rv d2"><b>Get approved.</b><p>The owner lets you in and gives you your name. Then you're on the board.</p></div>
+        <div class="rv"><b>Sign in with Discord</b><p>No new password to remember. Your Discord account is your login.</p></div>
+        <div class="rv d1"><b>Type the join code</b><p>Your group's owner gives you a code like LOCK-7K2P.</p></div>
+        <div class="rv d2"><b>Get approved</b><p>The owner lets you in and gives you your name. Then you're on the board.</p></div>
       </div>
       ${next("features", "Features")}
     </section>`;
-  else if (page === "features") body = head("Features", `Built for traders<span class="dim">who show up.</span>`,
+  else if (page === "features") body = head("Features", `Built for traders<span class="dim">who show up</span>`,
       "What's in the app, from daily ticks to reminders.") + `
     <section class="lp-sec">
       <div class="flist" style="margin-top:0">
@@ -3248,7 +3321,7 @@ function renderLanding() {
   else body = `<header class="lp-hero home">
       <div class="hero-text">
         <p class="mono rv in">For trading groups on Discord</p>
-        <h1 class="rv in d1">Daily trading homework.<span class="dim">Tracked as a group.</span></h1>
+        <h1 class="rv in d1">Daily trading homework,<span class="dim">tracked as a group</span></h1>
         <p class="lead rv in d2">Your group picks the boxes, like chart, journal and HTF. Everyone ticks them off after their session, and everyone can see who did.</p>
         <div class="lp-cta rv in d3">${signin()}${blink("how", "How it works")}</div>
         ${errMsg}
@@ -3287,7 +3360,7 @@ function renderLanding() {
       </div>
     </section>
     <section class="lp-sec split">
-      <div><p class="mono rv">Why it works</p><h2 class="rv d1">Discipline is<span class="dim">a group sport.</span></h2></div>
+      <div><p class="mono rv">Why it works</p><h2 class="rv d1">Discipline is<span class="dim">a group sport</span></h2></div>
       <div class="rv d2"><p class="sub" style="margin:0 0 24px">Your group sees who's done before the cutoff. Nobody wants to be the red circle.</p>${blink("why", "On your own vs. in a group")}</div>
     </section>
     ${goal}
@@ -3312,7 +3385,7 @@ function renderLanding() {
     ${body}
     ${LEGAL.includes(page) ? "" : `<section class="lp-final">
       <p class="mono rv">Ready?</p>
-      <h2 class="rv d1">Stop trading<span class="dim">alone.</span></h2>
+      <h2 class="rv d1">Stop trading<span class="dim">alone</span></h2>
       <div class="lp-cta rv d2" style="margin-top:30px">${signin("signin-end")}</div>
       ${page !== "home" ? errMsg : ""}
       <p class="fine rv d3">Sign in, type your group's join code, and the owner lets you in.</p>
@@ -3627,48 +3700,25 @@ function render() {
   if (tour) requestAnimationFrame(placeTour);
 }
 
-// A short fade-up when you open another page, and the profile numbers count up (skipped if you prefer less motion).
+// A short fade and rise when you open another page (skipped if you prefer less motion). No blur, no count-ups: numbers show as they are.
 function pageEnter() {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const app = document.getElementById("app");
   if (!app.animate) return;
-  // cards: one after another, from blurry to sharp
-  const cards = [...app.querySelectorAll(":scope > .card, :scope > .desk .card, :scope > .offline-bar")].slice(0, 14);
-  cards.forEach((el, i) => el.animate(
-    [{ opacity: 0, filter: "blur(10px)", transform: "translateY(14px) scale(0.985)" }, { opacity: 1, filter: "blur(0px)", transform: "none" }],
-    { duration: 520, delay: i * 70, easing: "cubic-bezier(.2,.8,.2,1)", fill: "backwards" }));
-  // bars grow into place
-  app.querySelectorAll(".track .fill, .bar i").forEach((el, i) => {
-    const w = el.style.width;
-    if (w && w !== "0%") el.animate([{ width: "0%" }, { width: w }], { duration: 750, delay: 180 + Math.min(i, 20) * 15, easing: "cubic-bezier(.2,.8,.2,1)", fill: "backwards" });
-  });
-  // numbers count up
-  app.querySelectorAll(".tile b, .meta .count, .pts").forEach(el => {
-    const node = [...el.childNodes].find(n => n.nodeType === 3 && /\d/.test(n.nodeValue));
-    const m = node && /^(\s*)(\d+)(%?)(\s*)$/.exec(node.nodeValue);
-    if (!m || +m[2] === 0) return;
-    const end = +m[2], start = performance.now(), dur = 700;
-    const step = now => {
-      const k = Math.min(1, (now - start) / dur), v = Math.round(end * (1 - Math.pow(1 - k, 3)));
-      if (!node.isConnected) return;
-      node.nodeValue = m[1] + v + m[3] + m[4];
-      if (k < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-    setTimeout(() => { if (node.isConnected) node.nodeValue = m[1] + end + m[3] + m[4]; }, dur + 150);   // always ends on the real number
-  });
+  const cards = [...app.querySelectorAll(":scope > .card, :scope > .desk .card, :scope > .admin-grid .card, :scope > .offline-bar")].slice(0, 6);
+  cards.forEach((el, i) => el.animate([{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }],
+    { duration: 360, delay: i * 50, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "backwards" }));
 }
 // The opening screen goes away (with the growing circle) once the first page is ready.
-const splashStart = performance.now();
 function hideSplash() {
   const sp = document.getElementById("splash");
   if (!sp || sp.dataset.going) return;
   sp.dataset.going = "1";
   setTimeout(() => {
     sp.classList.add("opening");
-    setTimeout(() => sp.remove(), 950);
+    setTimeout(() => sp.remove(), 300);
     requestAnimationFrame(pageEnter);
-  }, Math.max(0, 750 - (performance.now() - splashStart)));
+  }, 0);   // only while loading: it goes as soon as the first page is ready
 }
 setTimeout(hideSplash, 3500);   // never longer than this, whatever happens
 function setTab(t) {
