@@ -1314,6 +1314,21 @@
   .try-note { margin: 12px 0 0; font-size: 12.5px; color: var(--lp-2); }
   @supports (corner-shape: squircle) { .try-box { corner-shape: squircle; border-radius: 22px; } }
 
+  /* ================================================================ rounder buttons everywhere (front page and tracker). Still not full pills.
+     Plain corners first; where the browser draws Apple's smooth squircle, a larger radius looks just as round. */
+  .btn, .lp-btn, .try-box, .reflect-nudge, .switchrow, .addpic, .merow { border-radius: 18px; }
+  .btn.small, .lp-btn.small, .topbar .end button, .tagpick button, .lp-burger { border-radius: 14px; }
+  .t { border-radius: 16px; } .q { border-radius: 22px; } .gitem { border-radius: 20px; }
+  .segset { border-radius: 18px; } .segset button { border-radius: 14px; } .cell { border-radius: 12px; }
+  .rail button { border-radius: 18px; } .tabbar button, .tabbar .pill { border-radius: 22px; }
+  @supports (corner-shape: squircle) {
+    .btn, .lp-btn, .try-box, .reflect-nudge, .switchrow, .addpic, .merow { border-radius: 26px; }
+    .btn.small, .lp-btn.small, .topbar .end button, .tagpick button, .lp-burger, .lp-nav .lp-btn.small { border-radius: 20px; }
+    .t { border-radius: 23px; } .q { border-radius: 30px; } .gitem { border-radius: 28px; }
+    .segset { border-radius: 26px; } .segset button { border-radius: 20px; } .cell { border-radius: 17px; }
+    .rail button { border-radius: 26px; } .tabbar button, .tabbar .pill { border-radius: 30px; }
+  }
+
   /* front page bar: a short centred bar, 300px wide */
   .lp-nav { width: min(300px, calc(100% - var(--lp-pad) * 2)); }
 </style>
