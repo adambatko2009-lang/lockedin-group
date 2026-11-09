@@ -354,7 +354,9 @@ r = await as("m2", `select user_id from public.memberships`);
 ok(r.rows.length === 1, "members only see their own membership");
 
 section("pictures and logos");
-ok(!(await put("m2", `${today2}/${m2Key}/1.jpg`)).error, "member uploads to their own row in their group");
+// The group's time zone changed above, so its open day can differ from earlier (e.g. Monday morning: already Monday in London, still Friday in New York).
+const today2now = (await one(`select public.current_trading_day($1)::text d`, [G2])).d;
+ok(!(await put("m2", `${today2now}/${m2Key}/1.jpg`)).error, "member uploads to their own row in their group");
 ok(!!(await put("m2", `${today}/sid/9.jpg`)).error, "member can't upload into another group's row");
 r = await as("sid", `select name from storage.objects where name like $1`, [`%/${m2Key}/%`]);
 ok(r.rows.length === 0, "other groups can't see your pictures");
