@@ -1273,6 +1273,37 @@
     background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.05) 50%, transparent 70%); }
   @supports (corner-shape: squircle) { .lp-nav { corner-shape: squircle; border-radius: 21px; } .lp-tabs { corner-shape: squircle; border-radius: 23px; } .lp-tabs a { corner-shape: squircle; border-radius: 16px; } }
   @media (prefers-reduced-transparency: reduce) { .lp-nav, .lp-tabs { background: #16171b; -webkit-backdrop-filter: none; backdrop-filter: none; } .lp-nav::before, .lp-tabs::before, .lp-nav::after, .lp-tabs::after { display: none; } }
+  /* ================================================================ front page colours: Petrol Blue #102D35, Ice White #E8F7F5, Signal Lime #D9FA57 */
+  html:has(body.landing) { background: #0b2229; }
+  body.landing::after {
+    background:
+      radial-gradient(70% 60% at 82% 12%, rgba(38, 104, 118, 0.55), transparent 70%),
+      radial-gradient(60% 55% at 8% 62%, rgba(22, 64, 75, 0.7), transparent 70%),
+      radial-gradient(55% 45% at 55% 100%, rgba(217, 250, 87, 0.06), transparent 70%),
+      radial-gradient(rgba(232, 247, 245, 0.06) 1px, transparent 1.4px) 0 0 / 22px 22px; }
+  .lp { --lp-text: #e8f7f5; --lp-2: #9fbcb8; --lp-line: rgba(232, 247, 245, 0.10); --lp-blue: #d9fa57; color: var(--lp-text); }
+  .lp .dim { color: #6f8f8c; }
+  .lp-btn.white { background: #d9fa57; color: #102d35; }
+  .lp-btn.white:hover { background: #e6fc85; }
+  .lp-btn.ghost { background: rgba(232, 247, 245, 0.08); color: #e8f7f5; }
+  .lp-btn.ghost:hover { background: rgba(232, 247, 245, 0.14); color: #e8f7f5; }
+  .lp-nav, .lp-tabs { background: linear-gradient(180deg, rgba(26, 66, 77, 0.66), rgba(10, 34, 41, 0.70)); border-color: rgba(232, 247, 245, 0.14); }
+  .lp-burger { background: rgba(232, 247, 245, 0.10); }
+  .lp-menu .bg { background: rgba(7, 26, 31, 0.88); }
+  .lp-menu .bg::before { background: radial-gradient(60% 50% at 80% 10%, rgba(38, 104, 118, 0.45), transparent 70%), radial-gradient(rgba(232, 247, 245, 0.05) 1px, transparent 1.4px) 0 0 / 22px 22px; }
+  .vcol.us { background: linear-gradient(180deg, rgba(217, 250, 87, 0.08), rgba(217, 250, 87, 0.02)), #0d262d; border-color: rgba(217, 250, 87, 0.45); color: #e8f7f5; }
+  .vcol.us .mono { color: #d9fa57; }
+  .vcol.us li b { background: #d9fa57; color: #102d35; }
+  .lp-own { background: #0d262d; border-color: rgba(232, 247, 245, 0.14); }
+  .band-word { color: #e8f7f5; }
+  .band-white { background: #e8f7f5; color: #102d35; }
+  .band-meta { color: #9fbcb8; }
+  .chrome { background: linear-gradient(180deg, #f6fffd 0%, #cfe9e4 30%, #5d7f7b 58%, #e8f7f5 78%, #8fb0ab 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .s-phone, .stage3d .phone { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+      1px 1px 0 #3c3d43, 2px 2px 0 #34353a, 3px 3px 0 #2d2e33, 4px 4px 0 #27282c, 5px 5px 0 #222326, 6px 6px 0 #1d1e21, 7px 7px 0 #18191b, 8px 8px 0 #141416,
+      40px 60px 100px -30px rgba(0, 0, 0, 0.9), -30px 0 120px -40px rgba(45, 140, 140, 0.5); }
+  .st-chapters li { color: #6f8f8c; } .st-chapters li[aria-current="step"] { color: #e8f7f5; }
+  .st-chapters .bar i, .st-dots i.on { background: #d9fa57; }
 </style>
 <script src="config.js"></script>
 <script src="vendor/supabase-2.57.4.js"></script>
@@ -3373,10 +3404,10 @@ function initStory() {
   const q = sel => root.querySelector(sel), qa = sel => [...root.querySelectorAll(sel)];
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches, fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
   const CH = [
-    { t: ["Tick your", "homework"], b: "One tap per box after your session. All required boxes ticked turns your circle green.", bg: [2, 8, 23], glow: "rgba(37, 99, 235, 0.5)", hl: 0 },
-    { t: ["Show your", "work"], b: "Write what happened and add chart screenshots. Your group reads it and learns from it.", bg: [2, 16, 28], glow: "rgba(14, 165, 233, 0.42)", hl: 0 },
-    { t: ["Beat the", "cutoff"], b: "Everyone sees who's done before the day closes. Turn on reminders and your phone nudges you first.", bg: [2, 20, 14], glow: "rgba(34, 197, 94, 0.38)", hl: 1 },
-    { t: ["Climb the", "ranking"], b: "Points, streaks for days in a row, and 31 badges to unlock. Every day counts.", bg: [10, 10, 16], glow: "rgba(251, 191, 36, 0.28)", hl: 2 },
+    { t: ["Tick your", "homework"], b: "One tap per box after your session. All required boxes ticked turns your circle green.", bg: [9, 32, 38], glow: "rgba(45, 140, 140, 0.5)", hl: 0 },
+    { t: ["Show your", "work"], b: "Write what happened and add chart screenshots. Your group reads it and learns from it.", bg: [12, 38, 40], glow: "rgba(217, 250, 87, 0.2)", hl: 0 },
+    { t: ["Beat the", "cutoff"], b: "Everyone sees who's done before the day closes. Turn on reminders and your phone nudges you first.", bg: [6, 34, 26], glow: "rgba(34, 197, 94, 0.38)", hl: 1 },
+    { t: ["Climb the", "ranking"], b: "Points, streaks for days in a row, and 31 badges to unlock. Every day counts.", bg: [14, 28, 30], glow: "rgba(251, 191, 36, 0.28)", hl: 2 },
   ];
   const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>';
   const XS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg>';
@@ -3427,8 +3458,8 @@ function initStory() {
     ok: `<div class="circ" style="background:radial-gradient(circle at 35% 30%,#86efac,#16a34a);color:#052e16">${CHECK}</div>`,
     part: `<div class="circ" style="background:radial-gradient(circle at 35% 30%,#fde68a,#d97706);color:#451a03">${HALF}</div>`,
     miss: `<div class="circ" style="background:radial-gradient(circle at 35% 30%,#fca5a5,#dc2626);color:#fff">${XS}</div>`,
-    box: `<div class="tile box" style="background:linear-gradient(160deg,#60a5fa,#1d4ed8);color:#fff">${CHECK}</div>`,
-    chart: `<div class="tile" style="background:linear-gradient(160deg,#1e3a5f,#0f1f36)">${LINE}</div>`,
+    box: `<div class="tile box" style="background:linear-gradient(160deg,#e6fc85,#b8dc2e);color:#102d35">${CHECK}</div>`,
+    chart: `<div class="tile" style="background:linear-gradient(160deg,#1f4a55,#102d35)">${LINE}</div>`,
     medal: `<div class="circ" style="background:radial-gradient(circle at 35% 30%,#fde68a,#b45309);color:#451a03">${ic("flame", 24)}</div>`,
   })[t];
   const textEl = q("#story-text"), chapEl = q("#st-chapters");
@@ -3606,7 +3637,7 @@ function render() {
   const landingNow = screen === "signin" || legal;
   if (landingNow !== document.body.classList.contains("landing")) {
     document.body.classList.toggle("landing", landingNow);
-    if (landingNow) document.querySelectorAll('meta[name="theme-color"]').forEach(m => { m.removeAttribute("media"); m.content = "#000000"; });
+    if (landingNow) document.querySelectorAll('meta[name="theme-color"]').forEach(m => { m.removeAttribute("media"); m.content = "#0b2229"; });
     else applyTheme();
   }
   if (legal) { document.getElementById("topbar").hidden = true; document.getElementById("tabbar").hidden = true; app.innerHTML = renderLanding(); revealLanding(); return; }
