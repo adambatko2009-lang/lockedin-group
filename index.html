@@ -300,6 +300,8 @@
   .repreasons input { accent-color: var(--accent); width: 18px; height: 18px; margin: 0; }
   .repform textarea { width: 100%; min-height: 70px; padding: 8px 10px; resize: vertical; }
   .repbtns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+  .admin-one { display: flex; flex-direction: column; gap: 16px; max-width: 640px; }
+  .mem-name { flex: 1; min-width: 0; font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .reacts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .react { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line);
     background: transparent; color: var(--muted); font: 600 13px var(--font-data); cursor: default; }
@@ -3371,9 +3373,7 @@ function renderAdmin() {
   const g = group(), me = session.user.id;
   const free = activeMembers().filter(m => !people.some(p => p.member_key === m.key && p.status === "approved"));
   const avatar = p => p.avatar_url ? `<img src="${esc(p.avatar_url)}" alt="">` : `<span class="ph"></span>`;
-  // Approving makes a name from their Discord name. Only if the group has unused names (history from before accounts) can you pick one instead.
-  const namePicker = p => free.length ? `<select id="pick-${p.user_id}" aria-label="Name for ${esc(p.discord_name)}">
-      <option value="">New name: ${esc(p.discord_name)}</option>${free.map(m => `<option value="${m.key}">Use existing name: ${esc(m.name)}</option>`).join("")}</select>` : "";
+
   const isOwnerHere = isGroupOwner(g);
 
   const waiting = people.filter(p => p.status === "pending");
@@ -3381,8 +3381,8 @@ function renderAdmin() {
   const rejected = people.filter(p => p.status === "rejected");
 
   const waitingHtml = waiting.length ? waiting.map(p => `<div class="person">${avatar(p)}<b>${esc(p.discord_name)}</b>
-      <span class="sub">Asked to join ${new Date(p.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · their name will be ${esc(p.discord_name)}</span>
-      <div class="actions">${namePicker(p)}
+      <span class="sub">Asked to join ${new Date(p.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} </span>
+      <div class="actions">
         <button class="btn primary small" data-approve="${p.user_id}">Approve</button>
         <button class="btn danger small" data-reject="${p.user_id}">Reject</button></div></div>`).join("")
     : `<p class="empty">Nobody is waiting. Share the join code to invite people.</p>`;
@@ -3393,9 +3393,9 @@ function renderAdmin() {
     const adminBtn = isOwnerHere && !isOwner ? (p.role === "admin"
         ? `<button class="btn plain small" data-unadmin="${p.user_id}">Remove admin</button>`
         : `<button class="btn plain small" data-makeadmin="${p.user_id}">Make admin</button>`) : "";
-    const removeBtn = !isOwner && !self && (isOwnerHere || p.role !== "admin") ? `<button class="btn danger small" data-revoke="${p.user_id}">Remove access</button>` : "";
-    return `<div class="person">${avatar(p)}<b>${esc(m ? m.name : "No name")}${badge}</b>
-      <span class="sub">Discord: ${esc(p.discord_name)}</span>
+    const removeBtn = !isOwner && !self && (isOwnerHere || p.role !== "admin") ? `<button class="btn danger small" data-revoke="${p.user_id}">Remove from group</button>` : "";
+    return `<div class="person">${avatar(p)}<b>${esc(m ? m.name : p.discord_name)}${badge}</b>
+      <span class="sub">${isOwner ? "Owns the group" : p.role === "admin" ? "Can approve people and excuse days" : "Member"}</span>
       ${adminBtn || removeBtn ? `<div class="actions">${adminBtn}${removeBtn}</div>` : ""}</div>`;
   }).join("") : `<p class="empty">No one approved yet.</p>`;
 
@@ -3403,9 +3403,8 @@ function renderAdmin() {
       <span class="sub">Rejected</span>
       <div class="actions"><button class="btn plain small" data-reconsider="${p.user_id}">Move back to waiting</button></div></div>`).join("") + `</div>` : "";
 
-  const membersHtml = activeMembers().map(m => `<div class="mem">
-      <input class="field" id="mname-${m.key}" value="${esc(m.name)}" maxlength="40" aria-label="Name">
-      <button class="btn plain small" data-rename="${m.key}">Save</button>
+  // Names nobody is signed in as (from before accounts). Everyone else is their Discord name and is managed above.
+  const orphanHtml = free.map(m => `<div class="mem"><span class="mem-name">${esc(m.name)}</span>
       <button class="btn danger small" data-hide="${m.key}">Remove</button></div>`).join("");
 
   const codeCard = g ? `<div class="card"><div class="cardhead"><h2>Join code</h2></div>
@@ -3418,10 +3417,8 @@ function renderAdmin() {
   const cols = [
     `${codeCard}<div class="card"><div class="cardhead"><h2>Waiting for approval</h2></div>${waitingHtml}</div>
      <div class="card"><div class="cardhead"><h2>Approved</h2></div>${approvedHtml}</div>${rejectedHtml}`,
-    `<div class="card"><div class="cardhead"><h2>Names in the group</h2></div>${membersHtml}
-      <div class="addrow"><input class="field" id="newmember" placeholder="New member name" maxlength="40" aria-label="New member name">
-      <button class="btn primary small" id="addmember">Add</button></div>
-      <p class="empty" style="margin-top:10px">Approving someone adds their Discord name here. Rename anyone with Save. Add a name by hand only for someone without an account. Removing a member hides them; their history is kept.</p></div>`,
+    orphanHtml ? `<div class="card"><div class="cardhead"><h2>Names without an account</h2></div>${orphanHtml}
+      <p class="empty" style="margin-top:10px">These names have history but nobody is signed in as them. Remove one to take it off the board; its history is kept.</p></div>` : "",
   ];
   const note = flash ? `<div class="card"><p class="msg">${esc(flash)}</p></div>` : error ? `<div class="card"><p class="msg err">${esc(error)}</p></div>` : "";
   const paused = g && g.status === "paused" ? `<div class="card"><p class="msg err">This group is paused by the app owner. Nobody can tick or change anything until it's resumed.</p></div>` : "";
@@ -3435,7 +3432,7 @@ function renderAdmin() {
   const guide = ownerGuideHtml();
   if (adminView === "group") return segs + note + paused + guide + groupSettingsHtml(g);
   const repCard = isOwnerHere ? reportsCardHtml(reports.filter(r => r.group_id === gid), false) : "";
-  return segs + note + paused + guide + repCard + (isWide() ? `<div class="admin-grid"><div>${cols[0]}</div><div>${cols[1]}</div></div>` : cols.join(""));
+  return segs + note + paused + guide + repCard + (isWide() && cols[1] ? `<div class="admin-grid"><div>${cols[0]}</div><div>${cols[1]}</div></div>` : `<div class="admin-one">${cols.join("")}</div>`);
 }
 let adminView = "people";
 
@@ -4458,14 +4455,16 @@ document.addEventListener("click", async e => {
   }
   if (d.day) { const k = d.day; setTab("day"); selected = k; return render(); }
   if (d.approve) {
-    const sel = document.getElementById("pick-" + d.approve), key = sel ? sel.value : "";
     const who = (people.find(p => p.user_id === d.approve) || {}).discord_name || "They";
-    return adminDo(sb.rpc("approve_member", { g: gid, uid: d.approve, existing_key: key || null }), `Approved. ${who} is in. You can rename them under Names in the group.`);
+    return adminDo(sb.rpc("approve_member", { g: gid, uid: d.approve, existing_key: null }), `Approved. ${who} is in.`);
   }
   if (d.reject) return adminDo(memberQ({ status: "rejected", member_key: null }, d.reject), "Rejected.");
   if (d.revoke) {
     if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Sure? Tap again"; return; }
-    return adminDo(memberQ({ status: "rejected", member_key: null, role: "member" }, d.revoke), "Access removed.");
+    const key = (people.find(p => p.user_id === d.revoke) || {}).member_key;
+    const res = await memberQ({ status: "rejected", member_key: null, role: "member" }, d.revoke);
+    if (res.error || !key) return adminDo(Promise.resolve(res), "Removed from the group.");
+    return adminDo(sb.from("members").update({ active: false }).eq("key", key), "Removed from the group. Their history is kept.");
   }
   if (d.reconsider) return adminDo(memberQ({ status: "pending" }, d.reconsider), "");
   if (d.makeadmin) return adminDo(memberQ({ role: "admin" }, d.makeadmin), "They're a group admin now: they can approve people, add names and excuse days.");

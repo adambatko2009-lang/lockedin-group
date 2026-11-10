@@ -709,5 +709,20 @@ r = await rpc("o3", "approve_member", [G3, U.a8, oldKey]);
 ok(!r.error && (await one(`select member_key from public.memberships where user_id=$1 and group_id=$2`, [U.a8, G3])).member_key === oldKey, "the owner can link someone to an existing name instead");
 ok((await as("a6", `select count(*)::int n from public.members where group_id=$1`, [G3])).rows[0].n > 0, "the approved person can see the group right away");
 
+// ================================================================ update 18: names follow Discord
+await db.exec(readFileSync(dir + "update-18-discord-names.sql", "utf8"));
+console.log("\nloaded: update-18-discord-names.sql");
+section("names follow Discord (update 18)");
+await db.query(`update auth.users set raw_user_meta_data=$2 where id=$1`, [U.a6, { full_name: "Mia Trades" }]);
+ok((await one(`select name from public.members where key=$1`, [k6])).name === "Mia Trades", "changing your Discord name changes your name in the group");
+await db.query(`update auth.users set raw_user_meta_data=$2 where id=$1`, [U.a6, { full_name: "mia" }]);
+ok((await one(`select name from public.members where key=$1`, [k6])).name === "mia 2", "if another member has that name, a number is added");
+const k3name = (await one(`select name from public.members where key=$1`, [k3])).name;
+await db.query(`update auth.users set raw_user_meta_data=$2 where id=$1`, [U.j5, { full_name: "Waiting Person" }]);
+ok((await one(`select name from public.members where key=$1`, [k3])).name === k3name && (await one(`select count(*)::int n from public.members where name='Waiting Person'`)).n === 0, "people who aren't approved get no name, and nobody else's name changes");
+r = await as("a6", `update public.profiles set discord_name='Admin' where user_id=$1`, [U.a6]);
+ok((await one(`select name from public.members where key=$1`, [k6])).name === "mia 2", "you can't rename yourself by editing your profile");
+ok(!!(await as("o3", `select public.free_member_name($1, 'x')`, [G3])).error, "the name helper is only for the database");
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
