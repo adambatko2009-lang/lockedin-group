@@ -300,7 +300,7 @@
   .repreasons input { accent-color: var(--accent); width: 18px; height: 18px; margin: 0; }
   .repform textarea { width: 100%; min-height: 70px; padding: 8px 10px; resize: vertical; }
   .repbtns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
-  .admin-one { display: flex; flex-direction: column; gap: 16px; max-width: 640px; }
+  .admin-one { display: flex; flex-direction: column; gap: 16px; }
   .mem-name { flex: 1; min-width: 0; font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .reacts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .react { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line);
@@ -3415,10 +3415,9 @@ function renderAdmin() {
       <p class="empty" style="margin-top:10px">Share the code or the invite link in your Discord. The link fills in the code for them. Either way they land in "Waiting for approval" below.${isOwnerHere ? " A new code makes the old one stop working." : ""}</p></div>` : "";
 
   const cols = [
-    `${codeCard}<div class="card"><div class="cardhead"><h2>Waiting for approval</h2></div>${waitingHtml}</div>
-     <div class="card"><div class="cardhead"><h2>Approved</h2></div>${approvedHtml}</div>${rejectedHtml}`,
-    orphanHtml ? `<div class="card"><div class="cardhead"><h2>Names without an account</h2></div>${orphanHtml}
-      <p class="empty" style="margin-top:10px">These names have history but nobody is signed in as them. Remove one to take it off the board; its history is kept.</p></div>` : "",
+    `${codeCard}<div class="card"><div class="cardhead"><h2>Waiting for approval</h2></div>${waitingHtml}</div>${rejectedHtml}`,
+    `<div class="card"><div class="cardhead"><h2>Approved</h2></div>${approvedHtml}</div>` + (orphanHtml ? `<div class="card"><div class="cardhead"><h2>Names without an account</h2></div>${orphanHtml}
+      <p class="empty" style="margin-top:10px">These names have history but nobody is signed in as them. Remove one to take it off the board; its history is kept.</p></div>` : ""),
   ];
   const note = flash ? `<div class="card"><p class="msg">${esc(flash)}</p></div>` : error ? `<div class="card"><p class="msg err">${esc(error)}</p></div>` : "";
   const paused = g && g.status === "paused" ? `<div class="card"><p class="msg err">This group is paused by the app owner. Nobody can tick or change anything until it's resumed.</p></div>` : "";
@@ -3432,7 +3431,7 @@ function renderAdmin() {
   const guide = ownerGuideHtml();
   if (adminView === "group") return segs + note + paused + guide + groupSettingsHtml(g);
   const repCard = isOwnerHere ? reportsCardHtml(reports.filter(r => r.group_id === gid), false) : "";
-  return segs + note + paused + guide + repCard + (isWide() && cols[1] ? `<div class="admin-grid"><div>${cols[0]}</div><div>${cols[1]}</div></div>` : `<div class="admin-one">${cols.join("")}</div>`);
+  return segs + note + paused + guide + repCard + (isWide() ? `<div class="admin-grid"><div>${cols[0]}</div><div>${cols[1]}</div></div>` : `<div class="admin-one">${cols.join("")}</div>`);
 }
 let adminView = "people";
 
