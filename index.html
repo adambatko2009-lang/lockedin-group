@@ -1837,9 +1837,11 @@ async function loadPeople() {
   const pr = ids.length ? await sb.from("profiles").select("user_id, discord_name, avatar_url").in("user_id", ids) : { data: [] };
   people = (data || []).map(x => Object.assign({ discord_name: "Unknown", avatar_url: null }, (pr.data || []).find(p => p.user_id === x.user_id) || {}, x));
   if (isGroupOwner()) {
-    const rp = await sb.from("reports").select("*").eq("status", "open").order("created_at", { ascending: false }).limit(100);
+    const [rp, dc] = await Promise.all([
+      sb.from("reports").select("*").eq("status", "open").order("created_at", { ascending: false }).limit(100),
+      sb.from("group_discord").select("*").eq("group_id", gid).maybeSingle(),
+    ]);
     reports = rp.error ? [] : rp.data || [];
-    const dc = await sb.from("group_discord").select("*").eq("group_id", gid).maybeSingle();
     discordCfg = dc.error ? null : dc.data;
   } else { reports = []; discordCfg = null; }
 }
@@ -2670,16 +2672,27 @@ async function adminDo(promise, okMsg) {
   return res;
 }
 // Re-read groups, people and names after a change (and leave a group that no longer exists).
+// Approve and Reject show the result right away; the server and a refresh follow. If the server says no, it's undone.
+async function instantPerson(uid, patch, promise, okMsg) {
+  const p = people.find(x => x.user_id === uid), before = p ? { ...p } : null;
+  if (p) Object.assign(p, patch);
+  flash = okMsg; error = ""; render();
+  const res = await promise;
+  if (res.error && p) Object.assign(p, before);
+  return adminDo(Promise.resolve(res), okMsg);
+}
 async function refreshAfterAdmin() {
   adminDirty = false;   // saved: the page may redraw again
   await loadGroups();
   if (!group() || !canOpen(group())) { loaded = false; return loadAll(); }
   applyGroupRules(group());
   isAdmin = canManageGroup();
-  if (isAdmin) await loadPeople();
-  const m = await sb.from("members").select("*").eq("group_id", gid);
+  const [, m] = await Promise.all([
+    isAdmin ? loadPeople() : null,
+    sb.from("members").select("*").eq("group_id", gid),
+    isAppOwner ? loadOwnerData() : null,
+  ]);
   if (!m.error) members = m.data;
-  if (isAppOwner) await loadOwnerData();
   today = currentTradingDay();
 }
 let flash = "";
@@ -4455,9 +4468,9 @@ document.addEventListener("click", async e => {
   if (d.day) { const k = d.day; setTab("day"); selected = k; return render(); }
   if (d.approve) {
     const who = (people.find(p => p.user_id === d.approve) || {}).discord_name || "They";
-    return adminDo(sb.rpc("approve_member", { g: gid, uid: d.approve, existing_key: null }), `Approved. ${who} is in.`);
+    return instantPerson(d.approve, { status: "approved" }, sb.rpc("approve_member", { g: gid, uid: d.approve, existing_key: null }), `Approved. ${who} is in.`);
   }
-  if (d.reject) return adminDo(memberQ({ status: "rejected", member_key: null }, d.reject), "Rejected.");
+  if (d.reject) return instantPerson(d.reject, { status: "rejected", member_key: null }, memberQ({ status: "rejected", member_key: null }, d.reject), "Rejected.");
   if (d.revoke) {
     if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Sure? Tap again"; return; }
     const key = (people.find(p => p.user_id === d.revoke) || {}).member_key;
