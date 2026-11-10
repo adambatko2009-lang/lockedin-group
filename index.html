@@ -787,18 +787,37 @@
   .tabbar.lensing .pill { opacity: 0; }
   .tabbar.lensing button { transform: none; }
   .tabbar button.hot, .tabbar button.hot svg { color: var(--accent-text); }
-  .tablens { position: fixed; z-index: 7; pointer-events: none; overflow: hidden; border-radius: 26px;
-    background: color-mix(in srgb, var(--surface) 62%, transparent);
-    -webkit-backdrop-filter: blur(3px) saturate(180%); backdrop-filter: blur(3px) saturate(180%);
-    border: 1px solid var(--lg-edge);
-    box-shadow: inset 0 1px 0 var(--lg-rim), inset 0 -1px 0 color-mix(in srgb, var(--lg-rim) 40%, transparent),
-                inset 0 0 14px color-mix(in srgb, var(--lg-glow) 35%, transparent), 0 10px 28px rgba(0, 0, 0, .32);
-    transform: scale(.7); opacity: 0; transition: transform .28s cubic-bezier(.3, 1.4, .5, 1), opacity .18s; }
+  .tablens { position: fixed; z-index: 7; pointer-events: none; overflow: hidden; border-radius: 30px; isolation: isolate;
+    /* clear glass: barely tinted, the bar underneath is softly blurred and brightened, the copy on top is sharp */
+    background: color-mix(in srgb, var(--lg-glow) 7%, transparent);
+    -webkit-backdrop-filter: blur(7px) saturate(190%) brightness(1.12); backdrop-filter: blur(7px) saturate(190%) brightness(1.12);
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, .42),                 /* thin bright rim */
+      inset 0 1.5px 1px rgba(255, 255, 255, .55),               /* light catching the top edge */
+      inset 3px 0 7px -3px rgba(90, 170, 255, .75),             /* blue fringe on the left edge */
+      inset -3px 0 7px -3px rgba(255, 160, 70, .6),             /* warm fringe on the right edge */
+      inset 0 -6px 10px -6px rgba(120, 190, 255, .55),          /* light bending along the bottom */
+      inset 0 0 18px rgba(255, 255, 255, .08),
+      0 12px 30px rgba(0, 0, 0, .35), 0 2px 6px rgba(0, 0, 0, .2);
+    transform: scale(.6, .5); opacity: 0;
+    transition: transform .42s cubic-bezier(.25, 1.6, .45, 1), opacity .16s; }
   .tablens.up { transform: scale(1); opacity: 1; }
-  .tablens.drop { transition: left .3s cubic-bezier(.3, 1.3, .5, 1), transform .3s cubic-bezier(.3, 1.3, .5, 1), opacity .25s .08s; transform: scale(.82); opacity: 0; }
-  .tablens::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-    background: linear-gradient(115deg, color-mix(in srgb, var(--lg-glow) 55%, transparent), transparent 38%, transparent 70%, color-mix(in srgb, var(--lg-glow) 25%, transparent)); }
-  .tablens .lens-track { position: absolute; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; padding: 5px; box-sizing: border-box; }
+  .tablens.drop { transition: left .34s cubic-bezier(.3, 1.35, .5, 1), transform .34s cubic-bezier(.3, 1.35, .5, 1), opacity .24s .1s;
+    transform: scale(.78, .66); opacity: 0; }
+  /* the shine: a soft highlight that slides across the glass as you drag */
+  .tablens::before { content: ""; position: absolute; inset: 0; z-index: 2; border-radius: inherit; pointer-events: none;
+    background:
+      radial-gradient(60% 45% at calc(30% + var(--lx, .5) * 40%) 8%, rgba(255, 255, 255, .5), transparent 70%),
+      radial-gradient(40% 30% at calc(70% - var(--lx, .5) * 40%) 96%, rgba(255, 255, 255, .18), transparent 70%); mix-blend-mode: screen; }
+  /* a faint rainbow band where the glass is thickest, like light splitting at the edge */
+  .tablens::after { content: ""; position: absolute; inset: 0; z-index: 2; border-radius: inherit; pointer-events: none;
+    padding: 2px; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+    background: conic-gradient(from calc(var(--lx, .5) * 120deg + 200deg), rgba(120, 180, 255, .9), rgba(255, 255, 255, .7), rgba(255, 170, 90, .8),
+                rgba(255, 120, 200, .55), rgba(140, 220, 255, .85), rgba(255, 255, 255, .6), rgba(120, 180, 255, .9)); opacity: .55; }
+  @media (prefers-reduced-transparency: reduce) { .tablens { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
+    .tablens::before, .tablens::after { display: none; } }
+  .tablens .lens-track { z-index: 1; filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, .35));
+    position: absolute; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; padding: 5px; box-sizing: border-box; }
   .tablens .lens-track > * { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-height: 50px; color: var(--text-2); position: relative; }
   .tablens .lens-track svg { width: 22px; height: 22px; }
   .tablens .lens-track span { font-size: 11px; font-weight: 600; }
@@ -2717,7 +2736,8 @@ function renderTabbar() {
     bar.classList.add("lensing");
     try { bar.setPointerCapture(st.id); } catch (_) {}
     place(st.x, 0);
-    requestAnimationFrame(() => lens.classList.add("up"));
+    void lens.offsetWidth;   // start from the small size, then spring up
+    lens.classList.add("up");
     if (navigator.vibrate) navigator.vibrate(8);
   }
   function place(x, v) {
@@ -2728,10 +2748,11 @@ function renderTabbar() {
     // the magnified copy of the bar inside the lens, centred on the finger
     track.style.left = (r.left - left) + "px";
     track.style.transformOrigin = `${cx - r.left}px 50%`;
-    track.style.transform = "scale(1.22)";
+    track.style.transform = "scale(1.28, 1.34)";
+    lens.style.setProperty("--lx", ((cx - r.left) / r.width).toFixed(3));
     // a little stretch in the direction you move, like a drop of liquid
-    const s = Math.min(0.16, Math.abs(v) * 0.012);
-    if (lens.classList.contains("up")) lens.style.transform = `scale(${1 + s}, ${1 - s * 0.6})`;
+    const s = Math.min(0.22, Math.abs(v) * 0.016);
+    if (lens.classList.contains("up")) lens.style.transform = `scale(${1 + s}, ${1 - s * 0.55})`;
     const hot = tabAt(cx);
     if (hot !== st.hot) {
       tabsIn().forEach(b => b.classList.toggle("hot", b === hot));
