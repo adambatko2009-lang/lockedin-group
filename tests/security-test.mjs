@@ -729,5 +729,22 @@ const before18 = (await db.query(`select key, name from public.members order by 
 await db.exec(readFileSync(dir + "update-18-discord-names.sql", "utf8"));
 ok((await db.query(`select key, name from public.members order by key`)).rows.map(x => x.key + "=" + x.name).join() === before18, "running update 18 again changes nothing");
 
+// ================================================================ update 19: P&L and R
+await db.exec(readFileSync(dir + "update-19-pnl-rr.sql", "utf8"));
+console.log("\nloaded: update-19-pnl-rr.sql");
+section("P&L and R (update 19)");
+const d19 = (await one(`select public.current_trading_day($1)::text d`, [G3])).d;
+await as("m3", `insert into public.ticks (day, member_key) values ($1, $2) on conflict do nothing`, [d19, k3]);
+r = await as("m3", `update public.ticks set pnl = 420.5, rr = 2.1 where day=$1 and member_key=$2`, [d19, k3]);
+ok(!r.error && r.count === 1, "a member saves their P&L and R");
+r = await one(`select pnl::text p, rr::text r from public.ticks where day=$1 and member_key=$2`, [d19, k3]);
+ok(r.p === "420.50" && r.r === "2.10", "they're stored exactly");
+ok(!(await as("m3", `update public.ticks set pnl = -150, rr = -1 where day=$1 and member_key=$2`, [d19, k3])).error, "losses are negative numbers");
+ok(!(await as("m3", `update public.ticks set pnl = null, rr = null where day=$1 and member_key=$2`, [d19, k3])).error, "both are optional");
+ok(!!(await as("m3", `update public.ticks set rr = 500 where day=$1 and member_key=$2`, [d19, k3])).error, "an R outside -100 to 100 is refused");
+ok(!!(await as("m3", `update public.ticks set pnl = 99999999 where day=$1 and member_key=$2`, [d19, k3])).error, "an impossible P&L is refused");
+ok((await as("m3", `update public.ticks set pnl = 1 where member_key=$1`, [k6])).count === 0, "members can't set someone else's P&L");
+ok((await as("sid", `select pnl from public.ticks where member_key=$1`, [k3])).rows.length === 0, "other groups can't see it");
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

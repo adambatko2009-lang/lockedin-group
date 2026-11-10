@@ -302,6 +302,16 @@
   .repbtns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
   .admin-one { display: flex; flex-direction: column; gap: 16px; }
   .mem-name { flex: 1; min-width: 0; font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .numrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin-top: 10px; }
+  .numfield { min-width: 0; display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border-radius: 12px; background: var(--surface-2); cursor: text; }
+  .numfield span { font-size: 13px; font-weight: 600; color: var(--muted); }
+  .numfield b { font: 600 15px var(--font-data); color: var(--text-2); }
+  .numfield input { flex: 1; min-width: 0; width: 100%; border: 0; background: transparent; color: var(--text); font: 600 16px var(--font-data); outline: none; text-align: right; }
+  .numfield:focus-within { box-shadow: 0 0 0 2px var(--accent); }
+  #num-hint.bad { color: var(--crit); }
+  .pnlchip { font-family: var(--font-data); font-weight: 600; }
+  .pnlchip.up, .tile b.up { color: var(--good); }
+  .pnlchip.down, .tile b.down { color: var(--crit); }
   .reacts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .react { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line);
     background: transparent; color: var(--muted); font: 600 13px var(--font-data); cursor: default; }
@@ -2002,6 +2012,24 @@ const resultHint = rec => ({
   notrade: "You sat out on purpose. Chart with executions, journal and HTF are still required.",
   gamble: "Marked as a gamble: a trade outside your plan. Being honest here helps you spot it.",
 }[resultOf(rec)] || "Pick one. Tap it again to clear.");
+// P&L in dollars and R. Typed freely ("+1,250", "-150.5", "2R"); empty means not filled in.
+const parseNum = (v, max) => {
+  const t = String(v || "").replace(/[\s,$R]/gi, "").replace(/^\+/, "");
+  if (t === "") return null;
+  if (t === "-" || /^-?\d+\.$/.test(t)) return undefined;   // still typing
+  if (!/^-?\d+(\.\d{1,2})?$/.test(t)) return NaN;
+  const n = +t;
+  return Math.abs(n) > max ? NaN : n;
+};
+const fmtPnl = n => (n > 0 ? "+" : n < 0 ? "−" : "") + "$" + Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
+const fmtR = n => (n > 0 ? "+" : n < 0 ? "−" : "") + Math.abs(n).toLocaleString("en-US", { maximumFractionDigits: 2 }) + "R";
+const hasNum = v => v !== null && v !== undefined && v !== "";
+function pnlChipHtml(rec) {
+  const p = hasNum(rec.pnl) ? +rec.pnl : null, r = hasNum(rec.rr) ? +rec.rr : null;
+  if (p === null && r === null) return "";
+  const sign = p !== null ? Math.sign(p) : Math.sign(r);
+  return `<span class="bchip pnlchip ${sign > 0 ? "up" : sign < 0 ? "down" : ""}">${[p !== null ? fmtPnl(p) : "", r !== null ? fmtR(r) : ""].filter(Boolean).join(" · ")}</span>`;
+}
 const resultTag = rec => {
   const r = resultOf(rec); if (!r) return "";
   const label = RESULTS.find(x => x[0] === r)[1];
@@ -2013,7 +2041,7 @@ const resultTag = rec => {
 function editTick(k, key, mutate, quiet) {
   if (!key || !canEdit(k, key)) return;
   const id = k + "|" + key;
-  const row = Object.assign({ day: k, member_key: key, chart: false, journal: false, review: false, social: false, box5: false, box6: false, note: "", images: [], no_trade: false, result: null, rule_breaks: [] }, tickOf(k, key));
+  const row = Object.assign({ day: k, member_key: key, chart: false, journal: false, review: false, social: false, box5: false, box6: false, note: "", images: [], no_trade: false, result: null, pnl: null, rr: null, rule_breaks: [] }, tickOf(k, key));
   row.images = [...(row.images || [])];
   row.rule_breaks = [...(row.rule_breaks || [])];
   const before = statusOf(k, key);
@@ -2026,7 +2054,7 @@ function editTick(k, key, mutate, quiet) {
 }
 async function saveTick(id) {
   const row = ticks[id];
-  const body = { day: row.day, member_key: row.member_key, chart: !!row.chart, journal: !!row.journal, review: !!row.review, social: !!row.social, box5: !!row.box5, box6: !!row.box6, note: row.note || "", images: row.images || [], excused: !!row.excused, no_trade: !!row.no_trade, result: row.no_trade ? null : (row.result || null), rule_breaks: row.rule_breaks || [] };
+  const body = { day: row.day, member_key: row.member_key, chart: !!row.chart, journal: !!row.journal, review: !!row.review, social: !!row.social, box5: !!row.box5, box6: !!row.box6, note: row.note || "", images: row.images || [], excused: !!row.excused, no_trade: !!row.no_trade, result: row.no_trade ? null : (row.result || null), pnl: row.pnl ?? null, rr: row.rr ?? null, rule_breaks: row.rule_breaks || [] };
   saving++; noteState[id] = "saving"; renderTop();
   let e;
   if (!navigator.onLine) e = { message: "offline" };
@@ -2553,6 +2581,11 @@ function openPanel(day, key) {
     <h3 class="result-h">How did the day go?</h3>
     <div class="segset four result-set" role="group" aria-label="How did the day go?">${resultBtnsHtml(rec)}</div>
     <p class="sub-hint" id="result-hint">${resultHint(rec)}</p>
+    <div class="numrow">
+      <label class="numfield"><span>P&amp;L</span><b aria-hidden="true">$</b><input id="panel-pnl" inputmode="decimal" autocomplete="off" placeholder="0" value="${hasNum(rec.pnl) ? +rec.pnl : ""}" aria-label="P&L in dollars"></label>
+      <label class="numfield"><span>R</span><input id="panel-rr" inputmode="decimal" autocomplete="off" placeholder="0" value="${hasNum(rec.rr) ? +rec.rr : ""}" aria-label="Risk-reward in R"></label>
+    </div>
+    <p class="sub-hint" id="num-hint">Optional. Use a minus for a loss, like -150. Your group sees it.</p>
     <h3>Note</h3>
     <textarea id="panel-note" maxlength="10000" placeholder="What did you trade, what did you learn?">${esc(noteText)}</textarea>
     <p class="note-status" id="note-status" aria-live="polite"></p>
@@ -3130,7 +3163,7 @@ function renderDay() {
     return `<div class="member ${editable ? "" : "locked"}">
       <div class="mrow"><span class="name">${avatarHtml(m, 26)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === myKey() ? `<span class="you">YOU</span>` : ""}${resultTag(rec)}</span>${editBtn}${dot(st, m.name)}</div>
       ${showToggles ? `<div class="toggles" style="${togglesStyle()}">${toggles}</div>` : ""}
-      ${(rec.rule_breaks || []).length ? `<div class="breaks">${rec.rule_breaks.map(b => `<span class="bchip">${ic("alert", 13)}${esc(BREAK_LABEL[b] || b)}</span>`).join("")}</div>` : ""}
+      ${(rec.rule_breaks || []).length || pnlChipHtml(rec) ? `<div class="breaks">${pnlChipHtml(rec)}${(rec.rule_breaks || []).map(b => `<span class="bchip">${ic("alert", 13)}${esc(BREAK_LABEL[b] || b)}</span>`).join("")}</div>` : ""}
       ${note ? `<div class="note">${note}${canReport(k, m.key) ? `<button class="reportlink" data-report-note="${k}|${m.key}">Report note</button>` : ""}</div>` : ""}
       ${shots ? `<div class="shots">${shots}</div>` : ""}
       ${rec.note || images.length ? reactBarHtml(k, m.key) : ""}
@@ -3171,7 +3204,8 @@ function computeStats(key) {
   const days = tickDays || (tickDays = [...new Set(Object.keys(ticks).map(id => id.slice(0, 10)))].filter(isTradingDay).sort());
   let points = 0, run = 0, best = 0, closed = 0, complete = 0, last = null;
   let noTrades = 0, completeDays = 0, social = 0, notes = 0, pics = 0, comebacks = 0, prevSt = null, since = null;
-  let wins = 0, losses = 0, gambles = 0, sitOuts = 0;   // the day results members pick (excused days included: it's about trading)
+  let wins = 0, losses = 0, gambles = 0, sitOuts = 0;
+  let pnlSum = 0, pnlDays = 0, bestDay = null, rSum = 0, rDays = 0;   // only days where it was filled in   // the day results members pick (excused days included: it's about trading)
   const weeks = {};   // monday -> {n: closed days counted, ex: excused days, ok: all Complete, open: has an open day}
   const bonusBoxes = RULES.filter(r => r[2] === "bonus").map(r => r[0]);
   for (const k of days) {
@@ -3181,6 +3215,8 @@ function computeStats(key) {
     const w = weeks[mondayOf(k)] = weeks[mondayOf(k)] || { n: 0, ex: 0, ok: true, open: false };
     if (rec.note) notes++;
     pics += (rec.images || []).length;
+    if (hasNum(rec.pnl)) { pnlSum += +rec.pnl; pnlDays++; bestDay = bestDay === null ? +rec.pnl : Math.max(bestDay, +rec.pnl); }
+    if (hasNum(rec.rr)) { rSum += +rec.rr; rDays++; }
     const res = resultOf(rec);
     if (res === "win") wins++; else if (res === "loss") losses++; else if (res === "gamble") gambles++; else if (res === "notrade") sitOuts++;
     if (st === "EXCUSED") { w.ex++; continue; }   // no points, no streak change, not counted in %
@@ -3199,6 +3235,7 @@ function computeStats(key) {
     w.ok && !w.open && w.n > 0 && w.n + w.ex === [0, 1, 2, 3, 4].filter(i => isTradingDay(addDays(mon, i))).length).length;
   return { points, run, best, rate: closed ? Math.round(100 * complete / closed) : null,
            completeDays, social, notes, pics, comebacks, perfectWeeks, noTrades, since,
+           pnl: pnlDays ? Math.round(pnlSum * 100) / 100 : null, bestDay, avgR: rDays ? Math.round(rSum / rDays * 100) / 100 : null,
            wins, losses, gambles, sitOuts, winRate: wins + losses ? Math.round(100 * wins / (wins + losses)) : null };
 }
 
@@ -3276,8 +3313,11 @@ function renderProfile(key, part = "profile", withTabs = false) {
       <div class="tile"><b>${s.winRate === null ? "–" : s.winRate + "%"}</b><span>Win rate · ${s.wins}W ${s.losses}L</span></div>
       <div class="tile"><b>${s.gambles}</b><span>Gambles</span></div>
       <div class="tile"><b>${s.sitOuts}</b><span>No-trade days</span></div>
+      <div class="tile"><b class="${s.pnl > 0 ? "up" : s.pnl < 0 ? "down" : ""}">${s.pnl === null ? "–" : fmtPnl(s.pnl)}</b><span>Total P&amp;L</span></div>
+      <div class="tile"><b>${s.avgR === null ? "–" : fmtR(s.avgR)}</b><span>Average R</span></div>
+      <div class="tile"><b class="${s.bestDay > 0 ? "up" : ""}">${s.bestDay === null ? "–" : fmtPnl(s.bestDay)}</b><span>Best day</span></div>
     </div>
-    <p class="sub-hint tiles-note">Win rate counts days marked Win or Loss. Gambles and no-trade days don't count toward it.</p></div>`;
+    <p class="sub-hint tiles-note">Win rate counts days marked Win or Loss. Gambles and no-trade days don't count toward it. P&amp;L and R count only days where they were filled in.</p></div>`;
 
   const order = [...badges.filter(b => b.earned), ...badges.filter(b => !b.earned)];
   const ach = `<div class="card"><div class="cardhead"><h2>Achievements · ${earned}/${badges.length}</h2></div><div class="badges">
@@ -3799,7 +3839,7 @@ function renderLanding() {
       ${sec("Who is responsible", `<p>LockedIn is a free, non-commercial project run by Adam Batko, a private individual in Norway. He decides how your data is used (the "data controller"). Contact: ${mail}.</p>`)}
       ${sec("What we store", `<ul>
         <li><b>From Discord, when you sign in:</b> your Discord username, profile picture, email address and Discord account ID. LockedIn doesn't use your email address for anything and never emails you. We never see your Discord password, messages or servers.</li>
-        <li><b>What you add:</b> your ticks, notes, rule-break tags, weekly reflections, screenshots, reactions to other members' posts, your settings, and requests to join or start a group.</li>
+        <li><b>What you add:</b> your ticks, notes, rule-break tags, weekly reflections, screenshots, P&amp;L and R if you fill them in, reactions to other members' posts, your settings, and requests to join or start a group.</li>
         <li><b>Reports:</b> if you report a picture or note, we store the report, your reason and which post it is about. For notes, the start of the note is kept with the report as evidence.</li>
         <li><b>Reminders, only if you turn them on:</b> a push address for that phone or computer (made by your browser's push service, such as Apple, Google or Mozilla), how long before the cutoff you want a reminder, and a note of which reminders were sent. If you own or help run a group, the same notifications also tell you when someone asks to join or reports something.</li>
       </ul>`)}
@@ -3809,7 +3849,7 @@ function renderLanding() {
         <li><b>Keeping the service safe and working</b>, for example the technical logs our providers keep: our legitimate interest in a secure service (Article 6(1)(f)).</li>
       </ul><p>We don't sell your data, show ads, build profiles of you, or make automated decisions about you.</p>`)}
       ${sec("Who can see it", `<ul>
-        <li><b>Your group</b> sees your name, picture, ticks, notes, screenshots, reflections, streaks, badges, and the reactions you give and get.</li>
+        <li><b>Your group</b> sees your name, picture, ticks, notes, screenshots, P&amp;L and R, reflections, streaks, badges, and the reactions you give and get.</li>
         <li><b>Your group's owner and admins</b> can also approve or remove members, excuse days and correct ticks.</li>
         <li><b>Reports</b> are seen only by the group's owner and the app owner. The person who was reported isn't told who reported them.</li>
         <li><b>Your group's Discord server, if the group owner turns on Discord recaps:</b> LockedIn then posts each member's name, whether they finished the day's homework, and a weekly count of days done, wins and losses in a channel the owner picks. Everyone who can read that channel sees it. Your group owner decides this, so ask them if you'd rather not be included.</li>
@@ -4611,6 +4651,23 @@ document.addEventListener("input", e => {
   if (e.target.id === "terms-ok") { document.getElementById("accept-terms").disabled = !e.target.checked; return; }
   if (e.target.id === "set-confetti") { settings.confetti = e.target.checked; return saveSettings(); }
   if (e.target.id === "set-remind") return e.target.checked ? turnRemindersOn() : turnRemindersOff();
+  if ((e.target.id === "panel-pnl" || e.target.id === "panel-rr") && editing) {
+    const isPnl = e.target.id === "panel-pnl", v = parseNum(e.target.value, isPnl ? 10000000 : 100), hint = document.getElementById("num-hint");
+    if (v === undefined) return;
+    if (Number.isNaN(v)) { hint.textContent = isPnl ? "Numbers only, like 420 or -150.50." : "Numbers only, like 2 or -1, between -100 and 100."; hint.classList.add("bad"); return; }
+    hint.textContent = "Optional. Use a minus for a loss, like -150. Your group sees it."; hint.classList.remove("bad");
+    const { day, key } = editing;
+    editTick(day, key, row => {
+      row[isPnl ? "pnl" : "rr"] = v;
+      // no result picked yet: a P&L (or else an R) picks Win or Loss
+      const lead = hasNum(row.pnl) ? +row.pnl : hasNum(row.rr) ? +row.rr : 0;
+      if (!row.no_trade && !row.result && lead) row.result = lead > 0 ? "win" : "loss";
+    }, true);
+    const rec = tickOf(day, key) || {};
+    document.querySelectorAll("[data-result]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.result === resultOf(rec))));
+    const h = document.getElementById("result-hint"); if (h) h.textContent = resultHint(rec);
+    return;
+  }
   if (e.target.dataset && e.target.dataset.refl) return editReflection(e.target.dataset.week, e.target.dataset.key, e.target.dataset.refl, e.target.value);
   if (e.target.id === "panel-excused" && editing) { const on = e.target.checked; return editTick(editing.day, editing.key, row => { row.excused = on; }); }
   if (e.target.id !== "panel-note" || !editing) return;
