@@ -286,6 +286,37 @@
                   background: rgba(0, 0, 0, 0.94); color: #fff; overflow: hidden; }
   dialog#viewer::backdrop { background: rgba(0, 0, 0, 0.94); }
   dialog#viewer[open] { display: flex; flex-direction: column; }
+  .vbar .vreport { background: rgba(255, 255, 255, 0.14); color: #fff; }
+  /* report form: a small sheet over everything, also over the picture viewer */
+  dialog#reportdlg { border: 1px solid var(--line); border-radius: 20px; padding: 0; width: min(420px, calc(100vw - 32px));
+    background: var(--surface); color: var(--text); box-shadow: 0 20px 60px rgba(0, 0, 0, .5); }
+  dialog#reportdlg::backdrop { background: rgba(0, 0, 0, 0.6); }
+  .repform { padding: 20px; display: grid; gap: 4px; }
+  .repform h2 { margin: 0; font-size: 19px; }
+  .repform .sub-hint { margin: 4px 0; }
+  .repreasons { border: 0; padding: 0; margin: 10px 0 4px; display: grid; gap: 6px; }
+  .repreasons legend { font-size: 14px; font-weight: 600; margin-bottom: 6px; padding: 0; }
+  .repreasons label { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 12px; background: var(--surface-2); cursor: pointer; font-size: 15px; }
+  .repreasons input { accent-color: var(--accent); width: 18px; height: 18px; margin: 0; }
+  .repform textarea { width: 100%; min-height: 70px; padding: 8px 10px; resize: vertical; }
+  .repbtns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+  .okchip { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--good); }
+  .howto { margin: 0 0 6px; font-size: 14px; color: var(--text-2); }
+  .howto summary { cursor: pointer; font-weight: 600; color: var(--accent-text); padding: 4px 0; }
+  .howto ol { margin: 6px 0 4px; padding-left: 20px; display: grid; gap: 4px; }
+  .dcbtns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .gsettings + .gsettings { margin-top: 16px; }
+  .dangerzone { border-color: color-mix(in srgb, var(--crit) 35%, var(--line)); }
+  .reportlink { border: 0; background: none; padding: 4px 0; margin-top: 2px; color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer; }
+  .reportlink:hover { color: var(--text-2); text-decoration: underline; }
+  .reprow { display: grid; grid-template-columns: 56px 1fr; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .reprow:first-of-type { border-top: 0; }
+  .reprow .repthumb { width: 56px; height: 56px; border-radius: 10px; background: var(--surface-2) center / cover no-repeat; border: 0; padding: 0; cursor: pointer; }
+  .reprow .repnote { width: 56px; height: 56px; border-radius: 10px; background: var(--surface-2); display: grid; place-items: center; color: var(--muted); }
+  .reprow b { font-size: 15px; }
+  .reprow .sub { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .reprow blockquote { margin: 6px 0 0; padding: 6px 10px; border-left: 3px solid var(--line-strong); color: var(--text-2); font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .reprow .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .vtop { display: flex; align-items: center; gap: 10px; padding: calc(8px + env(safe-area-inset-top, 0px)) 12px 8px 18px; }
   .vtop .vcap { flex: 1; min-width: 0; font-size: 14px; color: #d4d4dc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .vtop .vcap b { color: #fff; font-weight: 600; }
@@ -349,6 +380,7 @@
   .phead { display: flex; align-items: center; gap: 14px; }
   .phead h1 { font-size: 24px; letter-spacing: -0.02em; margin: 0; }
   .phead p { margin: 2px 0 0; font-size: 14px; color: var(--muted); }
+  .tiles-note { margin: 10px 0 0; }
   .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
   .tile { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; }
   .tile b { display: block; font: 600 22px var(--font-data); }
@@ -1429,7 +1461,25 @@
   <div class="vstage" id="viewer-stage"><img id="viewer-img" alt="" draggable="false"></div>
   <button class="vnav prev" id="viewer-prev" aria-label="Previous picture">‹</button>
   <button class="vnav next" id="viewer-next" aria-label="Next picture">›</button>
-  <div class="vbar"><span class="vhint" id="viewer-hint"></span><button class="btn danger small" id="viewer-delete">Delete</button></div>
+  <div class="vbar"><span class="vhint" id="viewer-hint"></span><button class="btn plain small vreport" id="viewer-report">Report</button><button class="btn danger small" id="viewer-delete">Delete</button></div>
+</dialog>
+<dialog id="reportdlg" aria-labelledby="report-title">
+  <form method="dialog" class="repform" id="report-form">
+    <h2 id="report-title">Report this</h2>
+    <p class="sub-hint" id="report-what"></p>
+    <fieldset class="repreasons"><legend>What's wrong with it?</legend>
+      <label><input type="radio" name="rep-reason" value="inappropriate"><span>Inappropriate or explicit</span></label>
+      <label><input type="radio" name="rep-reason" value="harassment"><span>Harassment or hate</span></label>
+      <label><input type="radio" name="rep-reason" value="spam"><span>Spam</span></label>
+      <label><input type="radio" name="rep-reason" value="other"><span>Something else</span></label>
+    </fieldset>
+    <label class="flabel" for="report-detail">More details <span style="text-transform:none;letter-spacing:0">(optional)</span></label>
+    <textarea class="field" id="report-detail" maxlength="300" rows="3"></textarea>
+    <p class="sub-hint">Only the group owner and the app owner see reports. The person you report isn't told who sent it.</p>
+    <p class="sub-hint" id="report-msg" role="status" aria-live="polite"></p>
+    <div class="repbtns"><button type="button" class="btn plain small" id="report-cancel">Cancel</button>
+      <button type="button" class="btn primary small" id="report-send">Send report</button></div>
+  </form>
 </dialog>
 
 <script>
@@ -1573,7 +1623,7 @@ const sb = configured && window.supabase ? window.supabase.createClient(cfg.supa
 }) : null;
 
 // The date of the current Terms and Privacy policy. Change it when they change, and everyone is asked to accept again.
-const TERMS_VERSION = "2026-11-07";
+const TERMS_VERSION = "2026-11-10";
 let screen = "loading";          // loading | setup | signin | waiting | rejected | app
 let session = null, profile = null;
 let isAdmin = false;             // can manage the open group: its owner, a group admin, or the app owner
@@ -1584,6 +1634,8 @@ try { gid = localStorage.getItem("group"); } catch (e) {}
 let members = [];                // [{key, name, sort, active}]
 let ticks = {};                  // "day|member" -> row
 let people = [];                 // managers only: everyone in (or waiting for) the open group
+let discordCfg = null;           // group owner: this group's Discord recap settings (the webhook link is secret)
+let reports = [];                // group owners and the app owner: open reports (the database only returns the ones you may see)
 let today = currentTradingDay();
 let selected = today, weekStart = mondayOf(today), editing = null;   // editing = {day, key} while the edit panel is open
 let tab = "day";
@@ -1643,11 +1695,13 @@ async function loadAll() {
     screen = "terms"; loaded = false; clearTimeout(loadTimer); return render();
   }
   loadSettings();
+  const invited = await useInvite();
   await loadGroups();
   const usable = groups.filter(canOpen);
-  if (!usable.length) { screen = "lobby"; loaded = false; return render(); }
+  if (!usable.length) { screen = "lobby"; lobbyMode = "join"; loaded = false; return render(); }
   if (!usable.some(g => g.id === gid)) gid = (usable.find(g => (myMembership(g.id) || {}).status === "approved") || usable[0]).id;
   await openGroup(gid);
+  if (invited && screen === "app") openGroupsPanel();   // shows how the invite went
 }
 
 // Your groups, your memberships, and group requests (yours; the app owner sees all).
@@ -1760,6 +1814,12 @@ async function loadPeople() {
   const ids = (data || []).map(x => x.user_id);
   const pr = ids.length ? await sb.from("profiles").select("user_id, discord_name, avatar_url").in("user_id", ids) : { data: [] };
   people = (data || []).map(x => Object.assign({ discord_name: "Unknown", avatar_url: null }, (pr.data || []).find(p => p.user_id === x.user_id) || {}, x));
+  if (isGroupOwner()) {
+    const rp = await sb.from("reports").select("*").eq("status", "open").order("created_at", { ascending: false }).limit(100);
+    reports = rp.error ? [] : rp.data || [];
+    const dc = await sb.from("group_discord").select("*").eq("group_id", gid).maybeSingle();
+    discordCfg = dc.error ? null : dc.data;
+  } else { reports = []; discordCfg = null; }
 }
 
 // App owner: everybody's memberships and Discord names, for the All groups list.
@@ -2197,6 +2257,7 @@ function showViewerImage() {
   document.getElementById("viewer-next").hidden = i >= list.length - 1;
   const del = document.getElementById("viewer-delete");
   del.hidden = !canEdit(day, key); del.textContent = "Delete"; del.dataset.confirm = "";
+  document.getElementById("viewer-report").hidden = !canReport(day, key);
   document.getElementById("viewer-hint").textContent = matchMedia("(hover: none)").matches
     ? (list.length > 1 ? "Swipe for more · pinch to zoom" : "Pinch or double-tap to zoom") : "Click or scroll to zoom";
   setZoom(1, 0, 0);
@@ -2285,6 +2346,82 @@ function zoomAt(newS, cx, cy) {
     if (e.key === "ArrowLeft") stepViewer(-1);
   });
 })();
+
+// ---------------------------------------------------------------- reports
+// Members can report someone else's picture or note. People who can already delete it (owners, group admins) don't need to.
+const canReport = (day, key) => !!session && !!myKey() && key !== myKey() && !canEdit(day, key);
+let reporting = null;
+function openReport(kind, day, key, image) {
+  if (!canReport(day, key)) return;
+  const m = members.find(x => x.key === key);
+  reporting = { kind, day, key, image: image || "" };
+  document.getElementById("report-title").textContent = kind === "picture" ? "Report this picture" : "Report this note";
+  document.getElementById("report-what").textContent = `From ${m ? m.name : key} · ${fmtDay(day)}`;
+  document.querySelectorAll('input[name="rep-reason"]').forEach(r => { r.checked = false; });
+  document.getElementById("report-detail").value = "";
+  document.getElementById("report-msg").textContent = "";
+  const send = document.getElementById("report-send"); send.disabled = false; send.textContent = "Send report";
+  document.getElementById("reportdlg").showModal();
+}
+async function sendReport() {
+  const msg = document.getElementById("report-msg"), send = document.getElementById("report-send");
+  const pick = document.querySelector('input[name="rep-reason"]:checked');
+  if (!reporting) return;
+  if (!pick) { msg.textContent = "Pick what's wrong with it first."; return; }
+  send.disabled = true; send.textContent = "Sending…";
+  const { error: e } = await sb.rpc("report_content", { r_day: reporting.day, r_key: reporting.key, r_kind: reporting.kind,
+    r_image: reporting.image, r_reason: pick.value, r_detail: document.getElementById("report-detail").value.trim() });
+  if (e) { msg.textContent = e.message; send.disabled = false; send.textContent = "Send report"; return; }
+  msg.textContent = "Thanks. The group owner will look at it.";
+  send.textContent = "Sent";
+  setTimeout(() => { const d = document.getElementById("reportdlg"); if (d.open) d.close(); }, 1400);
+}
+const REASON_LABEL = { inappropriate: "Inappropriate or explicit", harassment: "Harassment or hate", spam: "Spam", other: "Something else" };
+// Open reports for the owner. withGroup: the app owner's list across all groups.
+function reportsCardHtml(list, withGroup) {
+  if (!list.length) return "";
+  ensureShotUrls(list.filter(r => r.kind === "picture").map(r => r.image));
+  const rows = list.map(r => {
+    const who = (members.find(x => x.key === r.member_key) || {}).name || r.member_key;
+    const g = groups.find(x => x.id === r.group_id);
+    const thumb = r.kind === "picture"
+      ? `<button class="repthumb" data-report-view="${r.id}" aria-label="Open the reported picture" style="${shotUrls[r.image] ? `background-image:url('${shotUrls[r.image]}')` : ""}"></button>`
+      : `<span class="repnote" aria-hidden="true">${ic("book", 22)}</span>`;
+    return `<div class="reprow">${thumb}<div>
+      <b>${r.kind === "picture" ? "Picture" : "Note"} from ${esc(who)}</b>
+      <span class="sub">${esc(REASON_LABEL[r.reason] || r.reason)} · ${esc(fmtDay(r.day))}${withGroup && g ? ` · ${esc(g.name)}` : ""}</span>
+      ${r.detail ? `<span class="sub">“${esc(r.detail)}”</span>` : ""}
+      ${r.excerpt ? `<blockquote>${esc(r.excerpt)}</blockquote>` : ""}
+      <div class="actions"><button class="btn danger small" data-report-remove="${r.id}">Remove ${r.kind === "picture" ? "picture" : "note"}</button>
+        <button class="btn plain small" data-report-keep="${r.id}">Keep it</button></div></div></div>`;
+  }).join("");
+  return `<div class="card"><div class="cardhead"><h2>Reports <span class="count">${list.length}</span></h2></div>
+    <p class="empty" style="margin:-4px 0 6px">Members reported these. Remove it, or keep it if it's fine. Either way the report is closed.</p>${rows}</div>`;
+}
+// Remove the reported picture or note (straight from the database, so it also works for groups you don't have open), then close the report.
+async function resolveReport(id, remove) {
+  const r = reports.find(x => x.id === id);
+  if (!r) return;
+  if (remove) {
+    const cur = await sb.from("ticks").select("images, note").eq("day", r.day).eq("member_key", r.member_key).maybeSingle();
+    if (cur.error) { error = cur.error.message; return render(); }
+    if (cur.data) {
+      if (r.kind === "picture") {
+        const st = await sb.storage.from("screenshots").remove([r.image]);
+        if (st.error) { error = "Couldn't delete the picture: " + st.error.message; return render(); }
+        const up = await sb.from("ticks").update({ images: (cur.data.images || []).filter(p => p !== r.image) }).eq("day", r.day).eq("member_key", r.member_key);
+        if (up.error) { error = up.error.message; return render(); }
+      } else {
+        const up = await sb.from("ticks").update({ note: "" }).eq("day", r.day).eq("member_key", r.member_key);
+        if (up.error) { error = up.error.message; return render(); }
+      }
+    }
+    // other reports about the same thing are done too
+    const same = reports.filter(x => x.day === r.day && x.member_key === r.member_key && x.kind === r.kind && x.image === r.image).map(x => x.id);
+    return adminDo(sb.from("reports").update({ status: "handled" }).in("id", same), r.kind === "picture" ? "Picture removed." : "Note removed.");
+  }
+  return adminDo(sb.from("reports").update({ status: "handled" }).eq("id", id), "Report closed. The post stays.");
+}
 
 async function removeShot(day, key, path) {
   if (!canEdit(day, key)) return;
@@ -2447,6 +2584,30 @@ let flash = "";
 
 // ---------------------------------------------------------------- groups: join, request, settings, logo
 const memberQ = (patch, uid) => sb.from("memberships").update(patch).eq("group_id", gid).eq("user_id", uid);
+
+// Invite links: lockedingroup.app/?join=ABCD-1234. The code is remembered through the Discord sign-in, then used once.
+const INVITE_KEY = "lockedin.invite";
+(function readInvite() {
+  try {
+    const u = new URL(location.href);
+    if (!u.searchParams.has("join")) return;
+    const c = (u.searchParams.get("join") || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (/^[A-Z0-9]{8}$/.test(c)) localStorage.setItem(INVITE_KEY, c.slice(0, 4) + "-" + c.slice(4));
+    u.searchParams.delete("join");
+    history.replaceState(history.state, "", u.pathname + u.search + u.hash);
+  } catch (err) { /* private mode: the link still opens the site */ }
+})();
+const pendingInvite = () => { try { return localStorage.getItem(INVITE_KEY) || ""; } catch (err) { return ""; } };
+const inviteLink = code => location.origin + "/?join=" + encodeURIComponent(code);
+async function useInvite() {
+  const code = pendingInvite();
+  if (!code || !session) return false;
+  try { localStorage.removeItem(INVITE_KEY); } catch (err) { /* nothing to clean */ }
+  const { data, error: e } = await sb.rpc("join_group", { code });
+  joinMsg = e ? `That invite link didn't work: ${e.message}` : data.status === "approved" ? `You're already in ${data.name}.`
+    : data.status === "pending" ? `Invite link used. Waiting for the owner of ${data.name} to approve you.` : `${data.name} didn't accept you.`;
+  return true;
+}
 
 async function joinWithCode() {
   const el = document.getElementById("joincode"), code = el ? el.value.trim() : "";
@@ -2854,7 +3015,7 @@ function renderDay() {
       <div class="mrow"><span class="name">${avatarHtml(m, 26)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === myKey() ? `<span class="you">YOU</span>` : ""}${resultTag(rec)}</span>${editBtn}${dot(st, m.name)}</div>
       ${showToggles ? `<div class="toggles" style="${togglesStyle()}">${toggles}</div>` : ""}
       ${(rec.rule_breaks || []).length ? `<div class="breaks">${rec.rule_breaks.map(b => `<span class="bchip">${ic("alert", 13)}${esc(BREAK_LABEL[b] || b)}</span>`).join("")}</div>` : ""}
-      ${note ? `<div class="note">${note}</div>` : ""}
+      ${note ? `<div class="note">${note}${canReport(k, m.key) ? `<button class="reportlink" data-report-note="${k}|${m.key}">Report note</button>` : ""}</div>` : ""}
       ${shots ? `<div class="shots">${shots}</div>` : ""}
       ${open ? `<div id="inline-slot" data-persist></div>` : ""}
     </div>`;
@@ -2893,6 +3054,7 @@ function computeStats(key) {
   const days = tickDays || (tickDays = [...new Set(Object.keys(ticks).map(id => id.slice(0, 10)))].filter(isTradingDay).sort());
   let points = 0, run = 0, best = 0, closed = 0, complete = 0, last = null;
   let noTrades = 0, completeDays = 0, social = 0, notes = 0, pics = 0, comebacks = 0, prevSt = null, since = null;
+  let wins = 0, losses = 0, gambles = 0, sitOuts = 0;   // the day results members pick (excused days included: it's about trading)
   const weeks = {};   // monday -> {n: closed days counted, ex: excused days, ok: all Complete, open: has an open day}
   const bonusBoxes = RULES.filter(r => r[2] === "bonus").map(r => r[0]);
   for (const k of days) {
@@ -2902,6 +3064,8 @@ function computeStats(key) {
     const w = weeks[mondayOf(k)] = weeks[mondayOf(k)] || { n: 0, ex: 0, ok: true, open: false };
     if (rec.note) notes++;
     pics += (rec.images || []).length;
+    const res = resultOf(rec);
+    if (res === "win") wins++; else if (res === "loss") losses++; else if (res === "gamble") gambles++; else if (res === "notrade") sitOuts++;
     if (st === "EXCUSED") { w.ex++; continue; }   // no points, no streak change, not counted in %
     if (raw && !since) since = k;
     const bonusTicks = bonusBoxes.filter(b => rec[b]).length;   // the group's bonus boxes
@@ -2917,7 +3081,8 @@ function computeStats(key) {
   const perfectWeeks = Object.entries(weeks).filter(([mon, w]) =>
     w.ok && !w.open && w.n > 0 && w.n + w.ex === [0, 1, 2, 3, 4].filter(i => isTradingDay(addDays(mon, i))).length).length;
   return { points, run, best, rate: closed ? Math.round(100 * complete / closed) : null,
-           completeDays, social, notes, pics, comebacks, perfectWeeks, noTrades, since };
+           completeDays, social, notes, pics, comebacks, perfectWeeks, noTrades, since,
+           wins, losses, gambles, sitOuts, winRate: wins + losses ? Math.round(100 * wins / (wins + losses)) : null };
 }
 
 // ---------------------------------------------------------------- achievements
@@ -2991,7 +3156,11 @@ function renderProfile(key, part = "profile", withTabs = false) {
       <div class="tile"><b>${s.points}</b><span>Points</span></div>
       <div class="tile"><b>${s.completeDays}</b><span>Days done</span></div>
       <div class="tile"><b>${earned}</b><span>Badges</span></div>
-    </div></div>`;
+      <div class="tile"><b>${s.winRate === null ? "–" : s.winRate + "%"}</b><span>Win rate · ${s.wins}W ${s.losses}L</span></div>
+      <div class="tile"><b>${s.gambles}</b><span>Gambles</span></div>
+      <div class="tile"><b>${s.sitOuts}</b><span>No-trade days</span></div>
+    </div>
+    <p class="sub-hint tiles-note">Win rate counts days marked Win or Loss. Gambles and no-trade days don't count toward it.</p></div>`;
 
   const order = [...badges.filter(b => b.earned), ...badges.filter(b => !b.earned)];
   const ach = `<div class="card"><div class="cardhead"><h2>Achievements · ${earned}/${badges.length}</h2></div><div class="badges">
@@ -3139,8 +3308,9 @@ function renderAdmin() {
   const codeCard = g ? `<div class="card"><div class="cardhead"><h2>Join code</h2></div>
       <div class="codebox"><code>${esc(g.join_code)}</code>
         <button class="btn plain small" id="copy-code">Copy</button>
+        <button class="btn plain small" id="copy-invite">Copy invite link</button>
         ${isOwnerHere ? `<button class="btn danger small" id="new-code">New code</button>` : ""}</div>
-      <p class="empty" style="margin-top:10px">Share it in your Discord. People who type it land in "Waiting for approval" below.${isOwnerHere ? " A new code makes the old one stop working." : ""}</p></div>` : "";
+      <p class="empty" style="margin-top:10px">Share the code or the invite link in your Discord. The link fills in the code for them. Either way they land in "Waiting for approval" below.${isOwnerHere ? " A new code makes the old one stop working." : ""}</p></div>` : "";
 
   const cols = [
     `${codeCard}<div class="card"><div class="cardhead"><h2>Waiting for approval</h2></div>${waitingHtml}</div>
@@ -3158,9 +3328,10 @@ function renderAdmin() {
   // Phones: a switch at the top. Computers use the sidebar.
   const segs = !isWide() && views.length > 1 ? `<div class="segset adminseg" style="grid-template-columns:repeat(${views.length},1fr)" role="group" aria-label="Admin view">
       ${views.map(([v, l]) => `<button data-admin-view="${v}" aria-pressed="${adminView === v}">${l === "Group settings" ? "Settings" : l}${v === "people" && pendingCount() ? ` <span class="count">${pendingCount()}</span>` : v === "all" && reqN ? ` <span class="count">${reqN}</span>` : ""}</button>`).join("")}</div>` : "";
-  if (adminView === "all") return segs + note + owner;
+  if (adminView === "all") return segs + note + reportsCardHtml(reports, true) + owner;
   if (adminView === "group") return segs + note + paused + groupSettingsHtml(g);
-  return segs + note + paused + (isWide() ? `<div class="admin-grid"><div>${cols[0]}</div><div>${cols[1]}</div></div>` : cols.join(""));
+  const repCard = isOwnerHere ? reportsCardHtml(reports.filter(r => r.group_id === gid), false) : "";
+  return segs + note + paused + repCard + (isWide() ? `<div class="admin-grid"><div>${cols[0]}</div><div>${cols[1]}</div></div>` : cols.join(""));
 }
 let adminView = "people";
 
@@ -3199,7 +3370,67 @@ function groupSettingsHtml(g) {
     <p class="empty" style="margin-top:6px">Members can tick their boxes until this time on the next trading day.</p>
     <button class="btn primary small" id="save-group" style="margin-top:14px">Save settings</button>
     <p class="sub-hint" id="save-group-msg" style="margin:8px 0 0"></p>
+  </div>${discordCardHtml()}${transferCardHtml(g)}`;
+}
+
+// Group owner: a short recap posted in the group's Discord, through a webhook link from Discord itself.
+const DISCORD_HOOK = /^https:\/\/(ptb\.|canary\.)?(discord|discordapp)\.com\/api\/webhooks\/[0-9]{5,25}\/[A-Za-z0-9_-]{20,100}$/;
+function discordCardHtml() {
+  const c = discordCfg || { daily: true, weekly: true, lead_minutes: 60 };
+  const lead = [[30, "30 min"], [60, "1 hour"], [120, "2 hours"], [180, "3 hours"]];
+  return `<div class="card gsettings"><div class="cardhead"><h2>Discord recaps</h2>${discordCfg ? `<span class="okchip">${ic("check", 14)}Connected</span>` : ""}</div>
+    <p class="empty" style="margin:-2px 0 10px">LockedIn posts in a channel of your Discord: who's done and who isn't before the cutoff, and a ranking after each week. Nobody gets pinged.</p>
+    <details class="howto"${discordCfg ? "" : " open"}><summary>How to get the link</summary>
+      <ol><li>In Discord, open <b>Server Settings</b>, then <b>Integrations</b>, then <b>Webhooks</b>.</li>
+        <li>Tap <b>New Webhook</b>, pick the channel it should post in, and tap <b>Copy Webhook URL</b>.</li>
+        <li>Paste it below. Keep it private: anyone with the link can post in that channel.</li></ol></details>
+    <label class="flabel" for="dc-url">Webhook link</label>
+    <input class="field wide" id="dc-url" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://discord.com/api/webhooks/…" value="${esc(discordCfg ? discordCfg.webhook_url : "")}">
+    <label class="switchrow" style="margin-top:12px"><span><b>Daily recap</b><small>Before the cutoff: how many are done and who still has to finish.</small></span>
+      <input type="checkbox" id="dc-daily" role="switch" ${c.daily ? "checked" : ""}></label>
+    <label class="flabel" for="dc-lead">Post the daily recap</label>
+    <select id="dc-lead" class="field">${lead.map(([v, l]) => `<option value="${v}" ${c.lead_minutes === v ? "selected" : ""}>${l} before the cutoff</option>`).join("")}</select>
+    <label class="switchrow" style="margin-top:12px"><span><b>Weekly ranking</b><small>After the last trading day of the week closes: days done, wins and losses.</small></span>
+      <input type="checkbox" id="dc-weekly" role="switch" ${c.weekly ? "checked" : ""}></label>
+    <div class="dcbtns"><button class="btn primary small" id="dc-save">Save</button>
+      ${discordCfg ? `<button class="btn plain small" id="dc-test">Send test message</button><button class="btn danger small" id="dc-remove">Disconnect</button>` : ""}</div>
+    <p class="sub-hint" id="dc-msg" role="status" aria-live="polite" style="margin:8px 0 0"></p>
   </div>`;
+}
+// Hand the group to someone else in it. They get every owner power; you stay in the group as a normal member.
+function transferCardHtml(g) {
+  if (!g || !session) return "";
+  const cands = people.filter(p => p.status === "approved" && p.member_key && p.user_id !== g.owner_id);
+  const nameOf = k => (members.find(m => m.key === k) || {}).name || k;
+  return `<div class="card gsettings dangerzone"><div class="cardhead"><h2>Move group to a new owner</h2></div>
+    <p class="empty" style="margin:-2px 0 10px">The new owner gets everything you can do here: settings, join code, approving people and reports.
+      You stay in the group as a normal member and can't undo this yourself. The Discord recap link is removed; the new owner adds their own.</p>
+    ${cands.length ? `<label class="flabel" for="xfer-to">New owner</label>
+    <select id="xfer-to" class="field"><option value="">Choose someone</option>${cands.map(p =>
+      `<option value="${esc(p.user_id)}">${esc(nameOf(p.member_key))} (${esc(p.discord_name)} on Discord)</option>`).join("")}</select>
+    <label class="flabel" for="xfer-confirm">Type the group's name to confirm</label>
+    <input class="field wide" id="xfer-confirm" autocomplete="off" placeholder="${esc(g.name)}">
+    <div class="dcbtns"><button class="btn danger small" id="xfer-go">Move group</button></div>
+    <p class="sub-hint" id="xfer-msg" role="status" aria-live="polite" style="margin:8px 0 0"></p>`
+    : `<p class="empty">Approve someone and give them a name first. Only people in the group can become its owner.</p>`}
+  </div>`;
+}
+async function transferGroup() {
+  const g = group(), msg = document.getElementById("xfer-msg"), to = document.getElementById("xfer-to").value;
+  if (!to) { msg.textContent = "Choose the new owner first."; return; }
+  if (document.getElementById("xfer-confirm").value.trim() !== g.name) { msg.textContent = `Type ${g.name} exactly to confirm.`; return; }
+  const p = people.find(x => x.user_id === to), who = p ? ((members.find(m => m.key === p.member_key) || {}).name || p.discord_name) : "They";
+  const res = await adminDo(sb.rpc("transfer_group", { g: gid, new_owner: to }), `${who} now owns ${g.name}.`);
+  if (!res.error) { fixAdminView(); render(); }
+}
+
+async function saveDiscord() {
+  const msg = document.getElementById("dc-msg"), url = document.getElementById("dc-url").value.trim();
+  if (!DISCORD_HOOK.test(url)) { msg.textContent = "That isn't a Discord webhook link. It starts with https://discord.com/api/webhooks/"; return; }
+  const row = { group_id: gid, webhook_url: url, daily: document.getElementById("dc-daily").checked,
+    weekly: document.getElementById("dc-weekly").checked, lead_minutes: +document.getElementById("dc-lead").value };
+  const res = await adminDo(sb.from("group_discord").upsert(row, { onConflict: "group_id" }), "Discord recaps saved. Send a test message to check the channel.");
+  return res;
 }
 
 // App owner: every group, requests to start one, and the big switches.
@@ -3456,6 +3687,7 @@ function renderLanding() {
       ${sec("What we store", `<ul>
         <li><b>From Discord, when you sign in:</b> your Discord username, profile picture, email address and Discord account ID. LockedIn doesn't use your email address for anything and never emails you. We never see your Discord password, messages or servers.</li>
         <li><b>What you add:</b> your ticks, notes, rule-break tags, weekly reflections, screenshots, your settings, and requests to join or start a group.</li>
+        <li><b>Reports:</b> if you report a picture or note, we store the report, your reason and which post it is about. For notes, the start of the note is kept with the report as evidence.</li>
         <li><b>Reminders, only if you turn them on:</b> a push address for that phone or computer (made by your browser's push service, such as Apple, Google or Mozilla), how long before the cutoff you want a reminder, and a note of which reminders were sent.</li>
       </ul>`)}
       ${sec("Why, and the legal basis", `<ul>
@@ -3466,12 +3698,14 @@ function renderLanding() {
       ${sec("Who can see it", `<ul>
         <li><b>Your group</b> sees your name, picture, ticks, notes, screenshots, reflections, streaks and badges.</li>
         <li><b>Your group's owner and admins</b> can also approve or remove members, excuse days and correct ticks.</li>
+        <li><b>Reports</b> are seen only by the group's owner and the app owner. The person who was reported isn't told who reported them.</li>
+        <li><b>Your group's Discord server, if the group owner turns on Discord recaps:</b> LockedIn then posts each member's name, whether they finished the day's homework, and a weekly count of days done, wins and losses in a channel the owner picks. Everyone who can read that channel sees it. Your group owner decides this, so ask them if you'd rather not be included.</li>
         <li><b>The app owner</b> (Adam Batko) can see every group, to run and support the service.</li>
         <li><b>Other groups</b> can't see anything of yours.</li>
       </ul>`)}
       ${sec("Services that handle data for us", `<ul>
         <li><b>Supabase</b> (database, sign-in, screenshot storage, sending reminders). Your data is stored in Ireland, in the EU. ${ext("https://supabase.com/privacy", "Supabase privacy policy")}</li>
-        <li><b>Discord</b> (sign-in): ${ext("https://discord.com/privacy", "Discord privacy policy")}</li>
+        <li><b>Discord</b> (sign-in, and Discord recaps if your group owner turns them on): ${ext("https://discord.com/privacy", "Discord privacy policy")}</li>
         <li><b>GitHub Pages</b> (hosts the website; receives your IP address when the page loads): ${ext("https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement", "GitHub privacy statement")}</li>
         <li><b>Your browser's push service</b> (delivers reminders, only if you turn them on).</li>
       </ul><p>Some of these companies are based in the United States, so your data may be transferred there. They protect these transfers with the legal safeguards described in their privacy policies, such as the EU Standard Contractual Clauses. Fonts and code are hosted on our own site, so no other companies are contacted when you open LockedIn.</p>`)}
@@ -3483,7 +3717,7 @@ function renderLanding() {
         <li><b>Your choices</b>, such as light or dark mode, your last tab and group, reminder timing and which badges you've seen.</li>
         <li><b>A copy of the website's files</b>, so it opens quickly and offline.</li>
       </ul><p>Because all of this is needed for the app to work, we don't ask for cookie consent. Signing out removes your sign-in, the copy of your group and unsent ticks. Deleting your account also removes your note backups and choices from that device.</p>`)}
-      ${sec("How long we keep it", `<p>Your data is kept while you have an account. Screenshots you delete are removed. The record of which reminders were sent is deleted after 7 days. When you delete your account, your account, ticks, notes, reflections, pictures, settings and reminder devices are deleted. Group owners can also remove members.</p>`)}
+      ${sec("How long we keep it", `<p>Your data is kept while you have an account. Screenshots you delete are removed. The record of which reminders were sent is deleted after 7 days. Reports are deleted 90 days after they are handled. When you delete your account, your account, ticks, notes, reflections, pictures, settings and reminder devices are deleted. Group owners can also remove members.</p>`)}
       ${sec("Your rights", `<ul>
         <li><b>See and download</b> your data: Settings → Your data → Download my data.</li>
         <li><b>Delete</b> your account and data: Settings → Your data → Delete my account.</li>
@@ -3514,7 +3748,7 @@ function renderLanding() {
         <p class="lead rv in d2">Your group picks the boxes, like chart, journal and HTF. Everyone ticks them off after their session, and everyone can see who did.</p>
         <div class="lp-cta rv in d3">${signin()}${blink("how", "How it works")}</div>
         ${errMsg}
-        <p class="fine rv in d3">Free. You'll need a join code from your group's owner.</p>
+        <p class="fine rv in d3">${pendingInvite() ? "You've been invited to a group. Sign in with Discord and you'll be on its waiting list." : "Free. You'll need a join code from your group's owner."}</p>
         <p class="fine rv in d3">By signing in you agree to the ${link("terms", "Terms")} and the ${link("privacy", "Privacy policy")}.</p>
       </div>
     </header>
@@ -4096,6 +4330,16 @@ document.addEventListener("click", async e => {
   if (t.id === "viewer-prev") return stepViewer(-1);
   if (t.id === "viewer-next") return stepViewer(1);
   if (t.id === "note-retry" && editing) { const v = document.getElementById("panel-note").value; return editTick(editing.day, editing.key, row => { row.note = v; }, true); }
+  if (t.id === "viewer-report") { const v = viewing; return v && openReport("picture", v.day, v.key, v.path); }
+  if (t.id === "report-cancel") return document.getElementById("reportdlg").close();
+  if (t.id === "report-send") return sendReport();
+  if (d.reportNote) { const [day, key] = d.reportNote.split("|"); return openReport("note", day, key); }
+  if (d.reportRemove) {
+    if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Sure? Tap again"; return; }
+    return resolveReport(+d.reportRemove, true);
+  }
+  if (d.reportKeep) return resolveReport(+d.reportKeep, false);
+  if (d.reportView) { const r = reports.find(x => x.id === +d.reportView); if (r) window.open(shotUrls[r.image] || "about:blank", "_blank", "noopener"); return; }
   if (t.id === "viewer-delete") {
     if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Sure? Tap again"; return; }
     const v = viewing;
@@ -4197,6 +4441,10 @@ document.addEventListener("click", async e => {
       if (e) { error = e.message; return render(); }
       closePanel(); loaded = false; screen = "loading"; render(); return loadAll();
     }
+    case "copy-invite": {
+      try { await navigator.clipboard.writeText(inviteLink(group().join_code)); t.textContent = "Link copied"; } catch (err) { t.textContent = inviteLink(group().join_code); }
+      return setTimeout(() => { t.textContent = "Copy invite link"; }, 1800);
+    }
     case "copy-code": {
       try { await navigator.clipboard.writeText(group().join_code); t.textContent = "Copied"; } catch (err) { t.textContent = "Select and copy"; }
       return setTimeout(() => { t.textContent = "Copy"; }, 1500);
@@ -4206,6 +4454,18 @@ document.addEventListener("click", async e => {
       return adminDo(sb.rpc("new_join_code", { g: gid }), "New join code made. Share the new one; the old one no longer works.");
     }
     case "save-group": return saveGroupSettings();
+    case "dc-save": return saveDiscord();
+    case "xfer-go": return transferGroup();
+    case "dc-test": {
+      const m = document.getElementById("dc-msg"); m.textContent = "Sending…";
+      const { error: e } = await sb.rpc("send_discord_test", { g: gid });
+      m.textContent = e ? e.message : "Sent. Check the channel in Discord. If nothing shows up, the link may be wrong or the webhook was deleted.";
+      return;
+    }
+    case "dc-remove": {
+      if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Stop posting? Tap again"; return; }
+      return adminDo(sb.from("group_discord").delete().eq("group_id", gid), "Disconnected. LockedIn no longer posts in your Discord.");
+    }
     case "logo-pick": { const inp = document.getElementById("logoinput"); inp.value = ""; return inp.click(); }
     case "logo-remove": return adminDo(sb.from("groups").update({ logo_path: null }).eq("id", gid), "Logo removed.");
     case "create-group": {

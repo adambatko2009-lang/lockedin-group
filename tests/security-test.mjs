@@ -544,5 +544,91 @@ ok(!r.error && r.count === 0, "member cannot set someone else's result");
 r = await as("sid", `update public.ticks set result = 'win' where member_key='sid' and day < $1`, [t14]);
 ok(!r.error && r.count === 0, "member cannot set a result on a closed day");
 
+// ================================================================ update 15: reports, Discord recaps, moving a group
+await db.exec(readFileSync(dir + "update-15-reports-recaps-owner.sql", "utf8").split("-- ================================================================ SCHEDULE")[0]);
+console.log("\nloaded: update-15-reports-recaps-owner.sql (without the schedule)");
+Object.assign(U, { o3: "00000000-0000-0000-0000-0000000000a3", m3: "00000000-0000-0000-0000-0000000000b3", m4: "00000000-0000-0000-0000-0000000000c3" });
+for (const k of ["o3", "m3", "m4"]) await db.query(`insert into auth.users (id, raw_user_meta_data) values ($1, $2)`, [U[k], meta(k)]);
+const G3 = (await one(`select public.make_group('Recap Crew', $1) g`, [U.o3])).g;
+const code3 = (await one(`select join_code from public.groups where id=$1`, [G3])).join_code;
+const o3Key = (await one(`select member_key from public.memberships where group_id=$1 and user_id=$2`, [G3, U.o3])).member_key;
+const k3 = (await rpc("o3", "add_member", [G3, "Mia"])).rows[0].v, k4 = (await rpc("o3", "add_member", [G3, "Leo_*star*"])).rows[0].v;
+for (const [u, k] of [["m3", k3], ["m4", k4]]) {
+  await rpc(u, "join_group", [code3]);
+  await as("o3", `update public.memberships set status='approved', member_key=$2 where group_id=$3 and user_id=$1`, [U[u], k, G3]);
+}
+const d3 = (await one(`select public.current_trading_day($1)::text d`, [G3])).d;
+await as("m4", `insert into public.ticks (day, member_key, images, note) values ($1, $2, '{p1.jpg,p2.jpg}', 'my note')`, [d3, k4]);
+
+section("reporting pictures and notes (update 15)");
+r = await rpc("m3", "report_content", [d3, k4, "picture", "p1.jpg", "inappropriate", "not ok"]);
+ok(!r.error, "a member reports a picture in their group");
+r = await rpc("m3", "report_content", [d3, k4, "picture", "p1.jpg", "inappropriate", "again"]);
+ok(!r.error && (await one(`select count(*)::int n from public.reports`)).n === 1, "reporting the same thing twice makes one report");
+r = await rpc("m3", "report_content", [d3, k4, "note", "", "spam", ""]);
+ok(!r.error && (await one(`select excerpt from public.reports where kind='note'`)).excerpt === "my note", "a member reports a note and its text is kept as evidence");
+ok(!!(await rpc("m3", "report_content", [d3, k4, "picture", "nope.jpg", "spam", ""])).error, "a picture that doesn't exist can't be reported");
+ok(!!(await rpc("m4", "report_content", [d3, k4, "note", "", "spam", ""])).error, "you can't report your own post");
+ok(!!(await rpc("sid", "report_content", [d3, k4, "note", "", "spam", ""])).error, "people outside the group can't report in it");
+ok(!!(await rpc("m3", "report_content", [d3, k4, "note", "", "because", ""])).error, "only the listed reasons work");
+ok(!!(await as("anon", `select public.report_content($1, $2, 'note', '', 'spam', '')`, [d3, k4])).error, "signed-out visitors can't report");
+ok((await as("m3", `select * from public.reports`)).rows.length === 0, "members can't read reports, not even their own");
+ok((await as("m4", `select * from public.reports`)).rows.length === 0, "the reported member can't see who reported them");
+ok((await as("owner2", `select * from public.reports`)).rows.length === 0, "other groups' owners can't see the reports");
+ok((await as("o3", `select * from public.reports`)).rows.length === 2, "the group owner sees their group's reports");
+ok((await as("batko", `select * from public.reports`)).rows.length === 2, "the app owner sees every report");
+r = await as("m3", `insert into public.reports (group_id, day, member_key, kind, reason) values ($1, $2, $3, 'note', 'spam')`, [G3, d3, k4]);
+ok(!!r.error, "reports can only be sent through the report button");
+r = await as("o3", `update public.reports set status='handled', reason='other', member_key=$1 where kind='picture'`, [o3Key]);
+r = await one(`select status, reason, member_key, handled_at is not null h from public.reports where kind='picture'`);
+ok(r.status === "handled" && r.reason === "inappropriate" && r.member_key === k4 && r.h, "the owner marks a report handled, and nothing else about it changes");
+ok((await as("m3", `update public.reports set status='handled'`)).count === 0, "members can't mark reports handled");
+
+section("Discord recaps (update 15)");
+const hook = "https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz_ABCDEFG-123";
+ok(!!(await as("m3", `insert into public.group_discord (group_id, webhook_url) values ($1, $2)`, [G3, hook])).error, "members can't set the Discord link");
+ok(!!(await as("o3", `insert into public.group_discord (group_id, webhook_url) values ($1, 'https://evil.example.com/api/webhooks/1/x')`, [G3])).error, "only real Discord webhook links are accepted");
+ok(!(await as("o3", `insert into public.group_discord (group_id, webhook_url, last_daily) values ($1, $2, '2099-01-01')`, [G3, hook])).error, "the group owner saves a Discord webhook link");
+ok((await one(`select last_daily from public.group_discord where group_id=$1`, [G3])).last_daily === null, "owners can't fake the 'already posted' date");
+ok((await as("m3", `select * from public.group_discord`)).rows.length === 0, "members can't see the secret Discord link");
+ok((await as("owner2", `select * from public.group_discord`)).rows.length === 0, "other groups can't see the Discord link");
+ok(!!(await as("o3", `select * from public.due_recaps()`)).error, "only the server can post recaps");
+await as("m3", `insert into public.ticks (day, member_key, chart, journal, review) values ($1, $2, true, true, true) on conflict (day, member_key) do update set chart=true, journal=true, review=true`, [d3, k3]);
+const close3 = (await one(`select public.day_closes_at($1, $2::date) c`, [G3, d3])).c;
+const at15 = new Date(close3.getTime() - 30 * 60000);
+r = await db.query(`select * from public.due_recaps($1)`, [at15]);
+const daily = r.rows.find(x => x.kind === "daily");
+ok(!!daily && daily.url === hook, "30 minutes before the cutoff the daily recap is due");
+ok(daily && /1\/3 done · 30 min left/.test(daily.content) && /Still to finish: .*Leo\\_\\\*star\\\*/.test(daily.content), "it says who is done and who still has to finish, with names shown as plain text");
+ok((await db.query(`select * from public.due_recaps($1)`, [at15])).rows.length === 0, "the same recap is never posted twice");
+r = await db.query(`select * from public.due_recaps($1)`, [new Date(close3.getTime() - 3 * 3600000)]);
+ok(r.rows.filter(x => x.kind === "daily").length === 0, "nothing is posted hours before the cutoff");
+const fri = (await one(`select max(x)::date::text f from generate_series(date '2026-10-01', date '2026-10-31', interval '1 day') x where extract(isodow from x) = 5 and not exists (select 1 from public.holidays h where h.day = x::date)`)).f;
+await db.query(`update public.group_discord set last_weekly = null`);
+const friClose = (await one(`select public.day_closes_at($1, $2::date) c`, [G3, fri])).c;
+r = await db.query(`select * from public.due_recaps($1)`, [new Date(friClose.getTime() + 10 * 60000)]);
+const weekly = r.rows.find(x => x.kind === "weekly");
+ok(!!weekly && /week of/.test(weekly.content) && /^1\. /m.test(weekly.content), "after the week's last day closes, the weekly ranking is due");
+ok((await db.query(`select * from public.due_recaps($1)`, [new Date(friClose.getTime() + 20 * 60000)])).rows.filter(x => x.kind === "weekly").length === 0, "the weekly ranking is posted once");
+
+section("moving a group to a new owner (update 15)");
+ok(!!(await rpc("m3", "transfer_group", [G3, U.m3])).error, "a member can't take over the group");
+ok(!!(await rpc("owner2", "transfer_group", [G3, U.owner2])).error, "another group's owner can't take it");
+ok(!!(await rpc("o3", "transfer_group", [G3, U.sid])).error, "the new owner must be in the group");
+ok(!!(await rpc("o3", "transfer_group", [G3, U.o3])).error, "you can't hand it to yourself");
+r = await as("o3", `update public.groups set owner_id=$1 where id=$2`, [U.m3, G3]);
+ok((await one(`select owner_id::text o from public.groups where id=$1`, [G3])).o === U.o3, "the owner can't be changed by editing the group directly");
+r = await rpc("o3", "transfer_group", [G3, U.m4]);
+ok(!r.error, "the owner hands the group to a member");
+r = await one(`select g.owner_id::text o, (select role from public.memberships where group_id=g.id and user_id=$2) nr, (select role from public.memberships where group_id=g.id and user_id=$3) orl,
+  (select status from public.memberships where group_id=g.id and user_id=$3) os from public.groups g where g.id=$1`, [G3, U.m4, U.o3]);
+ok(r.o === U.m4 && r.nr === "admin" && r.orl === "member" && r.os === "approved", "the new owner owns it; the old owner stays as a normal member");
+ok((await one(`select count(*)::int n from public.group_discord where group_id=$1`, [G3])).n === 0, "the old owner's Discord link is removed");
+ok((await as("m4", `select * from public.reports`)).rows.length === 2 && (await as("o3", `select * from public.reports`)).rows.length === 0, "reports go to the new owner, not the old one");
+ok(!(await as("m4", `update public.groups set name='Recap Crew 2' where id=$1`, [G3])).error && (await one(`select name from public.groups where id=$1`, [G3])).name === "Recap Crew 2", "the new owner can change the settings");
+ok((await as("o3", `update public.groups set name='Hacked' where id=$1`, [G3])).count === 0, "the old owner can't anymore");
+ok(!!(await rpc("o3", "transfer_group", [G3, U.o3])).error, "the old owner can't take it back");
+ok(!(await rpc("batko", "transfer_group", [G3, U.o3])).error && (await one(`select owner_id::text o from public.groups where id=$1`, [G3])).o === U.o3, "the app owner can move any group");
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
