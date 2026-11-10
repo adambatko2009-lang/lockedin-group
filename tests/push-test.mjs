@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 // Node runs the TypeScript file directly, but only with an .mts name, so test a copy.
 const copy = join(tmpdir(), "send-reminders-test.mts");
 copyFileSync(fileURLToPath(new URL("../supabase/functions/send-reminders/index.ts", import.meta.url)), copy);
-const { sendPush, reminderText, b64u } = await import(copy);
+const { sendPush, reminderText, b64u, cleanPictures } = await import(copy);
 let pass = 0, fail = 0; const ok = (c, l) => { c ? pass++ : fail++; console.log(c ? "PASS" : "FAIL", l); };
 
 // The phone's keys
@@ -50,4 +50,22 @@ const bad = Buffer.from(got.body); bad[bad.length - 1] ^= 1;
 let threw = false; try { ece.decrypt(bad, { version: "aes128gcm", privateKey: ua, authSecret: auth }); } catch { threw = true; }
 ok(threw, "a changed message is rejected");
 server.close();
+
+// Old pictures: files are deleted through Storage first, and only then removed from their days.
+const realFetch = globalThis.fetch;
+const calls = [];
+const fake = (answers) => async (u, o = {}) => { calls.push({ u: String(u), method: o.method, body: o.body }); const a = answers(String(u)); return new Response(JSON.stringify(a.body ?? null), { status: a.status ?? 200 }); };
+globalThis.fetch = fake(u => u.includes("old_pictures") ? { body: [] } : { body: null });
+ok(await cleanPictures("https://x.supabase.co", {}) === 0 && calls.length === 1, "no old pictures: nothing is deleted");
+calls.length = 0;
+globalThis.fetch = fake(u => u.includes("old_pictures") ? { body: ["2020-01-02/a/1.jpg", "2020-01-02/b/2.jpg"] } : { body: [] });
+const n = await cleanPictures("https://x.supabase.co", {});
+const del = calls.find(c => c.method === "DELETE"), forget = calls.findIndex(c => c.u.includes("forget_pictures"));
+ok(n === 2 && del && del.u.endsWith("/storage/v1/object/screenshots") && JSON.parse(del.body).prefixes.length === 2, "old picture files are deleted from storage");
+ok(forget > calls.indexOf(del) && JSON.parse(calls[forget].body).paths.length === 2, "then they're removed from their days");
+calls.length = 0;
+globalThis.fetch = fake(u => u.includes("old_pictures") ? { body: ["2020-01-02/a/1.jpg"] } : u.includes("/storage/") ? { status: 500, body: { error: "down" } } : { body: null });
+let failed = false; try { await cleanPictures("https://x.supabase.co", {}); } catch { failed = true; }
+ok(failed && !calls.some(c => c.u.includes("forget_pictures")), "if storage fails, the days keep their pictures");
+globalThis.fetch = realFetch;
 console.log(`${pass} passed, ${fail} failed`);

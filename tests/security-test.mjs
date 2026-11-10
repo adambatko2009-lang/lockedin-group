@@ -630,5 +630,57 @@ ok((await as("o3", `update public.groups set name='Hacked' where id=$1`, [G3])).
 ok(!!(await rpc("o3", "transfer_group", [G3, U.o3])).error, "the old owner can't take it back");
 ok(!(await rpc("batko", "transfer_group", [G3, U.o3])).error && (await one(`select owner_id::text o from public.groups where id=$1`, [G3])).o === U.o3, "the app owner can move any group");
 
+// ================================================================ update 16: old pictures, owner alerts, reactions
+await db.exec(readFileSync(dir + "update-16-cleanup-alerts-reactions.sql", "utf8"));
+console.log("\nloaded: update-16-cleanup-alerts-reactions.sql");
+section("owner alerts (update 16)");
+U.j5 = "00000000-0000-0000-0000-0000000000d3";
+await db.query(`insert into auth.users (id, raw_user_meta_data) values ($1, $2)`, [U.j5, meta("j5")]);
+await db.query(`insert into public.push_subscriptions (user_id, endpoint, p256dh, auth) values ($1, 'https://push.example.com/o3', '${"B".repeat(87)}', '${"A".repeat(22)}')`, [U.o3]);
+await db.query(`update public.owner_alerts set sent_at = now()`);   // start clean
+await rpc("j5", "join_group", [(await one(`select join_code from public.groups where id=$1`, [G3])).join_code]);
+ok((await one(`select count(*)::int n from public.owner_alerts where user_id=$1 and kind='join' and sent_at is null`, [U.o3])).n === 1, "asking to join alerts the group owner");
+ok((await one(`select count(*)::int n from public.owner_alerts where user_id=$1 and sent_at is null`, [U.j5])).n === 0, "the person asking isn't alerted");
+r = await db.query(`select * from public.due_owner_alerts()`);
+ok(r.rows.length === 1 && /^Someone wants to join /.test(r.rows[0].title) && r.rows[0].endpoint === "https://push.example.com/o3", "the owner gets one notification on their device");
+ok((await db.query(`select * from public.due_owner_alerts()`)).rows.length === 0, "the same alert is never sent twice");
+await rpc("m3", "report_content", [d3, k4, "picture", "p2.jpg", "harassment", ""]);
+ok((await one(`select count(*)::int n from public.owner_alerts where kind='report' and sent_at is null and user_id in ($1, $2)`, [U.o3, U.batko])).n === 2, "a report alerts the group owner and the app owner");
+ok((await as("o3", `select * from public.owner_alerts`)).error !== undefined || (await as("o3", `select * from public.owner_alerts`)).rows.length === 0, "nobody can read alerts from the app");
+ok(!!(await as("o3", `select * from public.due_owner_alerts()`)).error, "only the server sends alerts");
+await as("o3", `update public.memberships set status='rejected' where user_id=$1 and group_id=$2`, [U.j5, G3]);
+await db.query(`update public.owner_alerts set sent_at = now()`);
+await as("o3", `update public.memberships set status='pending' where user_id=$1 and group_id=$2`, [U.j5, G3]);
+ok((await one(`select count(*)::int n from public.owner_alerts where user_id=$1 and sent_at is null`, [U.o3])).n === 0, "owners aren't alerted about what they did themselves");
+
+section("reactions (update 16)");
+r = await as("m3", `insert into public.reactions (day, member_key, kind) values ($1, $2, 'fire')`, [d3, k4]);
+ok(!r.error, "a member reacts to someone's post");
+r = await one(`select reactor_key, group_id, user_id::text u from public.reactions where member_key=$1`, [k4]);
+ok(r.reactor_key === k3 && r.group_id === G3 && r.u === U.m3, "the database fills in who reacted and the group");
+r = await as("m3", `insert into public.reactions (day, member_key, kind, reactor_key, user_id) values ($1, $2, 'clean', $3, $4)`, [d3, k4, o3Key, U.o3]);
+ok(!r.error && (await one(`select reactor_key, user_id::text u from public.reactions where kind='clean'`)).reactor_key === k3, "nobody can react in someone else's name");
+ok(!!(await as("m3", `insert into public.reactions (day, member_key, kind) values ($1, $2, 'respect')`, [d3, k3])).error, "you can't react to your own post");
+ok(!!(await as("m3", `insert into public.reactions (day, member_key, kind) values ($1, $2, 'respect')`, [d3, o3Key])).error, "you can't react to a day with no note or pictures");
+ok(!!(await as("m3", `insert into public.reactions (day, member_key, kind) values ($1, $2, 'love')`, [d3, k4])).error, "only fire, clean and respect");
+ok(!!(await as("sid", `insert into public.reactions (day, member_key, kind) values ($1, $2, 'fire')`, [d3, k4])).error, "people outside the group can't react");
+ok(!!(await as("j5", `insert into public.reactions (day, member_key, kind) values ($1, $2, 'fire')`, [d3, k4])).error, "people waiting for approval can't react");
+ok((await as("m4", `select * from public.reactions`)).rows.length === 2, "the group sees reactions");
+ok((await as("sid", `select * from public.reactions`)).rows.length === 0, "other groups don't");
+ok((await as("m4", `delete from public.reactions where kind='fire'`)).count === 0, "you can't remove someone else's reaction");
+ok((await as("m3", `delete from public.reactions where kind='fire'`)).count === 1, "you can take your own reaction back");
+r = await rpc("m3", "export_my_data", []);
+ok(!r.error && r.rows[0].v.reactions_you_gave.length === 1 && r.rows[0].v.reports_you_sent.length >= 1, "your data download includes your reactions and reports");
+
+section("pictures older than 60 days (update 16)");
+await db.query(`insert into storage.objects (bucket_id, name) values ('screenshots', '2020-01-02/x/1.jpg'), ('screenshots', $1), ('logos', '2020-01-02/x/2.jpg')`, [`${d3}/x/2.jpg`]);
+r = await db.query(`select p from public.old_pictures(100) as p`);
+const oldOnes = r.rows.map(x => x.p);
+ok(oldOnes.includes("2020-01-02/x/1.jpg") && !oldOnes.includes(`${d3}/x/2.jpg`) && !oldOnes.includes("2020-01-02/x/2.jpg"), "only screenshots older than 60 days are picked, never recent ones or logos");
+await db.query(`insert into public.ticks (day, member_key, images) values ('2020-01-02', $1, '{2020-01-02/x/1.jpg,keep.jpg}')`, [k4]);
+r = await db.query(`select public.forget_pictures($1) n`, [["2020-01-02/x/1.jpg"]]);
+ok((await one(`select images from public.ticks where day='2020-01-02' and member_key=$1`, [k4])).images.join() === "keep.jpg", "deleted pictures are removed from the day, the rest stays");
+ok(!!(await as("o3", `select * from public.old_pictures(10)`)).error && !!(await as("o3", `select public.forget_pictures('{a}')`)).error, "only the server can clean up pictures");
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

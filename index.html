@@ -300,6 +300,24 @@
   .repreasons input { accent-color: var(--accent); width: 18px; height: 18px; margin: 0; }
   .repform textarea { width: 100%; min-height: 70px; padding: 8px 10px; resize: vertical; }
   .repbtns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+  .reacts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .react { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line);
+    background: transparent; color: var(--muted); font: 600 13px var(--font-data); cursor: default; }
+  button.react { cursor: pointer; }
+  button.react:hover { color: var(--text); border-color: var(--line-strong); }
+  .react.on { color: var(--accent-text); border-color: color-mix(in srgb, var(--accent) 55%, transparent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  @media (prefers-reduced-motion: no-preference) { button.react:active { transform: scale(0.92); } }
+  .guide .cardhead { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .guide-n { font: 600 13px var(--font-data); color: var(--muted); }
+  .guide-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 4px; }
+  .guide-list li { display: flex; align-items: center; gap: 10px; min-height: 40px; font-size: 15px; }
+  .guide-list li.ok { color: var(--muted); }
+  .guide-list li.ok .ic { color: var(--good); flex: none; }
+  .guide-dot { width: 18px; height: 18px; flex: none; border-radius: 50%; border: 2px solid var(--line-strong); }
+  .linkbtn { border: 0; background: none; padding: 0; color: var(--accent-text); font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+  .linkbtn:hover { text-decoration: underline; }
+  .guide-nudge { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 0 14px; margin-bottom: 12px; border-radius: 14px;
+    border: 1px dashed color-mix(in srgb, var(--accent) 60%, transparent); background: transparent; color: var(--accent-text); font-size: 15px; font-weight: 600; cursor: pointer; }
   .okchip { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--good); }
   .howto { margin: 0 0 6px; font-size: 14px; color: var(--text-2); }
   .howto summary { cursor: pointer; font-weight: 600; color: var(--accent-text); padding: 4px 0; }
@@ -891,9 +909,10 @@
     .desk .maincol, .desk .side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
     .card { padding: 18px 20px; }
     .member { display: grid; grid-template-columns: 180px minmax(0, 1fr) 36px 28px;
-              grid-template-areas: "name tg nb st" ". breaks breaks breaks" ". note note note" ". shots shots shots";
+              grid-template-areas: "name tg nb st" ". breaks breaks breaks" ". note note note" ". shots shots shots" ". reacts reacts reacts";
               align-items: center; column-gap: 12px; padding: 10px 0; }
     .member .shots { grid-area: shots; margin-top: 6px; }
+    .member .reacts { grid-area: reacts; }
     .member .breaks { grid-area: breaks; margin-top: 6px; }
     .shot { width: 56px; height: 56px; }
     .member:first-child { padding-top: 0; }
@@ -1783,6 +1802,7 @@ async function openGroup(id) {
   const rf = await fetchAll(o => sb.from("reflections").select("*", o).eq("group_id", id).order("week_start", { ascending: false }).order("member_key"));
   reflections = {};
   ((rf.error && snap ? snap.reflections : rf.data) || []).forEach(r => { reflections[r.week_start + "|" + r.member_key] = r; });
+  await loadReactions(id);
   loadStep = "admin list";
   people = [];
   if (isAdmin) await loadPeople();
@@ -1880,6 +1900,11 @@ function subscribe() {
       else if (!pendingRefl[id]) reflections[id] = payload.new;
       scheduleRender();
     })
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "reactions", filter }, payload => {
+      if (here !== gid || !payload.new || payload.new.group_id !== gid) return;
+      addReactionLocal(payload.new);
+      scheduleRender();
+    })
     .on("postgres_changes", { event: "*", schema: "public", table: "memberships", filter }, () => {
       // Someone typed the join code (managers see them appear in Admin right away).
       if (isAdmin && here === gid) loadPeople().then(autoRender);
@@ -1889,6 +1914,80 @@ function subscribe() {
 
 // One save at a time per row; quick taps are combined into one save.
 const pending = {}, timers = {};
+// ---------------------------------------------------------------- reactions on someone's post (note or pictures)
+let reactions = {};   // "day|member" -> [{ reactor_key, user_id, kind }]
+const REACTIONS = [["fire", "flame", "Fire"], ["clean", "target", "Clean execution"], ["respect", "check", "Respect"]];
+function addReactionLocal(x) {
+  const k = x.day + "|" + x.member_key, l = reactions[k] || (reactions[k] = []);
+  if (!l.some(y => y.user_id === x.user_id && y.kind === x.kind)) l.push(x);
+}
+async function loadReactions(id) {
+  const r = await sb.from("reactions").select("day, member_key, reactor_key, user_id, kind").eq("group_id", id).gte("day", addDays(today, -70)).limit(5000);
+  reactions = {};
+  if (!r.error) (r.data || []).forEach(addReactionLocal);   // before database update 16 there's simply nothing
+}
+function reactBarHtml(day, key) {
+  const list = reactions[day + "|" + key] || [], uid = session ? session.user.id : null;
+  const canReact = !!uid && !!myKey() && key !== myKey();
+  const chips = REACTIONS.map(([kind, icon, label]) => {
+    const who = list.filter(x => x.kind === kind), mine = who.some(x => x.user_id === uid);
+    if (!who.length && !canReact) return "";
+    const names = who.map(x => (members.find(m => m.key === x.reactor_key) || {}).name).filter(Boolean);
+    const tip = names.length ? `${label}: ${names.join(", ")}` : label;
+    const inner = `${ic(icon, 15)}${who.length ? `<span>${who.length}</span>` : ""}`;
+    return canReact
+      ? `<button class="react${mine ? " on" : ""}" data-react="${kind}|${day}|${key}" aria-pressed="${mine}" title="${esc(tip)}" aria-label="${esc(tip)}">${inner}</button>`
+      : `<span class="react" title="${esc(tip)}" role="img" aria-label="${esc(tip)}">${inner}</span>`;
+  }).join("");
+  return chips ? `<div class="reacts">${chips}</div>` : "";
+}
+async function toggleReaction(kind, day, key) {
+  if (!session || !myKey() || key === myKey()) return;
+  const uid = session.user.id, k = day + "|" + key, mineNow = (reactions[k] || []).some(x => x.user_id === uid && x.kind === kind);
+  const drop = () => { reactions[k] = (reactions[k] || []).filter(x => !(x.user_id === uid && x.kind === kind)); };
+  const add = () => addReactionLocal({ day, member_key: key, user_id: uid, reactor_key: myKey(), kind });
+  if (mineNow) { drop(); render(); } else { add(); render(); }
+  const { error: e } = mineNow
+    ? await sb.from("reactions").delete().eq("day", day).eq("member_key", key).eq("user_id", uid).eq("kind", kind)
+    : await sb.from("reactions").insert({ day, member_key: key, kind });
+  if (e && !/duplicate/i.test(e.message)) { if (mineNow) add(); else drop(); error = e.message; render(); }
+}
+
+// ---------------------------------------------------------------- setup guide for a new group owner
+// Progress is saved with your settings: og[group] holds "b" (boxes saved), "s" (invite shared), "x" (hidden).
+const guideFlags = () => ((settings.og || {})[gid] || "");
+function setGuideFlag(f) {
+  if (!gid || guideFlags().includes(f)) return;
+  settings.og = Object.assign({}, settings.og || {}, { [gid]: guideFlags() + f });
+  saveSettings();
+}
+function guideSteps() {
+  const g = group();
+  if (!g || !session || g.owner_id !== session.user.id || guideFlags().includes("x")) return null;
+  const steps = [
+    ["Set your homework boxes, points and cutoff time", guideFlags().includes("b"), "group"],
+    ["Share your invite link in your Discord", guideFlags().includes("s"), "people"],
+    ["Approve your first member and give them a name", people.some(p => p.status === "approved" && p.user_id !== g.owner_id), "people"],
+    ["Turn on notifications, so you hear about join requests", !!push.sub, "notif"],
+    ["Connect Discord recaps (optional)", !!discordCfg, "group"],
+  ];
+  return steps.every(x => x[1]) ? null : steps;
+}
+function ownerGuideHtml() {
+  const steps = guideSteps();
+  if (!steps) return "";
+  const done = steps.filter(x => x[1]).length;
+  return `<div class="card guide"><div class="cardhead"><h2>Set up ${esc(group().name)}</h2><span class="guide-n">${done} of ${steps.length} done</span></div>
+    <ol class="guide-list">${steps.map(([label, ok, go]) => `<li class="${ok ? "ok" : ""}">${ok ? ic("check", 18) : `<span class="guide-dot" aria-hidden="true"></span>`}
+      ${ok ? `<span>${esc(label)}</span>` : `<button class="linkbtn" data-guide="${go}">${esc(label)}</button>`}</li>`).join("")}</ol>
+    <button class="btn plain small" id="guide-hide">Hide this</button></div>`;
+}
+function guideNudgeHtml() {
+  const steps = guideSteps();
+  if (!steps) return "";
+  return `<button class="guide-nudge" data-guide="people">${ic("target", 16)}Finish setting up your group · ${steps.filter(x => x[1]).length} of ${steps.length} done</button>`;
+}
+
 // A day's result: one of these, or nothing picked yet. "No trade" uses the no_trade column.
 const RESULTS = [["win", "Win"], ["loss", "Loss"], ["notrade", "No trade"], ["gamble", "Gamble"]];
 const resultOf = rec => rec && rec.no_trade ? "notrade" : (rec && rec.result) || null;
@@ -2454,6 +2553,7 @@ function openPanel(day, key) {
     <textarea id="panel-note" maxlength="10000" placeholder="What did you trade, what did you learn?">${esc(noteText)}</textarea>
     <p class="note-status" id="note-status" aria-live="polite"></p>
     <h3>Pictures <span id="panel-pics-count"></span></h3>
+    <p class="sub-hint" style="margin:-4px 0 8px">Pictures are deleted automatically 60 days after the day.</p>
     <div class="pics" id="panel-pics"></div>
     <h3>Rule breaks today</h3>
     <p class="sub-hint">Be honest: it never costs points, and it helps you spot patterns.</p>
@@ -2646,7 +2746,8 @@ async function saveGroupSettings() {
     cutoff_hour: +val("g-cutoff"), timezone: val("g-tz"),
   };
   msg.textContent = "Saving…";
-  await adminDo(sb.from("groups").update(patch).eq("id", gid), "Group settings saved.");
+  const saved = await adminDo(sb.from("groups").update(patch).eq("id", gid), "Group settings saved.");
+  if (!saved.error) { setGuideFlag("b"); render(); }
   window.scrollTo(0, 0);
 }
 
@@ -3017,6 +3118,7 @@ function renderDay() {
       ${(rec.rule_breaks || []).length ? `<div class="breaks">${rec.rule_breaks.map(b => `<span class="bchip">${ic("alert", 13)}${esc(BREAK_LABEL[b] || b)}</span>`).join("")}</div>` : ""}
       ${note ? `<div class="note">${note}${canReport(k, m.key) ? `<button class="reportlink" data-report-note="${k}|${m.key}">Report note</button>` : ""}</div>` : ""}
       ${shots ? `<div class="shots">${shots}</div>` : ""}
+      ${rec.note || images.length ? reactBarHtml(k, m.key) : ""}
       ${open ? `<div id="inline-slot" data-persist></div>` : ""}
     </div>`;
   }).join("");
@@ -3029,7 +3131,7 @@ function renderDay() {
     ${banner}${nudge}
   </div>`;
   const err = error && !isWide() && error.length > 48 ? `<div class="card"><p class="msg err">${esc(error)}</p></div>` : "";
-  return { summary: summary + quick, list: err + `<div class="card">${rows || `<p class="empty">No members yet.</p>`}</div>` };
+  return { summary: guideNudgeHtml() + summary + quick, list: err + `<div class="card">${rows || `<p class="empty">No members yet.</p>`}</div>` };
 }
 
 function renderWeek() {
@@ -3329,9 +3431,10 @@ function renderAdmin() {
   const segs = !isWide() && views.length > 1 ? `<div class="segset adminseg" style="grid-template-columns:repeat(${views.length},1fr)" role="group" aria-label="Admin view">
       ${views.map(([v, l]) => `<button data-admin-view="${v}" aria-pressed="${adminView === v}">${l === "Group settings" ? "Settings" : l}${v === "people" && pendingCount() ? ` <span class="count">${pendingCount()}</span>` : v === "all" && reqN ? ` <span class="count">${reqN}</span>` : ""}</button>`).join("")}</div>` : "";
   if (adminView === "all") return segs + note + reportsCardHtml(reports, true) + owner;
-  if (adminView === "group") return segs + note + paused + groupSettingsHtml(g);
+  const guide = ownerGuideHtml();
+  if (adminView === "group") return segs + note + paused + guide + groupSettingsHtml(g);
   const repCard = isOwnerHere ? reportsCardHtml(reports.filter(r => r.group_id === gid), false) : "";
-  return segs + note + paused + repCard + (isWide() ? `<div class="admin-grid"><div>${cols[0]}</div><div>${cols[1]}</div></div>` : cols.join(""));
+  return segs + note + paused + guide + repCard + (isWide() ? `<div class="admin-grid"><div>${cols[0]}</div><div>${cols[1]}</div></div>` : cols.join(""));
 }
 let adminView = "people";
 
@@ -3686,9 +3789,9 @@ function renderLanding() {
       ${sec("Who is responsible", `<p>LockedIn is a free, non-commercial project run by Adam Batko, a private individual in Norway. He decides how your data is used (the "data controller"). Contact: ${mail}.</p>`)}
       ${sec("What we store", `<ul>
         <li><b>From Discord, when you sign in:</b> your Discord username, profile picture, email address and Discord account ID. LockedIn doesn't use your email address for anything and never emails you. We never see your Discord password, messages or servers.</li>
-        <li><b>What you add:</b> your ticks, notes, rule-break tags, weekly reflections, screenshots, your settings, and requests to join or start a group.</li>
+        <li><b>What you add:</b> your ticks, notes, rule-break tags, weekly reflections, screenshots, reactions to other members' posts, your settings, and requests to join or start a group.</li>
         <li><b>Reports:</b> if you report a picture or note, we store the report, your reason and which post it is about. For notes, the start of the note is kept with the report as evidence.</li>
-        <li><b>Reminders, only if you turn them on:</b> a push address for that phone or computer (made by your browser's push service, such as Apple, Google or Mozilla), how long before the cutoff you want a reminder, and a note of which reminders were sent.</li>
+        <li><b>Reminders, only if you turn them on:</b> a push address for that phone or computer (made by your browser's push service, such as Apple, Google or Mozilla), how long before the cutoff you want a reminder, and a note of which reminders were sent. If you own or help run a group, the same notifications also tell you when someone asks to join or reports something.</li>
       </ul>`)}
       ${sec("Why, and the legal basis", `<ul>
         <li><b>To run the app you signed up for</b> (your account, groups, ticks, notes, pictures, ranking): this is needed to provide the service (GDPR Article 6(1)(b)). Without it you can't use LockedIn.</li>
@@ -3696,7 +3799,7 @@ function renderLanding() {
         <li><b>Keeping the service safe and working</b>, for example the technical logs our providers keep: our legitimate interest in a secure service (Article 6(1)(f)).</li>
       </ul><p>We don't sell your data, show ads, build profiles of you, or make automated decisions about you.</p>`)}
       ${sec("Who can see it", `<ul>
-        <li><b>Your group</b> sees your name, picture, ticks, notes, screenshots, reflections, streaks and badges.</li>
+        <li><b>Your group</b> sees your name, picture, ticks, notes, screenshots, reflections, streaks, badges, and the reactions you give and get.</li>
         <li><b>Your group's owner and admins</b> can also approve or remove members, excuse days and correct ticks.</li>
         <li><b>Reports</b> are seen only by the group's owner and the app owner. The person who was reported isn't told who reported them.</li>
         <li><b>Your group's Discord server, if the group owner turns on Discord recaps:</b> LockedIn then posts each member's name, whether they finished the day's homework, and a weekly count of days done, wins and losses in a channel the owner picks. Everyone who can read that channel sees it. Your group owner decides this, so ask them if you'd rather not be included.</li>
@@ -3717,7 +3820,7 @@ function renderLanding() {
         <li><b>Your choices</b>, such as light or dark mode, your last tab and group, reminder timing and which badges you've seen.</li>
         <li><b>A copy of the website's files</b>, so it opens quickly and offline.</li>
       </ul><p>Because all of this is needed for the app to work, we don't ask for cookie consent. Signing out removes your sign-in, the copy of your group and unsent ticks. Deleting your account also removes your note backups and choices from that device.</p>`)}
-      ${sec("How long we keep it", `<p>Your data is kept while you have an account. Screenshots you delete are removed. The record of which reminders were sent is deleted after 7 days. Reports are deleted 90 days after they are handled. When you delete your account, your account, ticks, notes, reflections, pictures, settings and reminder devices are deleted. Group owners can also remove members.</p>`)}
+      ${sec("How long we keep it", `<p>Your data is kept while you have an account. Screenshots are deleted automatically 60 days after the day they belong to, and right away if you delete them. The record of which reminders were sent is deleted after 7 days. Reports are deleted 90 days after they are handled. When you delete your account, your account, ticks, notes, reflections, pictures, settings and reminder devices are deleted. Group owners can also remove members.</p>`)}
       ${sec("Your rights", `<ul>
         <li><b>See and download</b> your data: Settings → Your data → Download my data.</li>
         <li><b>Delete</b> your account and data: Settings → Your data → Delete my account.</li>
@@ -4330,6 +4433,12 @@ document.addEventListener("click", async e => {
   if (t.id === "viewer-prev") return stepViewer(-1);
   if (t.id === "viewer-next") return stepViewer(1);
   if (t.id === "note-retry" && editing) { const v = document.getElementById("panel-note").value; return editTick(editing.day, editing.key, row => { row.note = v; }, true); }
+  if (d.react) { const [kind, day, key] = d.react.split("|"); return toggleReaction(kind, day, key); }
+  if (d.guide) {
+    if (d.guide === "notif") return openSettings();
+    tab = "admin"; profileKey = null; adminView = d.guide; flash = ""; error = ""; fixAdminView();
+    return render();
+  }
   if (t.id === "viewer-report") { const v = viewing; return v && openReport("picture", v.day, v.key, v.path); }
   if (t.id === "report-cancel") return document.getElementById("reportdlg").close();
   if (t.id === "report-send") return sendReport();
@@ -4442,10 +4551,12 @@ document.addEventListener("click", async e => {
       closePanel(); loaded = false; screen = "loading"; render(); return loadAll();
     }
     case "copy-invite": {
+      setGuideFlag("s");
       try { await navigator.clipboard.writeText(inviteLink(group().join_code)); t.textContent = "Link copied"; } catch (err) { t.textContent = inviteLink(group().join_code); }
       return setTimeout(() => { t.textContent = "Copy invite link"; }, 1800);
     }
     case "copy-code": {
+      setGuideFlag("s");
       try { await navigator.clipboard.writeText(group().join_code); t.textContent = "Copied"; } catch (err) { t.textContent = "Select and copy"; }
       return setTimeout(() => { t.textContent = "Copy"; }, 1500);
     }
@@ -4456,6 +4567,7 @@ document.addEventListener("click", async e => {
     case "save-group": return saveGroupSettings();
     case "dc-save": return saveDiscord();
     case "xfer-go": return transferGroup();
+    case "guide-hide": setGuideFlag("x"); return render();
     case "dc-test": {
       const m = document.getElementById("dc-msg"); m.textContent = "Sending…";
       const { error: e } = await sb.rpc("send_discord_test", { g: gid });
@@ -4884,7 +4996,8 @@ function remindHtml() {
     : "This browser can't show reminders. Try Chrome, Edge, Firefox or Safari."}</p>`;
   const blocked = Notification.permission === "denied", on = !!push.sub && Notification.permission === "granted";
   const opt = (m, l) => `<button data-remind="${m}" aria-pressed="${remindMins === m}">${l}</button>`;
-  return head + `<label class="switchrow"><span><b>Remind me</b><small>A notification on this ${isWide() ? "computer" : "phone"} if your homework isn't done before the day closes.</small></span>
+  const owns = groups.some(g => session && (g.owner_id === session.user.id || (myMembership(g.id) || {}).role === "admin"));
+  return head + `<label class="switchrow"><span><b>Remind me</b><small>A notification on this ${isWide() ? "computer" : "phone"} if your homework isn't done before the day closes.${owns ? " You'll also be told when someone asks to join your group or reports something." : ""}</small></span>
       <input type="checkbox" id="set-remind" role="switch" ${on ? "checked" : ""} ${push.busy || blocked ? "disabled" : ""}></label>
     ${on ? `<div class="segset four" role="group" aria-label="How long before the day closes">${opt(30, "30 min")}${opt(60, "1 hour")}${opt(120, "2 hours")}${opt(180, "3 hours")}</div>
       <p class="sub-hint" style="margin-top:8px">before the day closes. Turn it on on each phone or computer you use.</p>` : ""}

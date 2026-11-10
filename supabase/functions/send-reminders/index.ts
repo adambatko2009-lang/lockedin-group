@@ -1,7 +1,9 @@
 // Supabase Edge Function "send-reminders".
-// Every 5 minutes Supabase calls this (see update-10-reminders.sql). It asks the database who needs a reminder
-// right now and sends each of them a notification. Calling it more often can't cause extra notifications:
-// the database only hands out each reminder once.
+// Every 5 minutes Supabase calls this (see update-10-reminders.sql). It does three things:
+//   1. Reminders: asks the database who needs a reminder right now and sends each of them a notification.
+//   2. Owner alerts (update 16): tells group owners when someone asks to join or something is reported.
+//   3. Once an hour: deletes screenshots older than 60 days (update 16), through Supabase Storage so the space is freed.
+// Calling it more often can't cause extra notifications: the database only hands out each one once.
 //
 // Needs three secrets (Supabase > Edge Functions > Secrets): VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT.
 // Notifications are sent with the standard Web Push protocol (RFC 8291 encryption + RFC 8292 VAPID), using only
@@ -81,28 +83,67 @@ export function reminderText(r) {
   return { title: `${left} left to finish your homework`, body: `${r.group_name}: still to do ${list(r.missing)}.`, tag: "reminder", url: "./" };
 }
 
+// Sends one notification; forgets the device if the phone turned notifications off or the app was removed.
+async function deliver(r, message, vapid, url, headers, count) {
+  try {
+    const out = await sendPush(r, message, vapid);
+    if (out.ok) count.sent++;
+    else if (out.status === 404 || out.status === 410) {
+      await fetch(`${url}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(r.endpoint)}`, { method: "DELETE", headers });
+      count.removed++;
+    } else { count.failed++; console.log("push failed", out.status, await out.text()); }
+  } catch (e) { count.failed++; console.log("push error", String(e)); }
+}
+
+async function rpc(url, headers, fn, args = {}) {
+  const res = await fetch(`${url}/rest/v1/rpc/${fn}`, { method: "POST", headers, body: JSON.stringify(args) });
+  if (!res.ok) throw new Error(`${fn}: ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
+// Screenshots older than 60 days: delete the files, then remove them from their days. At most 200 per run.
+export async function cleanPictures(url, headers) {
+  const rows = await rpc(url, headers, "old_pictures", { max_count: 200 });
+  const paths = (rows || []).map(x => typeof x === "string" ? x : x.old_pictures).filter(Boolean);
+  if (!paths.length) return 0;
+  const del = await fetch(`${url}/storage/v1/object/screenshots`, { method: "DELETE", headers, body: JSON.stringify({ prefixes: paths }) });
+  if (!del.ok) throw new Error(`storage delete: ${del.status} ${await del.text()}`);
+  await rpc(url, headers, "forget_pictures", { paths });
+  return paths.length;
+}
+
 async function run() {
   const url = Deno.env.get("SUPABASE_URL"), key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const vapid = { publicKey: Deno.env.get("VAPID_PUBLIC_KEY"), privateKey: Deno.env.get("VAPID_PRIVATE_KEY"), subject: Deno.env.get("VAPID_SUBJECT") };
   if (!vapid.publicKey || !vapid.privateKey || !vapid.subject) return { error: "VAPID secrets are missing" };
   const headers: Record<string, string> = { apikey: key, "Content-Type": "application/json" };
   if (key.startsWith("eyJ")) headers.Authorization = "Bearer " + key;
-  const res = await fetch(`${url}/rest/v1/rpc/due_reminders`, { method: "POST", headers, body: "{}" });
-  if (!res.ok) return { error: "due_reminders: " + res.status + " " + await res.text() };
-  const due = await res.json();
-  let sent = 0, removed = 0, failed = 0;
-  await Promise.all(due.map(async r => {
-    try {
-      const out = await sendPush(r, reminderText(r), vapid);
-      if (out.ok) sent++;
-      else if (out.status === 404 || out.status === 410) {
-        // The phone turned notifications off or the app was removed: forget this device.
-        await fetch(`${url}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(r.endpoint)}`, { method: "DELETE", headers });
-        removed++;
-      } else { failed++; console.log("push failed", out.status, await out.text()); }
-    } catch (e) { failed++; console.log("push error", String(e)); }
-  }));
-  return { due: due.length, sent, removed, failed };
+  const result: Record<string, unknown> = {}, problems: string[] = [];
+
+  // 1. reminders
+  try {
+    const due = await rpc(url, headers, "due_reminders");
+    const count = { sent: 0, removed: 0, failed: 0 };
+    await Promise.all(due.map(r => deliver(r, reminderText(r), vapid, url, headers, count)));
+    result.reminders = { due: due.length, ...count };
+  } catch (e) { problems.push(String(e)); }
+
+  // 2. owner alerts (only once database update 16 has been run)
+  try {
+    const alerts = await rpc(url, headers, "due_owner_alerts");
+    const count = { sent: 0, removed: 0, failed: 0 };
+    await Promise.all(alerts.map(a => deliver(a, { title: a.title, body: a.body, tag: a.tag, url: "./" }, vapid, url, headers, count)));
+    result.owner_alerts = { due: alerts.length, ...count };
+  } catch (e) { problems.push(String(e)); }
+
+  // 3. old pictures, once an hour
+  if (new Date().getUTCMinutes() < 5) {
+    try { result.old_pictures_deleted = await cleanPictures(url, headers); } catch (e) { problems.push(String(e)); }
+  }
+
+  if (problems.length) { console.log("problems", problems); result.problems = problems; }
+  if (problems.length && !result.reminders) result.error = problems[0];
+  return result;
 }
 
 if (typeof Deno !== "undefined") {
