@@ -389,8 +389,18 @@
 
   /* ---------- no-trade, countdown, reflection ---------- */
   .ic { flex: none; vertical-align: -3px; }
+  .result-h { margin-top: 4px; }
+  .result-set { margin-top: 0; }
+  .result-set button { font-size: 14px; white-space: nowrap; padding: 0 4px; }
+  @media (max-width: 360px) { .result-set button { font-size: 13px; } }
+  .result-set + .sub-hint { margin-top: 8px; }
+  .result-set .r-win[aria-pressed="true"] { color: var(--good); }
+  .result-set .r-loss[aria-pressed="true"] { color: var(--crit); }
+  .result-set .r-gamble[aria-pressed="true"] { color: var(--warn); }
+  .rtag i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .rtag.r-win { color: var(--good); } .rtag.r-loss { color: var(--crit); } .rtag.r-gamble { color: var(--warn); }
   .ntag { display: inline-flex; align-items: center; gap: 4px; flex: none; font-size: 12px; font-weight: 600; color: var(--text-2); background: var(--surface-2); border-radius: 6px; padding: 1px 6px; }
-  @media (max-width: 420px) { .ntag-text { display: none; } }
+  @media (max-width: 420px) { .ntag-text { display: none; } .rtag .ntag-text { display: inline; } }
   .time.urgent { color: var(--crit-text); }
   @media (prefers-reduced-motion: no-preference) {
     .time.urgent { animation: pulse 1.6s ease-in-out infinite; }
@@ -770,6 +780,32 @@
   .addrow { display: flex; gap: 8px; margin-top: 12px; }
   .addrow .field { flex: 1; }
   .empty { font-size: 14px; color: var(--muted); margin: 0; }
+
+  /* phone: press and hold the bottom bar, then slide. A glass lens lifts off, magnifies the tab under your
+     finger and drops onto the one you let go of. */
+  .tabbar { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  .tabbar.lensing .pill { opacity: 0; }
+  .tabbar.lensing button { transform: none; }
+  .tabbar button.hot, .tabbar button.hot svg { color: var(--accent-text); }
+  .tablens { position: fixed; z-index: 7; pointer-events: none; overflow: hidden; border-radius: 26px;
+    background: color-mix(in srgb, var(--surface) 62%, transparent);
+    -webkit-backdrop-filter: blur(3px) saturate(180%); backdrop-filter: blur(3px) saturate(180%);
+    border: 1px solid var(--lg-edge);
+    box-shadow: inset 0 1px 0 var(--lg-rim), inset 0 -1px 0 color-mix(in srgb, var(--lg-rim) 40%, transparent),
+                inset 0 0 14px color-mix(in srgb, var(--lg-glow) 35%, transparent), 0 10px 28px rgba(0, 0, 0, .32);
+    transform: scale(.7); opacity: 0; transition: transform .28s cubic-bezier(.3, 1.4, .5, 1), opacity .18s; }
+  .tablens.up { transform: scale(1); opacity: 1; }
+  .tablens.drop { transition: left .3s cubic-bezier(.3, 1.3, .5, 1), transform .3s cubic-bezier(.3, 1.3, .5, 1), opacity .25s .08s; transform: scale(.82); opacity: 0; }
+  .tablens::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background: linear-gradient(115deg, color-mix(in srgb, var(--lg-glow) 55%, transparent), transparent 38%, transparent 70%, color-mix(in srgb, var(--lg-glow) 25%, transparent)); }
+  .tablens .lens-track { position: absolute; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; padding: 5px; box-sizing: border-box; }
+  .tablens .lens-track > * { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-height: 50px; color: var(--text-2); position: relative; }
+  .tablens .lens-track svg { width: 22px; height: 22px; }
+  .tablens .lens-track span { font-size: 11px; font-weight: 600; }
+  .tablens .lens-track .meav { width: 24px; height: 24px; font-size: 0; }
+  .tablens .lens-track .hot, .tablens .lens-track .hot svg { color: var(--accent-text); }
+  .tablens .lens-track .badge { display: none; }
+  @media (prefers-reduced-motion: reduce) { .tablens, .tablens.drop { transition: opacity .15s; transform: none; } }
 
   @media (prefers-reduced-motion: no-preference) {
     .tabbar .pill { transition: transform .35s cubic-bezier(.3, 1.3, .5, 1); }
@@ -1773,10 +1809,28 @@ function subscribe() {
 
 // One save at a time per row; quick taps are combined into one save.
 const pending = {}, timers = {};
+// A day's result: one of these, or nothing picked yet. "No trade" uses the no_trade column.
+const RESULTS = [["win", "Win"], ["loss", "Loss"], ["notrade", "No trade"], ["gamble", "Gamble"]];
+const resultOf = rec => rec && rec.no_trade ? "notrade" : (rec && rec.result) || null;
+const resultBtnsHtml = rec => RESULTS.map(([v, l]) => `<button data-result="${v}" class="r-${v}" aria-pressed="${resultOf(rec) === v}">${l}</button>`).join("");
+const resultHint = rec => ({
+  win: "Marked as a win. Tap again to clear.",
+  loss: "Marked as a loss. Losses are part of it, the homework still counts.",
+  notrade: "You sat out on purpose. Chart with executions, journal and HTF are still required.",
+  gamble: "Marked as a gamble: a trade outside your plan. Being honest here helps you spot it.",
+}[resultOf(rec)] || "Pick one. Tap it again to clear.");
+const resultTag = rec => {
+  const r = resultOf(rec); if (!r) return "";
+  const label = RESULTS.find(x => x[0] === r)[1];
+  return r === "notrade"
+    ? `<span class="ntag" title="No trade today: sat out on purpose">${ic("pause", 13)}<span class="ntag-text">No trade</span></span>`
+    : `<span class="ntag rtag r-${r}" title="${label}"><i aria-hidden="true"></i><span class="ntag-text">${label}</span></span>`;
+};
+
 function editTick(k, key, mutate, quiet) {
   if (!key || !canEdit(k, key)) return;
   const id = k + "|" + key;
-  const row = Object.assign({ day: k, member_key: key, chart: false, journal: false, review: false, social: false, box5: false, box6: false, note: "", images: [], no_trade: false, rule_breaks: [] }, tickOf(k, key));
+  const row = Object.assign({ day: k, member_key: key, chart: false, journal: false, review: false, social: false, box5: false, box6: false, note: "", images: [], no_trade: false, result: null, rule_breaks: [] }, tickOf(k, key));
   row.images = [...(row.images || [])];
   row.rule_breaks = [...(row.rule_breaks || [])];
   const before = statusOf(k, key);
@@ -1789,7 +1843,7 @@ function editTick(k, key, mutate, quiet) {
 }
 async function saveTick(id) {
   const row = ticks[id];
-  const body = { day: row.day, member_key: row.member_key, chart: !!row.chart, journal: !!row.journal, review: !!row.review, social: !!row.social, box5: !!row.box5, box6: !!row.box6, note: row.note || "", images: row.images || [], excused: !!row.excused, no_trade: !!row.no_trade, rule_breaks: row.rule_breaks || [] };
+  const body = { day: row.day, member_key: row.member_key, chart: !!row.chart, journal: !!row.journal, review: !!row.review, social: !!row.social, box5: !!row.box5, box6: !!row.box6, note: row.note || "", images: row.images || [], excused: !!row.excused, no_trade: !!row.no_trade, result: row.no_trade ? null : (row.result || null), rule_breaks: row.rule_breaks || [] };
   saving++; noteState[id] = "saving"; renderTop();
   let e;
   if (!navigator.onLine) e = { message: "offline" };
@@ -2040,7 +2094,7 @@ function renderReflections() {
 
 // ---------------------------------------------------------------- screenshots
 // Stored privately in Supabase Storage as <day>/<member>/<time>.jpg; shown through short-lived signed links.
-const MAX_SHOTS = 4;
+const MAX_SHOTS = 10;
 const shotUrls = {}, shotRequested = new Set(), uploading = {};
 let shotTarget = null, viewing = null;
 
@@ -2236,8 +2290,9 @@ function openPanel(day, key) {
   panel.innerHTML = `<div class="grab" aria-hidden="true"></div>
     <header><div><b id="panel-title" role="heading" aria-level="2">${inlineOK(day) ? "Note &amp; pictures" : esc(m ? m.name : key)}</b><span>${fmtDay(day, { weekday: "long", month: "long" })}</span></div>
       <button class="round" id="panel-close" aria-label="Close">${SYM.x}</button></header>
-    <label class="switchrow"><span><b>No trade today</b><small>Shows the group you sat out on purpose. Chart with executions, journal and HTF are still required.</small></span>
-      <input type="checkbox" id="panel-notrade" role="switch" ${rec.no_trade ? "checked" : ""}></label>
+    <h3 class="result-h">How did the day go?</h3>
+    <div class="segset four result-set" role="group" aria-label="How did the day go?">${resultBtnsHtml(rec)}</div>
+    <p class="sub-hint" id="result-hint">${resultHint(rec)}</p>
     <h3>Note</h3>
     <textarea id="panel-note" maxlength="10000" placeholder="What did you trade, what did you learn?">${esc(noteText)}</textarea>
     <p class="note-status" id="note-status" aria-live="polite"></p>
@@ -2639,6 +2694,85 @@ function renderTabbar() {
       ${t === "admin" && pendingCount() ? `<i class="badge">${pendingCount()}</i>` : ""}</button>`).join(""));
 }
 
+// Phone bottom bar: press and hold (or just slide sideways), drag the glass lens across, let go to switch.
+(function tabLens() {
+  const bar = document.getElementById("tabbar");
+  let st = null, justDragged = false;
+  const tabsIn = () => [...bar.querySelectorAll("button[data-tab]")];
+  const tabAt = x => { const b = tabsIn(); if (!b.length) return null;
+    const r = bar.getBoundingClientRect(), w = (r.width - 10) / b.length;
+    return b[Math.max(0, Math.min(b.length - 1, Math.floor((x - r.left - 5) / w)))]; };
+  function begin() {
+    const r = bar.getBoundingClientRect(), n = tabsIn().length || 1, w = (r.width - 10) / n;
+    const lens = document.createElement("div");
+    lens.className = "tablens"; lens.setAttribute("aria-hidden", "true");
+    const lw = w + 18, lh = r.height + 16;
+    Object.assign(lens.style, { width: lw + "px", height: lh + "px", top: (r.top - 8) + "px" });
+    const track = document.createElement("div");
+    track.className = "lens-track";
+    Object.assign(track.style, { width: r.width + "px", height: r.height + "px", top: "8px" });
+    track.innerHTML = tabsIn().map(b => `<div data-k="${b.dataset.tab}">${b.innerHTML}</div>`).join("");
+    lens.appendChild(track); document.body.appendChild(lens);
+    Object.assign(st, { lens, track, r, w, lw, lh, on: true, hot: null });
+    bar.classList.add("lensing");
+    try { bar.setPointerCapture(st.id); } catch (_) {}
+    place(st.x, 0);
+    requestAnimationFrame(() => lens.classList.add("up"));
+    if (navigator.vibrate) navigator.vibrate(8);
+  }
+  function place(x, v) {
+    const { lens, track, r, lw } = st;
+    const cx = Math.max(r.left + 5 + st.w / 2, Math.min(r.right - 5 - st.w / 2, x));
+    const left = cx - lw / 2;
+    lens.style.left = left + "px";
+    // the magnified copy of the bar inside the lens, centred on the finger
+    track.style.left = (r.left - left) + "px";
+    track.style.transformOrigin = `${cx - r.left}px 50%`;
+    track.style.transform = "scale(1.22)";
+    // a little stretch in the direction you move, like a drop of liquid
+    const s = Math.min(0.16, Math.abs(v) * 0.012);
+    if (lens.classList.contains("up")) lens.style.transform = `scale(${1 + s}, ${1 - s * 0.6})`;
+    const hot = tabAt(cx);
+    if (hot !== st.hot) {
+      tabsIn().forEach(b => b.classList.toggle("hot", b === hot));
+      track.querySelectorAll("[data-k]").forEach(d => d.classList.toggle("hot", hot && d.dataset.k === hot.dataset.tab));
+      if (st.hot && navigator.vibrate) navigator.vibrate(5);
+      st.hot = hot;
+    }
+  }
+  function end(cancel) {
+    if (!st) return;
+    clearTimeout(st.timer);
+    const s0 = st; st = null;
+    if (!s0.on) return;
+    justDragged = true; setTimeout(() => { justDragged = false; }, 400);
+    const target = cancel ? null : s0.hot, b = tabsIn(), i = target ? b.indexOf(target) : -1;
+    if (i >= 0) s0.lens.style.left = (s0.r.left + 5 + s0.w * i + s0.w / 2 - s0.lw / 2) + "px";
+    s0.lens.style.transform = "";
+    s0.lens.classList.add("drop");
+    setTimeout(() => { s0.lens.remove(); bar.classList.remove("lensing"); b.forEach(x => x.classList.remove("hot")); }, 320);
+    if (target && target.dataset.tab) setTab(target.dataset.tab);
+  }
+  bar.addEventListener("pointerdown", e => {
+    if (e.button !== 0 || bar.hidden || st) return;
+    st = { id: e.pointerId, x0: e.clientX, x: e.clientX, t: performance.now(), on: false };
+    st.timer = setTimeout(() => { if (st && !st.on) begin(); }, 220);
+  });
+  bar.addEventListener("pointermove", e => {
+    if (!st || e.pointerId !== st.id) return;
+    const now = performance.now(), v = (e.clientX - st.x) / Math.max(1, now - st.t) * 16;
+    st.x = e.clientX; st.t = now;
+    if (!st.on && Math.abs(e.clientX - st.x0) > 8) { clearTimeout(st.timer); begin(); }
+    if (st.on) place(e.clientX, v);
+  });
+  bar.addEventListener("pointerup", () => end(false));
+  bar.addEventListener("pointercancel", () => end(true));
+  bar.addEventListener("lostpointercapture", () => { if (st && st.on) end(false); });
+  // the tap that ends a drag must not also count as a tap on the tab under it
+  bar.addEventListener("click", e => { if (justDragged) { e.stopPropagation(); e.preventDefault(); } }, true);
+  bar.addEventListener("contextmenu", e => e.preventDefault());
+})();
+
 // The row of boxes adapts to the group's boxes: long names get more room; more than 4 wrap on phones.
 function togglesStyle() {
   const cols = RULES.map(r => r[1].length > 12 ? "1.6fr" : "1fr").join(" ");
@@ -2695,7 +2829,7 @@ function renderDay() {
       + Array.from({ length: uploading[m.key] || 0 }, () => `<span class="shot busy">Uploading…</span>`).join("");
     const showToggles = !(quickOn && m.key === me);   // already at the top as big buttons
     return `<div class="member ${editable ? "" : "locked"}">
-      <div class="mrow"><span class="name">${avatarHtml(m, 26)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === myKey() ? `<span class="you">YOU</span>` : ""}${rec.no_trade ? `<span class="ntag" title="No trade today: sat out on purpose">${ic("pause", 13)}<span class="ntag-text">No trade</span></span>` : ""}</span>${editBtn}${dot(st, m.name)}</div>
+      <div class="mrow"><span class="name">${avatarHtml(m, 26)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === myKey() ? `<span class="you">YOU</span>` : ""}${resultTag(rec)}</span>${editBtn}${dot(st, m.name)}</div>
       ${showToggles ? `<div class="toggles" style="${togglesStyle()}">${toggles}</div>` : ""}
       ${(rec.rule_breaks || []).length ? `<div class="breaks">${rec.rule_breaks.map(b => `<span class="bchip">${ic("alert", 13)}${esc(BREAK_LABEL[b] || b)}</span>`).join("")}</div>` : ""}
       ${note ? `<div class="note">${note}</div>` : ""}
@@ -3910,6 +4044,15 @@ document.addEventListener("click", async e => {
     document.getElementById("settings-breaks").innerHTML = customBreaksListHtml();
     return;
   }
+  if (d.result && editing) {
+    const { day, key } = editing, cur = resultOf(tickOf(day, key));
+    const next = cur === d.result ? null : d.result;   // tapping the picked one clears it
+    editTick(day, key, row => { row.no_trade = next === "notrade"; row.result = next && next !== "notrade" ? next : null; });
+    const rec = tickOf(day, key) || {};
+    document.querySelectorAll("[data-result]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.result === resultOf(rec))));
+    const h = document.getElementById("result-hint"); if (h) h.textContent = resultHint(rec);
+    return;
+  }
   if (d.themeSet) {
     settings.theme = d.themeSet; saveSettings();
     document.querySelectorAll("[data-theme-set]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.themeSet === settings.theme)));
@@ -4062,7 +4205,6 @@ document.addEventListener("input", e => {
   if (e.target.id === "terms-ok") { document.getElementById("accept-terms").disabled = !e.target.checked; return; }
   if (e.target.id === "set-confetti") { settings.confetti = e.target.checked; return saveSettings(); }
   if (e.target.id === "set-remind") return e.target.checked ? turnRemindersOn() : turnRemindersOff();
-  if (e.target.id === "panel-notrade" && editing) { const on = e.target.checked; return editTick(editing.day, editing.key, row => { row.no_trade = on; }); }
   if (e.target.dataset && e.target.dataset.refl) return editReflection(e.target.dataset.week, e.target.dataset.key, e.target.dataset.refl, e.target.value);
   if (e.target.id === "panel-excused" && editing) { const on = e.target.checked; return editTick(editing.day, editing.key, row => { row.excused = on; }); }
   if (e.target.id !== "panel-note" || !editing) return;
@@ -4202,7 +4344,7 @@ function tourSteps() {
         + (bonus.length ? ` ${esc(listText(bonus))} ${bonus.length > 1 ? "are bonus boxes" : "is a bonus box"}: extra points.` : "")
         + ` You can tick until ${hh(CUTOFF_HOUR)} ${esc(tzCity(TZ))} time on the next trading day.` },
     mine && { el: wide ? q(`[data-edit="${me}"]`) : q(".quick .qnote"), title: "Note & pictures",
-      text: "Write your note, add chart screenshots" + (wide ? " (you can paste them with ⌘V / Ctrl+V)" : "") + ", tag rule breaks, mark a no-trade day, and on Fridays write your weekly reflection. Everything saves by itself." },
+      text: "Write your note, add chart screenshots" + (wide ? " (you can paste them with ⌘V / Ctrl+V)" : "") + ", tag rule breaks, mark the day as a win, loss, no trade or gamble, and on Fridays write your weekly reflection. Everything saves by itself." },
     { el: () => { const t = document.querySelector("#app .track"); return t && t.closest(".card"); }, title: "Time left today",
       text: "How many of you are done and how much time is left. In the last hour the timer turns red, and you get a reminder if you're not done yet." },
     { el: () => { const m = [...document.querySelectorAll("#app .member")].find(x => !x.querySelector(`[data-edit="${me}"]`)); return m; }, title: "Everyone's day",

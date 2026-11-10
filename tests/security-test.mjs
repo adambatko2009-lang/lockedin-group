@@ -521,5 +521,28 @@ r = await as("sid", `update public.profiles set terms_accepted_at = null where u
 ok(!!r.error || r.count === 0, "nobody can change the acceptance record directly");
 ok((await one(`select count(*)::int n from public.ticks where member_key = 'sid'`)).n > 0, "nobody's ticks were touched");
 
+// ================================================================ update 14: 10 pictures and day results
+await db.exec(readFileSync(dir + "update-14-photos-results.sql", "utf8"));
+console.log("\nloaded: update-14-photos-results.sql");
+section("10 pictures and day results (update 14)");
+const t14 = (await one(`select public.current_trading_day()::text d`)).d;
+await as("sid", `insert into public.ticks (day, member_key) values ($1, 'sid') on conflict do nothing`, [t14]);
+r = await as("sid", `update public.ticks set images = '{a,b,c,d,e,f,g,h,i,j}', no_trade = false where member_key='sid' and day=$1`, [t14]);
+ok(!r.error && r.count === 1, "member can save 10 pictures on their own day");
+r = await as("sid", `update public.ticks set images = '{a,b,c,d,e,f,g,h,i,j,k}' where member_key='sid' and day=$1`, [t14]);
+ok(!!r.error, "11 pictures are refused");
+r = await as("sid", `update public.ticks set result = 'win' where member_key='sid' and day=$1`, [t14]);
+ok(!r.error && r.count === 1, "member marks their own day as a win");
+r = await as("sid", `update public.ticks set result = 'gamble' where member_key='sid' and day=$1`, [t14]);
+ok(!r.error && r.count === 1, "member changes it to gamble");
+r = await as("sid", `update public.ticks set result = 'jackpot' where member_key='sid' and day=$1`, [t14]);
+ok(!!r.error, "unknown results are refused");
+r = await as("sid", `update public.ticks set no_trade = true where member_key='sid' and day=$1`, [t14]);
+ok(!!r.error, "a day can't be both no-trade and have a result");
+r = await as("sid", `update public.ticks set result = 'loss' where member_key <> 'sid'`);
+ok(!r.error && r.count === 0, "member cannot set someone else's result");
+r = await as("sid", `update public.ticks set result = 'win' where member_key='sid' and day < $1`, [t14]);
+ok(!r.error && r.count === 0, "member cannot set a result on a closed day");
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

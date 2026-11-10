@@ -22,6 +22,7 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
 | `supabase/update-11-your-data.sql` | Download my data and Delete my account (run once, after update 10) |
 | `supabase/update-12-lockdown.sql` | Signed-out visitors can't use the database's helper functions (run once, after update 11) |
 | `supabase/update-13-accept-terms.sql` | Everyone accepts the Terms once; saves when (run once, after update 12, before pushing) |
+| `supabase/update-14-photos-results.sql` | Up to 10 pictures per day, and a day result: win, loss or gamble (run once, after update 13, before pushing) |
 | `supabase/sign-out-everyone-except-owner.sql` | Signs everyone but you out; no data is removed (run when needed) |
 | `assets/app-day.jpg` | Screenshot of the app with a made-up demo group, shown in the phone on the front page |
 | `vendor/` | Fonts and the Supabase library, hosted on our own site (see `vendor/THIRD-PARTY-NOTICES.md`) |
