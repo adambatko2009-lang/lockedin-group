@@ -1497,6 +1497,7 @@ const ICON_PATHS = {
   target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>',
 };
 const ic = (name, px = 16) => `<svg class="ic" viewBox="0 0 24 24" width="${px}" height="${px}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name] || ""}</svg>`;
+// Settings gear adapted from Feather Icons (MIT, Cole Bemis); full license in vendor/licenses. All other icons were drawn for LockedIn.
 const SVG = {
   note: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>`,
   day: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>`,
@@ -3869,7 +3870,7 @@ function initStory() {
     measureZones();
     const W = zones.W, pb = pin.getBoundingClientRect();
     fls.forEach((f, i) => {
-      const per = [5, 7, 6, 8, 5.5, 6.5, 9, 11, 10][i % 9], ph = (t + i * 0.7) * (Math.PI * 2 / per);
+      const per = 6.2 + (i * 2.9) % 5.3, ph = (t + i * 1.3) * (Math.PI * 2 / per);   // each shape bobs at its own slow pace
       const sz = W < 900 ? f.size * 0.6 : f.size;
       if (f.sz !== sz) { f.sz = sz; f.el.firstElementChild.style.width = f.el.firstElementChild.style.height = sz + "px"; }
       const [sx, sy] = spot(f), baseX = sx - sz / 2, baseY = sy - sz / 2;
