@@ -682,5 +682,32 @@ r = await db.query(`select public.forget_pictures($1) n`, [["2020-01-02/x/1.jpg"
 ok((await one(`select images from public.ticks where day='2020-01-02' and member_key=$1`, [k4])).images.join() === "keep.jpg", "deleted pictures are removed from the day, the rest stays");
 ok(!!(await as("o3", `select * from public.old_pictures(10)`)).error && !!(await as("o3", `select public.forget_pictures('{a}')`)).error, "only the server can clean up pictures");
 
+// ================================================================ update 17: one-tap approve
+await db.exec(readFileSync(dir + "update-17-one-tap-approve.sql", "utf8"));
+console.log("\nloaded: update-17-one-tap-approve.sql");
+section("one-tap approve (update 17)");
+Object.assign(U, { a6: "00000000-0000-0000-0000-0000000000a6", a7: "00000000-0000-0000-0000-0000000000a7", a8: "00000000-0000-0000-0000-0000000000a8" });
+await db.query(`insert into auth.users (id, raw_user_meta_data) values ($1, $2), ($3, $4), ($5, $6)`,
+  [U.a6, { full_name: "Mia" }, U.a7, { full_name: "Nova <script>" }, U.a8, { full_name: "Old Timer" }]);
+const code17 = (await one(`select join_code from public.groups where id=$1`, [G3])).join_code;
+for (const u of ["a6", "a7", "a8"]) await rpc(u, "join_group", [code17]);
+ok(!!(await rpc("m3", "approve_member", [G3, U.a6, null])).error, "members can't approve people");
+ok(!!(await rpc("owner2", "approve_member", [G3, U.a6, null])).error, "other groups' owners can't approve people here");
+ok(!!(await rpc("a6", "approve_member", [G3, U.a6, null])).error, "nobody approves themselves");
+r = await rpc("o3", "approve_member", [G3, U.a6, null]);
+const k6 = r.rows && r.rows[0].v;
+ok(!r.error && !!k6, "the owner approves someone with one tap");
+r = await one(`select m.status, mb.name, mb.group_id from public.memberships m join public.members mb on mb.key = m.member_key where m.user_id=$1 and m.group_id=$2`, [U.a6, G3]);
+ok(r.status === "approved" && r.name === "Mia 2" && r.group_id === G3, "their name comes from Discord, with a number when it's taken (there's already a Mia)");
+r = await rpc("o3", "approve_member", [G3, U.a7, null]);
+ok(!r.error && (await one(`select name from public.members where key=$1`, [r.rows[0].v])).name === "Nova script", "unsafe characters are removed from the name");
+ok(!!(await rpc("o3", "approve_member", [G3, U.a6, null])).error, "someone already in can't be approved twice");
+const oldKey = (await rpc("o3", "add_member", [G3, "Old history"])).rows[0].v;
+ok(!!(await rpc("o3", "approve_member", [G3, U.a8, k3])).error, "you can't give someone a name another person already has");
+ok(!!(await rpc("o3", "approve_member", [G3, U.a8, o3Key.replace(/.$/, "x")])).error, "you can't link a name that isn't in the group");
+r = await rpc("o3", "approve_member", [G3, U.a8, oldKey]);
+ok(!r.error && (await one(`select member_key from public.memberships where user_id=$1 and group_id=$2`, [U.a8, G3])).member_key === oldKey, "the owner can link someone to an existing name instead");
+ok((await as("a6", `select count(*)::int n from public.members where group_id=$1`, [G3])).rows[0].n > 0, "the approved person can see the group right away");
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

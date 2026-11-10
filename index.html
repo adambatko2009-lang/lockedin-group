@@ -1967,7 +1967,7 @@ function guideSteps() {
   const steps = [
     ["Set your homework boxes, points and cutoff time", guideFlags().includes("b"), "group"],
     ["Share your invite link in your Discord", guideFlags().includes("s"), "people"],
-    ["Approve your first member and give them a name", people.some(p => p.status === "approved" && p.user_id !== g.owner_id), "people"],
+    ["Approve your first member", people.some(p => p.status === "approved" && p.user_id !== g.owner_id), "people"],
     ["Turn on notifications, so you hear about join requests", !!push.sub, "notif"],
     ["Connect Discord recaps (optional)", !!discordCfg, "group"],
   ];
@@ -3371,8 +3371,9 @@ function renderAdmin() {
   const g = group(), me = session.user.id;
   const free = activeMembers().filter(m => !people.some(p => p.member_key === m.key && p.status === "approved"));
   const avatar = p => p.avatar_url ? `<img src="${esc(p.avatar_url)}" alt="">` : `<span class="ph"></span>`;
-  const memberOptions = (current) => `<option value="">Choose name…</option>` +
-    activeMembers().filter(m => m.key === current || free.includes(m)).map(m => `<option value="${m.key}" ${m.key === current ? "selected" : ""}>${esc(m.name)}</option>`).join("");
+  // Approving makes a name from their Discord name. Only if the group has unused names (history from before accounts) can you pick one instead.
+  const namePicker = p => free.length ? `<select id="pick-${p.user_id}" aria-label="Name for ${esc(p.discord_name)}">
+      <option value="">New name: ${esc(p.discord_name)}</option>${free.map(m => `<option value="${m.key}">Use existing name: ${esc(m.name)}</option>`).join("")}</select>` : "";
   const isOwnerHere = isGroupOwner(g);
 
   const waiting = people.filter(p => p.status === "pending");
@@ -3380,8 +3381,8 @@ function renderAdmin() {
   const rejected = people.filter(p => p.status === "rejected");
 
   const waitingHtml = waiting.length ? waiting.map(p => `<div class="person">${avatar(p)}<b>${esc(p.discord_name)}</b>
-      <span class="sub">Joined with the code ${new Date(p.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
-      <div class="actions"><select id="pick-${p.user_id}" aria-label="Name for ${esc(p.discord_name)}">${memberOptions(null)}</select>
+      <span class="sub">Asked to join ${new Date(p.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} · their name will be ${esc(p.discord_name)}</span>
+      <div class="actions">${namePicker(p)}
         <button class="btn primary small" data-approve="${p.user_id}">Approve</button>
         <button class="btn danger small" data-reject="${p.user_id}">Reject</button></div></div>`).join("")
     : `<p class="empty">Nobody is waiting. Share the join code to invite people.</p>`;
@@ -3420,7 +3421,7 @@ function renderAdmin() {
     `<div class="card"><div class="cardhead"><h2>Names in the group</h2></div>${membersHtml}
       <div class="addrow"><input class="field" id="newmember" placeholder="New member name" maxlength="40" aria-label="New member name">
       <button class="btn primary small" id="addmember">Add</button></div>
-      <p class="empty" style="margin-top:10px">Removing a member hides them; their history is kept.</p></div>`,
+      <p class="empty" style="margin-top:10px">Approving someone adds their Discord name here. Rename anyone with Save. Add a name by hand only for someone without an account. Removing a member hides them; their history is kept.</p></div>`,
   ];
   const note = flash ? `<div class="card"><p class="msg">${esc(flash)}</p></div>` : error ? `<div class="card"><p class="msg err">${esc(error)}</p></div>` : "";
   const paused = g && g.status === "paused" ? `<div class="card"><p class="msg err">This group is paused by the app owner. Nobody can tick or change anything until it's resumed.</p></div>` : "";
@@ -3515,7 +3516,7 @@ function transferCardHtml(g) {
     <input class="field wide" id="xfer-confirm" autocomplete="off" placeholder="${esc(g.name)}">
     <div class="dcbtns"><button class="btn danger small" id="xfer-go">Move group</button></div>
     <p class="sub-hint" id="xfer-msg" role="status" aria-live="polite" style="margin:8px 0 0"></p>`
-    : `<p class="empty">Approve someone and give them a name first. Only people in the group can become its owner.</p>`}
+    : `<p class="empty">Approve someone first. Only people in the group can become its owner.</p>`}
   </div>`;
 }
 async function transferGroup() {
@@ -3600,7 +3601,7 @@ function joinCodeHtml() {
       <div class="addrow"><input class="field code" id="joincode" placeholder="ABCD-1234" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false">
         <button class="btn primary small" id="join">Join</button></div>
       <p class="sub-hint" id="join-msg" role="status" style="margin:10px 0 0">${esc(joinMsg)}</p>
-      <p class="sub-hint" style="margin:10px 0 0">The owner approves you and gives you your name. Then you're in.</p>
+      <p class="sub-hint" style="margin:10px 0 0">The owner approves you, and you're in with your Discord name.</p>
     </div>`;
 }
 function createHtml() {
@@ -3762,7 +3763,7 @@ function renderLanding() {
       <div class="bigsteps cols">
         <div class="rv"><b>Sign in with Discord.</b><p>No new password to remember. Your Discord account is your login.</p></div>
         <div class="rv d1"><b>Type the join code.</b><p>Your group's owner gives you a code like LOCK-7K2P.</p></div>
-        <div class="rv d2"><b>Get approved.</b><p>The owner lets you in and gives you your name. Then you're on the board.</p></div>
+        <div class="rv d2"><b>Get approved.</b><p>The owner lets you in with one tap. You're on the board with your Discord name.</p></div>
       </div>
       ${next("features", "Features")}
     </section>`;
@@ -4457,9 +4458,9 @@ document.addEventListener("click", async e => {
   }
   if (d.day) { const k = d.day; setTab("day"); selected = k; return render(); }
   if (d.approve) {
-    const key = document.getElementById("pick-" + d.approve).value;
-    if (!key) { flash = ""; error = "Choose a name first."; return render(); }
-    return adminDo(memberQ({ status: "approved", member_key: key }, d.approve), "Approved.");
+    const sel = document.getElementById("pick-" + d.approve), key = sel ? sel.value : "";
+    const who = (people.find(p => p.user_id === d.approve) || {}).discord_name || "They";
+    return adminDo(sb.rpc("approve_member", { g: gid, uid: d.approve, existing_key: key || null }), `Approved. ${who} is in. You can rename them under Names in the group.`);
   }
   if (d.reject) return adminDo(memberQ({ status: "rejected", member_key: null }, d.reject), "Rejected.");
   if (d.revoke) {
@@ -4754,7 +4755,7 @@ function tourSteps() {
       text: (wide ? "Your profile and badges. Journal has your notes, pictures, rule breaks and reflections. " : "Your profile and badges, and your Journal: notes, pictures, rule breaks and reflections. ")
         + "Settings has light or dark mode, confetti, your own rule-break tags and the app icon for your phone. Sign out and this tutorial are at the bottom of " + (wide ? "Profile." : "Me.") },
     isAdmin && { el: wide ? q("#toggleadmin") : tabEl("admin"), title: "Admin",
-      text: `You help run ${esc(g ? g.name : "this group")}: share the join code, approve people and give them a name, excuse days${isGroupOwner() ? ", and change the group's settings (boxes, points, time, color, logo)" : ""}.` },
+      text: `You help run ${esc(g ? g.name : "this group")}: share the join code, approve people, excuse days${isGroupOwner() ? ", and change the group's settings (boxes, points, time, color, logo)" : ""}.` },
     { title: "You're all set", text: (wide ? "" : "Tip: pull down at the top of the page to refresh. ") + "Good luck today, and stay locked in." },
   ];
   return steps.filter(Boolean);

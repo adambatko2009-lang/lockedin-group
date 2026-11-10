@@ -25,6 +25,7 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
 | `supabase/update-14-photos-results.sql` | Up to 10 pictures per day, and a day result: win, loss or gamble (run once, after update 13, before pushing) |
 | `supabase/update-15-reports-recaps-owner.sql` | Reporting pictures and notes, Discord recaps, moving a group to a new owner (run once, after update 14, before pushing) |
 | `supabase/update-16-cleanup-alerts-reactions.sql` | Pictures deleted after 60 days, owner alerts, reactions (run once, after update 15, before pushing; then paste the new `send-reminders` code into Supabase) |
+| `supabase/update-17-one-tap-approve.sql` | Approving someone is one tap; their name comes from Discord (run once, after update 16, before pushing) |
 | `supabase/sign-out-everyone-except-owner.sql` | Signs everyone but you out; no data is removed (run when needed) |
 | `assets/app-day.jpg` | Screenshot of the app with a made-up demo group, shown in the phone on the front page |
 | `vendor/` | Fonts and the Supabase library, hosted on our own site (see `vendor/THIRD-PARTY-NOTICES.md`) |
