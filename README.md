@@ -28,6 +28,7 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
 | `supabase/update-17-one-tap-approve.sql` | Approving someone is one tap; their name comes from Discord (run once, after update 16, before pushing) |
 | `supabase/update-18-discord-names.sql` | Names follow Discord: a new Discord name updates your name in your groups (run once, after update 17, before pushing) |
 | `supabase/update-19-pnl-rr.sql` | P&L and R for each day, optional (run once, after update 18, before pushing) |
+| `supabase/update-20-request-alerts.sql` | The app owner gets a notification for new group requests (run once, after update 19; no push needed) |
 | `supabase/sign-out-everyone-except-owner.sql` | Signs everyone but you out; no data is removed (run when needed) |
 | `assets/app-day.jpg` | Screenshot of the app with a made-up demo group, shown in the phone on the front page |
 | `vendor/` | Fonts and the Supabase library, hosted on our own site (see `vendor/THIRD-PARTY-NOTICES.md`) |

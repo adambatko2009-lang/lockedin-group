@@ -746,5 +746,23 @@ ok(!!(await as("m3", `update public.ticks set pnl = 99999999 where day=$1 and me
 ok((await as("m3", `update public.ticks set pnl = 1 where member_key=$1`, [k6])).count === 0, "members can't set someone else's P&L");
 ok((await as("sid", `select pnl from public.ticks where member_key=$1`, [k3])).rows.length === 0, "other groups can't see it");
 
+// ================================================================ update 20: group request alerts
+await db.exec(readFileSync(dir + "update-20-request-alerts.sql", "utf8"));
+console.log("\nloaded: update-20-request-alerts.sql");
+section("group request alerts (update 20)");
+await db.query(`insert into public.push_subscriptions (user_id, endpoint, p256dh, auth) values ($1, 'https://push.example.com/batko', '${"B".repeat(87)}', '${"A".repeat(22)}') on conflict do nothing`, [U.batko]);
+await db.query(`update public.owner_alerts set sent_at = now() where sent_at is null`);
+r = await as("a7", `insert into public.group_requests (name, note) values ('Morning Crew', 'NY session')`);
+ok(!r.error, "someone asks to start a group");
+ok((await one(`select count(*)::int n from public.owner_alerts where kind='request' and user_id=$1 and sent_at is null`, [U.batko])).n === 1, "the app owner gets an alert for it");
+r = await db.query(`select * from public.due_owner_alerts()`);
+const req = r.rows.find(x => x.endpoint === "https://push.example.com/batko");
+ok(!!req && req.title === "New group request: Morning Crew" && /All groups/.test(req.body), "the notification names the group they asked for");
+U.a9 = "00000000-0000-0000-0000-0000000000a9";
+await db.query(`insert into auth.users (id, raw_user_meta_data) values ($1, $2)`, [U.a9, { full_name: "Newbie" }]);
+await rpc("a9", "join_group", [code17]);
+ok((await db.query(`select * from public.due_owner_alerts()`)).rows.some(x => /wants to join/.test(x.title)), "join alerts still work");
+ok(!!(await as("a7", `insert into public.owner_alerts (user_id, kind) values ($1, 'request')`, [U.batko])).error, "nobody can create alerts from the app");
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
