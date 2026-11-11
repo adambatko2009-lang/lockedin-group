@@ -1119,6 +1119,13 @@
   .lp-hero.home { display: grid; gap: 56px; align-items: center; justify-items: start; text-align: left; max-width: 1180px; margin: 0 auto; padding: 150px 20px 80px; min-height: auto; }
   .lp-hero.home .lp-cta { justify-content: flex-start; }
   .lp-hero.home .lead { margin-left: 0; }
+  /* hero: a group's day on the right (computers only; phones get the scroll story right below) */
+  .hero-app { display: none; margin: 0; justify-self: end; width: min(420px, 100%); }
+  .hero-app .mock { transform: none; width: 100%; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 24px 60px -12px rgba(0, 0, 0, 0.85); }
+  .hero-own { display: inline-block; margin-top: 16px; color: rgba(245, 245, 247, 0.78); font-size: 15px; font-weight: 500;
+    text-decoration: underline; text-decoration-color: rgba(245, 245, 247, 0.35); text-underline-offset: 4px; transition: color .15s, text-decoration-color .15s; }
+  .hero-own:hover { color: #fff; text-decoration-color: #fff; }
+  #start-own { scroll-margin-top: 96px; }
   .phone { justify-self: center; width: min(320px, 84vw); aspect-ratio: 9 / 19; padding: 11px; border-radius: 48px;
     background: linear-gradient(145deg, #4a4b52, #121216 38%, #2b2c31 62%, #0b0b0e);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 50px 120px -40px rgba(255, 255, 255, 0.12), 0 40px 80px -30px rgba(0, 0, 0, 0.9); }
@@ -1397,6 +1404,12 @@
   .lp-hero.home, .lp-sec, .lp-foot { max-width: calc(var(--lp-max) + var(--lp-pad) * 2); padding-left: var(--lp-pad); padding-right: var(--lp-pad); }
   .lp-hero.home { grid-template-columns: 1fr !important; padding-bottom: 72px; }
   .lp-hero.home h1 { font-size: clamp(44px, 8.6vw, 124px); }
+  /* wide screens: the headline on the left, a group's day on the right */
+  @media (min-width: 1100px) {
+    .lp-hero.home { grid-template-columns: minmax(0, 1.3fr) minmax(340px, 0.7fr) !important; column-gap: 64px; }
+    .lp-hero.home h1 { font-size: clamp(64px, 6.4vw, 100px); }
+    .hero-app { display: block; }
+  }
   .lp-hero.home .lead { max-width: 44ch; }
   .story-grid { padding: 76px var(--lp-pad) 20px; }
   @media (min-width: 900px) { .story-grid { max-width: calc(var(--lp-max) + var(--lp-pad) * 2); padding: 76px var(--lp-pad) 40px; } }
@@ -1757,7 +1770,9 @@ async function loadAll() {
   const invited = await useInvite();
   await loadGroups();
   const usable = groups.filter(canOpen);
-  if (!usable.length) { screen = "lobby"; lobbyMode = "join"; loaded = false; return render(); }
+  let intent = "";
+  try { intent = localStorage.getItem("lockedin.intent") || ""; localStorage.removeItem("lockedin.intent"); } catch (err) { /* private mode */ }
+  if (!usable.length) { screen = "lobby"; lobbyMode = intent === "create" ? "create" : "join"; loaded = false; return render(); }
   if (!usable.some(g => g.id === gid)) gid = (usable.find(g => (myMembership(g.id) || {}).status === "approved") || usable[0]).id;
   await openGroup(gid);
   if (invited && screen === "app") openGroupsPanel();   // shows how the invite went
@@ -3966,10 +3981,14 @@ function renderLanding() {
         <h1 class="rv in d1">Daily trading homework<span class="dim">Tracked as a group</span></h1>
         <p class="lead rv in d2">Your group picks the boxes, like chart, journal and HTF. Everyone ticks them off after their session, and everyone can see who did.</p>
         <div class="lp-cta rv in d3">${signin()}${blink("how", "How it works")}</div>
+        <a class="hero-own rv in d3" href="#start-own">Run a trading group? Start your own</a>
         ${errMsg}
         <p class="fine rv in d3">${pendingInvite() ? "You've been invited to a group. Sign in with Discord and you'll be on its waiting list." : "Free. You'll need a join code from your group's owner."}</p>
         <p class="fine rv in d3">By signing in you agree to the ${link("terms", "Terms")} and the ${link("privacy", "Privacy policy")}.</p>
       </div>
+      <figure class="hero-app rv in d2" role="img" aria-label="Example of a group's day in LockedIn: the last member ticks their box and the group reaches 5 of 5 done before the cutoff.">
+        <div class="mock">${rows}</div>
+      </figure>
     </header>
     <section class="story" id="story" aria-labelledby="story-title">
       <div class="story-pin">
@@ -4015,7 +4034,7 @@ function renderLanding() {
     </section>
     ${goal}
     </section>
-    <section class="lp-sec">${own}</section>`;
+    <section class="lp-sec" id="start-own">${own}</section>`;
   return `<div class="lp">
     <nav class="lp-nav" aria-label="LockedIn">
       ${link("home", `<img src="icons/icon-192.png" alt="">LockedIn`, "brand")}
@@ -4643,6 +4662,7 @@ document.addEventListener("click", async e => {
     case "signin-nav":
     case "signin-own":
     case "signin": {
+      try { if (t.id === "signin-own") localStorage.setItem("lockedin.intent", "create"); else localStorage.removeItem("lockedin.intent"); } catch (err) { /* private mode */ }
       const { error: er } = await sb.auth.signInWithOAuth({ provider: "discord", options: { redirectTo: location.origin + location.pathname } });
       if (er) { error = er.message; render(); }
       return;
