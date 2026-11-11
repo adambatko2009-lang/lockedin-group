@@ -6,3 +6,6 @@ secrets/
 
 # Impeccable design reviews (local notes, not part of the website)
 .impeccable/
+
+# Impeccable product description (kept on this Mac only)
+PRODUCT.md
