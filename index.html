@@ -323,6 +323,7 @@
   .help-start .btn { display: inline-flex; align-items: center; gap: 6px; }
   .help-install h3 { margin: 16px 0 6px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
   .help-install .sub-hint { font-size: 14px; color: var(--text-2); margin: 0 0 8px; }
+  .help-copy { margin-top: 12px; font-family: var(--font-data); font-size: 12px; }
   .help-legal { display: flex; gap: 16px; margin: 10px 0 0; }
   .help-legal a { color: var(--accent-text); font-weight: 600; }
   .datarow a.btn { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
@@ -751,6 +752,7 @@
   .lp-foot { border-top: 1px solid var(--lp-line); max-width: 1120px; margin: 0 auto; padding: 26px 20px calc(30px + env(safe-area-inset-bottom, 0px));
     display: flex; flex-wrap: wrap; gap: 10px 24px; justify-content: space-between; color: var(--lp-2); font-size: 13px; line-height: 1.5; }
   .lp-foot p { margin: 0; max-width: 60ch; }
+  .lp-foot .foot-copy { flex-basis: 100%; font: 500 12px var(--font-data); letter-spacing: 0.04em; color: var(--lp-2); opacity: .8; }
   /* scroll reveal */
   .rv { opacity: 0; transform: translateY(10px); transition: opacity .6s ease-out, transform .6s ease-out; }
   .rv.in { opacity: 1; transform: none; }
@@ -2288,7 +2290,8 @@ function renderHelp() {
     ${install ? `<div class="help-install">${install}</div>` : `<p class="empty" style="margin-top:12px">You're using LockedIn as an app. Nice.</p>`}</div>`;
   const legal = `<div class="card"><div class="cardhead"><h2>Your data and the rules</h2></div>
     <p class="empty">Download or delete your data in <button class="linkbtn" data-rail="settings">Settings</button>.</p>
-    <p class="help-legal"><a href="?p=privacy" data-land="privacy">Privacy policy</a><a href="?p=terms" data-land="terms">Terms</a></p></div>`;
+    <p class="help-legal"><a href="?p=privacy" data-land="privacy">Privacy policy</a><a href="?p=terms" data-land="terms">Terms</a></p>
+    <p class="empty help-copy">© 2026 Adam Batko</p></div>`;
   const faq = `<div class="card faq"><div class="cardhead"><h2>Questions</h2></div>
     ${FAQ.map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join("")}</div>`;
   return isWide()
@@ -4044,7 +4047,8 @@ function renderLanding() {
     </section>`}
     <footer class="lp-foot">
       <span class="foot-links">${inApp ? link("home", "Back to the app") : link("home", "Home") + link("why", "Why") + link("how", "How it works") + link("features", "Features")}${link("privacy", "Privacy")}${link("terms", "Terms")}</span>
-      <p>Signing in with Discord shares your Discord username, profile picture, email address and account ID with LockedIn. We never see your messages, servers or password. LockedIn is a free project run by Adam Batko, Norway.${cfg.contactEmail ? ` Contact: <a href="mailto:${esc(cfg.contactEmail)}">${esc(cfg.contactEmail)}</a>` : ""}</p></footer>
+      <p>Signing in with Discord shares your Discord username, profile picture, email address and account ID with LockedIn. We never see your messages, servers or password. LockedIn is a free project run by Adam Batko, Norway.${cfg.contactEmail ? ` Contact: <a href="mailto:${esc(cfg.contactEmail)}">${esc(cfg.contactEmail)}</a>` : ""}</p>
+      <p class="foot-copy">© 2026 Adam Batko</p></footer>
   </div>`;
 }
 // The front page's glass bars glow where the pointer is, like the tracker's bars.
