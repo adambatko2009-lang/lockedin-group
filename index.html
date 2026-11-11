@@ -324,6 +324,22 @@
   .faq summary::after { content: "+"; flex: none; font: 500 20px var(--font-data); color: var(--muted); transition: transform .2s; }
   .faq details[open] summary::after { transform: rotate(45deg); }
   .faq details p { margin: 0 0 14px; font-size: 15px; line-height: 1.55; color: var(--text-2); }
+  .faq summary .faq-q { display: block; }
+  .faq details[open] .faq-snip { display: none; }
+  .faq summary .faq-snip { display: block; margin-top: 3px; font-size: 14px; font-weight: 400; line-height: 1.45; color: var(--muted); }
+  .faq summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+  .faq details[open] summary { color: var(--accent-text); }
+  .faq mark { background: color-mix(in oklab, var(--accent) 26%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }
+  .faq-search { position: relative; margin: 0 0 6px; }
+  .faq-search .ic { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+  .faq-search .field { width: 100%; min-height: 44px; padding-left: 38px; font-size: 16px; }
+  .faq-search .field::-webkit-search-cancel-button { cursor: pointer; }
+  .faq-count { margin: 0 0 4px; min-height: 0; font: 500 13px var(--font-data); color: var(--muted); }
+  .faq-count:empty { display: none; }
+  .faq-link { display: inline-flex; align-items: center; gap: 6px; margin: -4px 0 14px; padding: 4px 0; border: 0; background: none; font: 500 13px var(--font-ui); color: var(--muted); cursor: pointer; }
+  .faq-link:hover { color: var(--text-2); }
+  .faq-none { padding: 10px 0 4px; }
+  .faq-none p { margin: 0 0 12px; font-size: 15px; color: var(--text-2); }
   .help-contact .datarow { margin-top: 12px; }
   .support-mail { margin: 10px 0 0; font: 500 14px var(--font-data); color: var(--text-2); user-select: all; -webkit-user-select: all; overflow-wrap: anywhere; }
   .help-contact .help-note { margin: 14px 0 0; }
@@ -1651,6 +1667,8 @@ const ICON_PATHS = {
   more: '<circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.9.8c0 1.7-2.5 2.1-2.5 3.8"/><path d="M12 17.1v.2"/>',
   mail: '<rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4 7 8 6 8-6"/>',
+  search: '<circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/>',
+  link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
 };
 const ic = (name, px = 16) => `<svg class="ic" viewBox="0 0 24 24" width="${px}" height="${px}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name] || ""}</svg>`;
 // Settings gear adapted from Feather Icons (MIT, Cole Bemis); full license in vendor/licenses. All other icons were drawn for LockedIn.
@@ -1899,10 +1917,12 @@ async function openGroup(id) {
   loadStep = "done";
   if (changed) profileKey = null;
   if (!isAdmin && tab === "admin") tab = "day";
+  openFaqLink();
   loaded = true; screen = "app";
   offlineSince = null;
   subscribe();
   render();
+  if (faqOpenSlug) { const d = document.getElementById("faq-" + faqOpenSlug); faqOpenSlug = null; if (d) d.scrollIntoView({ block: "center" }); }
   if (!failed) saveSnapshot();
   flushOutbox();
   maybeStartTour();
@@ -2324,6 +2344,64 @@ const FAQ = [
   ["How do I download or delete my data?", "<b>Settings</b> → <b>Your data</b>. Download my data gives you a copy of everything; Delete my account removes your account and everything in it."],
   ["Is LockedIn free?", "Yes, completely. There's nothing to buy. Nothing in LockedIn is financial or investment advice."],
 ];
+// Help search: every word typed must appear in the question or the answer.
+let faqQuery = "", faqOpenSlug = null;
+const faqText = html => html.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+const faqSlug = q => faqText(q).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48).replace(/-+$/, "");
+const faqWords = q => [...new Set(q.toLowerCase().split(/\s+/).filter(Boolean))];
+const reEsc = w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+// marks the typed words in the text between tags (P&amp;L is matched as P&L)
+function faqMark(html, words) {
+  if (!words.length) return html;
+  const re = new RegExp("(" + words.map(reEsc).sort((a, b) => b.length - a.length).join("|") + ")", "gi");
+  return html.split(/(<[^>]+>)/).map(part => part.startsWith("<") ? part : faqText(part).split(re).map((bit, i) => i % 2 ? `<mark>${esc(bit)}</mark>` : esc(bit)).join("")).join("");
+}
+function faqSnippet(text, words, radius = 44) {
+  const low = text.toLowerCase(), at = Math.min(...words.map(w => low.indexOf(w)).filter(i => i >= 0));
+  const from = Math.max(0, at - radius), to = Math.min(text.length, at + radius * 2);
+  return (from > 0 ? "…" : "") + text.slice(from, to).trim() + (to < text.length ? "…" : "");
+}
+const faqLink = slug => location.origin + "/?faq=" + slug;
+// a question link (lockedingroup.app/?faq=...) is remembered through the Discord sign-in
+const FAQ_KEY = "lockedin.faq";
+(function readFaqLink() {
+  try {
+    const u = new URL(location.href);
+    if (!u.searchParams.has("faq")) return;
+    const slug = u.searchParams.get("faq") || "";
+    if (FAQ.some(([q]) => faqSlug(q) === slug)) sessionStorage.setItem(FAQ_KEY, slug);
+    u.searchParams.delete("faq");
+    history.replaceState(history.state, "", u.pathname + u.search + u.hash);
+  } catch (err) { /* private mode: the link still opens the site */ }
+})();
+function openFaqLink() {
+  let slug = "";
+  try { slug = sessionStorage.getItem(FAQ_KEY) || ""; sessionStorage.removeItem(FAQ_KEY); } catch (err) { return; }
+  if (!slug) return;
+  tab = "help"; profileKey = null; faqQuery = ""; faqOpenSlug = slug;
+}
+function faqListHtml() {
+  const words = faqWords(faqQuery);
+  const hits = FAQ.filter(([q, a]) => { const t = (faqText(q) + " " + faqText(a)).toLowerCase(); return words.every(w => t.includes(w)); });
+  if (!hits.length) {
+    const mail = cfg.contactEmail;
+    return `<div class="faq-none"><p>Nothing here matches "${esc(faqQuery.trim())}".</p>
+      <div class="datarow"><button class="btn plain small" data-faq-clear>Show every question</button>${mail ? `<a class="btn plain small" href="mailto:${esc(mail)}?subject=${encodeURIComponent("LockedIn question")}">${ic("mail", 16)}Ask us instead</a>` : ""}</div></div>`;
+  }
+  return hits.map(([q, a]) => {
+    const slug = faqSlug(q), qLow = faqText(q).toLowerCase();
+    const snip = words.length && !words.every(w => qLow.includes(w)) ? `<span class="faq-snip">${faqMark(esc(faqSnippet(faqText(a), words)), words)}</span>` : "";
+    return `<details id="faq-${slug}"${faqOpenSlug === slug ? " open" : ""}><summary><span><span class="faq-q">${faqMark(q, words)}</span>${snip}</span></summary>
+      <p>${faqMark(a, words)}</p><button class="faq-link" data-faq-copy="${slug}">${ic("link", 14)}<span>Copy link to this answer</span></button></details>`;
+  }).join("");
+}
+function faqCountText() {
+  if (!faqWords(faqQuery).length) return "";
+  const words = faqWords(faqQuery);
+  const n = FAQ.filter(([q, a]) => { const t = (faqText(q) + " " + faqText(a)).toLowerCase(); return words.every(w => t.includes(w)); }).length;
+  return n ? `${n} of ${FAQ.length} questions` : "";
+}
+
 function renderHelp() {
   const mail = cfg.contactEmail;
   const contact = `<div class="card help-contact"><div class="cardhead"><h2>Contact support</h2></div>
@@ -2341,7 +2419,9 @@ function renderHelp() {
     <p class="help-legal"><a href="?p=privacy" data-land="privacy">Privacy policy</a><a href="?p=terms" data-land="terms">Terms</a></p>
     <p class="empty help-copy">© 2026 Adam Batko</p></div>`;
   const faq = `<div class="card faq"><div class="cardhead"><h2>Questions</h2></div>
-    ${FAQ.map(([q, a]) => `<details><summary>${q}</summary><p>${a}</p></details>`).join("")}</div>`;
+    <div class="faq-search" role="search">${ic("search", 18)}<input class="field" type="search" id="faq-search" value="${esc(faqQuery)}" placeholder="Search the questions" aria-label="Search the questions" autocomplete="off" enterkeyhint="search"></div>
+    <p class="faq-count" aria-live="polite">${faqCountText()}</p>
+    <div id="faq-list">${faqListHtml()}</div></div>`;
   return isWide()
     ? `<div class="desk"><div class="maincol">${faq}</div><div class="side">${contact}${start}${legal}</div></div>`
     : contact + faq + start + legal;
@@ -4806,6 +4886,7 @@ document.addEventListener("click", async e => {
   }
 });
 document.addEventListener("input", e => {
+  if (e.target.id === "faq-search") { faqQuery = e.target.value.slice(0, 80); return render(); }
   if (tab === "admin" && e.target.closest && e.target.closest("#app")) adminDirty = true;
   if (e.target.id === "terms-ok") { document.getElementById("accept-terms").disabled = !e.target.checked; return; }
   if (e.target.id === "set-confetti") { settings.confetti = e.target.checked; return saveSettings(); }
@@ -4836,6 +4917,27 @@ document.addEventListener("input", e => {
 });
 document.addEventListener("change", e => { if (e.target.id === "daypick") goToDay(e.target.value); });
 // Desktop browsers only open the calendar from its small icon; open it from anywhere on the date.
+document.addEventListener("click", async e => {
+  const clear = e.target.closest && e.target.closest("[data-faq-clear]");
+  if (clear) { faqQuery = ""; render(); const f = document.getElementById("faq-search"); if (f) f.focus(); return; }
+  const copy = e.target.closest && e.target.closest("[data-faq-copy]");
+  if (!copy) return;
+  const label = copy.querySelector("span"), url = faqLink(copy.dataset.faqCopy);
+  try { await navigator.clipboard.writeText(url); label.textContent = "Link copied"; } catch (err) { label.textContent = url; }
+  setTimeout(() => { label.textContent = "Copy link to this answer"; }, 1800);
+});
+// arrow keys move between questions; Escape in the search box clears it
+document.addEventListener("keydown", e => {
+  if (e.target.id === "faq-search" && e.key === "Escape" && faqQuery) { e.preventDefault(); faqQuery = ""; render(); return; }
+  if (e.target.id === "faq-search" && e.key === "ArrowDown") { const s = document.querySelector("#faq-list summary"); if (s) { e.preventDefault(); s.focus(); } return; }
+  if (!(e.target.tagName === "SUMMARY" && e.target.closest("#faq-list"))) return;
+  const all = [...document.querySelectorAll("#faq-list summary")], i = all.indexOf(e.target);
+  const to = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: all.length - 1 }[e.key];
+  if (to === undefined) return;
+  e.preventDefault();
+  if (to < 0) { const f = document.getElementById("faq-search"); if (f) f.focus(); return; }
+  if (all[Math.min(to, all.length - 1)]) all[Math.min(to, all.length - 1)].focus();
+});
 document.addEventListener("click", e => { if (e.target.id === "daypick" && e.target.showPicker) try { e.target.showPicker(); } catch (err) {} });
 // Phones: swipe left / right on the Day tab for the next / previous day, on the Week tab for weeks.
 (function swipeDays() {
