@@ -164,8 +164,8 @@
   .track .now { position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: var(--text); box-shadow: 0 0 0 3px var(--surface); }
   .meta { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; gap: 10px; }
   .meta .count { font: 600 30px var(--font-data); letter-spacing: -0.03em; }
-  .meta .count, .pts, .tile b { background: var(--chrome); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-  .meta .count span { -webkit-text-fill-color: var(--muted); }
+  .meta .count, .pts, .tile b { color: var(--text); }   /* solid, not chrome gradient text */
+  .meta .count span { color: var(--muted); }
   .meta .count span { font-size: 17px; color: var(--muted); font-weight: 500; }
   .meta .time { font: 600 14px var(--font-data); color: var(--text-2); text-align: right; }
   .stack { display: flex; gap: 2px; height: 6px; margin-top: 12px; }
@@ -653,21 +653,18 @@
   .legal b { color: #fff; font-weight: 600; }
   .lp a:not(.lp-btn):not(.brand):not([data-land]) , .legal a, .lp .fine a { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
   @media (min-width: 760px) { .legal { padding-top: 130px; } }
-  /* moving smoke: soft colored clouds, blurred together, with film grain on top */
+  /* smoke: soft colored clouds, blurred together, with film grain on top. Still on purpose: no drifting loops */
   .smoke { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
-  .smoke i { position: absolute; border-radius: 50%; filter: blur(70px); mix-blend-mode: screen; will-change: transform; }
-  .smoke i:nth-child(1) { width: 70vmax; height: 50vmax; left: -15%; top: 10%; background: radial-gradient(closest-side, rgba(96, 165, 250, 0.55), transparent); animation: drift-a 26s ease-in-out infinite alternate; }
-  .smoke i:nth-child(2) { width: 55vmax; height: 55vmax; right: -20%; top: -15%; background: radial-gradient(closest-side, rgba(29, 78, 216, 0.5), transparent); animation: drift-b 32s ease-in-out infinite alternate; }
-  .smoke i:nth-child(3) { width: 60vmax; height: 30vmax; left: 15%; bottom: -10%; background: radial-gradient(closest-side, rgba(230, 236, 255, 0.24), transparent); animation: drift-c 24s ease-in-out infinite alternate; }
-  .smoke i:nth-child(4) { width: 30vmax; height: 30vmax; left: 45%; top: 35%; background: radial-gradient(closest-side, rgba(74, 222, 128, 0.18), transparent); animation: drift-b 20s ease-in-out infinite alternate-reverse; }
+  .smoke i { position: absolute; border-radius: 50%; filter: blur(70px); mix-blend-mode: screen; }
+  .smoke i:nth-child(1) { width: 70vmax; height: 50vmax; left: -15%; top: 10%; background: radial-gradient(closest-side, rgba(96, 165, 250, 0.55), transparent); }
+  .smoke i:nth-child(2) { width: 55vmax; height: 55vmax; right: -20%; top: -15%; background: radial-gradient(closest-side, rgba(29, 78, 216, 0.5), transparent); }
+  .smoke i:nth-child(3) { width: 60vmax; height: 30vmax; left: 15%; bottom: -10%; background: radial-gradient(closest-side, rgba(230, 236, 255, 0.24), transparent); }
+  .smoke i:nth-child(4) { width: 30vmax; height: 30vmax; left: 45%; top: 35%; background: radial-gradient(closest-side, rgba(74, 222, 128, 0.18), transparent); }
   .smoke::before { content: ""; position: absolute; inset: 0; z-index: 2; opacity: 0.09; mix-blend-mode: overlay;
     background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
   .smoke::after { content: ""; position: absolute; inset: 0; z-index: 3; background: radial-gradient(120% 90% at 50% 45%, transparent 35%, #000 85%); }
   .lp-hero .smoke { -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent); }
   .lp-final .smoke { -webkit-mask-image: linear-gradient(transparent, #000 35%, #000 75%, transparent); mask-image: linear-gradient(transparent, #000 35%, #000 75%, transparent); }
-  @keyframes drift-a { to { transform: translate(18vw, -6vh) rotate(25deg) scale(1.15); } }
-  @keyframes drift-b { to { transform: translate(-14vw, 12vh) rotate(-30deg) scale(0.9); } }
-  @keyframes drift-c { to { transform: translate(-10vw, -14vh) scale(1.25); } }
   .lp-hero { position: relative; isolation: isolate; min-height: 100svh; display: grid; place-items: center; text-align: center; padding: 150px 20px 90px; }
   .lp-hero h1 { font-size: clamp(46px, 10.5vw, 120px); line-height: 0.92; letter-spacing: -0.05em; font-weight: 600; margin: 22px 0 22px; text-wrap: balance; }
   .lp-hero h1 .serif { display: block; font-size: 1.1em; letter-spacing: -0.03em; color: #e8ecff; }
@@ -734,9 +731,8 @@
   .steps3 > div { border-top: 1px solid var(--lp-line); padding-top: 16px; }
   .steps3 b { display: block; font-size: 19px; letter-spacing: -0.02em; margin: 8px 0 6px; }
   .steps3 p { margin: 0; color: rgba(245, 245, 247, 0.68); font-size: 15px; line-height: 1.5; }
-  /* big chrome number */
-  .chrome { font-size: clamp(110px, 26vw, 300px); font-weight: 700; letter-spacing: -0.06em; line-height: 0.9; margin: 10px 0 6px;
-    background: linear-gradient(180deg, #ffffff 0%, #d9dbe3 30%, #6b6f7c 58%, #e9ebf2 78%, #9a9eaa 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  /* the big 5/5: solid white, not chrome gradient text */
+  .chrome { font-size: clamp(110px, 26vw, 300px); font-weight: 700; letter-spacing: -0.06em; line-height: 0.9; margin: 10px 0 6px; color: #fff; }
   /* features: editorial list */
   .flist { display: grid; margin-top: 44px; border-top: 1px solid var(--lp-line); text-align: left; }
   .frow { display: grid; grid-template-columns: 44px 1fr; gap: 6px 16px; padding: 24px 0; border-bottom: 1px solid var(--lp-line); }
@@ -3455,7 +3451,7 @@ function checkUnlocks() {
   const fresh = earned.filter(b => !seen.includes(b.id));
   if (!fresh.length) return;
   const b = fresh[fresh.length - 1], t = document.getElementById("toast");
-  t.innerHTML = `<div class="medal tier-${b.tier}"><span>${ic(b.icon, 26)}</span></div><div><b>Achievement unlocked!</b><span>${esc(b.title)}${fresh.length > 1 ? ` · +${fresh.length - 1} more` : ""}</span></div>`;
+  t.innerHTML = `<div class="medal tier-${b.tier}"><span>${ic(b.icon, 26)}</span></div><div><b>Achievement unlocked</b><span>${esc(b.title)}${fresh.length > 1 ? ` · +${fresh.length - 1} more` : ""}</span></div>`;
   t.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { t.hidden = true; }, 4500);
@@ -3843,7 +3839,7 @@ function renderLanding() {
       </div></div></div>
     </div>`;
   const own = `<div class="lp-own rv">
-      <div><p class="mono">Run a trading group?</p><h2>Start your own group.</h2>
+      <div><p class="mono">Run a trading group?</p><h2>Start your own group</h2>
         <p>Sign in and tap <b>Start your own group</b>. Once approved you get your own join code, homework boxes, points, time zone, color and logo. You decide who gets in.</p></div>
       ${signin("signin-own", "Sign in to start")}
     </div>`;
@@ -3878,7 +3874,7 @@ function renderLanding() {
     </div></section>
     <section class="lp-sec">
       <p class="mono rv">Getting in</p>
-      <h2 class="rv d1">Join your group<span class="dim">in a minute.</span></h2>
+      <h2 class="rv d1">Join your group<span class="dim">in a minute</span></h2>
       <div class="bigsteps cols">
         <div class="rv"><b>Sign in with Discord.</b><p>No new password to remember. Your Discord account is your login.</p></div>
         <div class="rv d1"><b>Type the join code.</b><p>Your group's owner gives you a code like LOCK-7K2P.</p></div>
@@ -3892,7 +3888,7 @@ function renderLanding() {
       <div class="flist" style="margin-top:0">
         ${row("Daily homework", "One tap per box. Your group decides the boxes: chart with execution, journal, HTF, or your own.")}
         ${row("Notes &amp; chart pictures", "Write what happened and paste screenshots of your trades. Tap any picture to zoom in.")}
-        ${row("Streaks, points &amp; badges", "A ranking for your group, streaks for days in a row, and 31 badges to unlock.")}
+        ${row("Streaks, points &amp; badges", "A ranking for your group, streaks for days in a row, and 31 badges to earn.")}
         ${row("Reminders", "A notification on your phone before the day closes, only if your homework isn't done yet.")}
         ${row("Works like an app", "Add it to your home screen. It opens full screen and keeps working with bad signal.")}
         ${row("Kept inside your group", "Other groups can't see your ticks, notes or pictures. Only your group, its owner and the app owner can.")}
@@ -3967,7 +3963,7 @@ function renderLanding() {
   else body = `<header class="lp-hero home">
       <div class="hero-text">
         <p class="mono rv in">For trading groups on Discord</p>
-        <h1 class="rv in d1">Daily trading homework.<span class="dim">Tracked as a group.</span></h1>
+        <h1 class="rv in d1">Daily trading homework<span class="dim">Tracked as a group</span></h1>
         <p class="lead rv in d2">Your group picks the boxes, like chart, journal and HTF. Everyone ticks them off after their session, and everyone can see who did.</p>
         <div class="lp-cta rv in d3">${signin()}${blink("how", "How it works")}</div>
         ${errMsg}
@@ -4014,7 +4010,7 @@ function renderLanding() {
       </div>
     </section>
     <section class="lp-sec split">
-      <div><p class="mono rv">Why it works</p><h2 class="rv d1">Discipline is<span class="dim">a group sport.</span></h2></div>
+      <div><p class="mono rv">Why it works</p><h2 class="rv d1">Discipline is<span class="dim">a group sport</span></h2></div>
       <div class="rv d2"><p class="sub" style="margin:0 0 24px">Your group sees who's done before the cutoff. Nobody wants to be the red circle.</p>${blink("why", "On your own vs. in a group")}</div>
     </section>
     ${goal}
@@ -4039,7 +4035,7 @@ function renderLanding() {
     ${body}
     ${LEGAL.includes(page) ? "" : `<section class="lp-final">
       <p class="mono rv">Ready?</p>
-      <h2 class="rv d1">Stop trading<span class="dim">alone.</span></h2>
+      <h2 class="rv d1">Stop trading<span class="dim">alone</span></h2>
       <div class="lp-cta rv d2" style="margin-top:30px">${signin("signin-end")}</div>
       ${page !== "home" ? errMsg : ""}
       <p class="fine rv d3">Sign in, type your group's join code, and the owner lets you in.</p>
@@ -4161,7 +4157,7 @@ function initStory() {
     { t: ["Tick your", "homework"], b: "One tap per box after your session. All required boxes ticked turns your circle green.", bg: [2, 8, 23], glow: "rgba(37, 99, 235, 0.5)", hl: 0 },
     { t: ["Show your", "work"], b: "Write what happened and add chart screenshots. Your group reads it and learns from it.", bg: [2, 16, 28], glow: "rgba(14, 165, 233, 0.42)", hl: 0 },
     { t: ["Beat the", "cutoff"], b: "Everyone sees who's done before the day closes. Turn on reminders and your phone nudges you first.", bg: [2, 20, 14], glow: "rgba(34, 197, 94, 0.38)", hl: 1 },
-    { t: ["Climb the", "ranking"], b: "Points, streaks for days in a row, and 31 badges to unlock. Every day counts.", bg: [10, 10, 16], glow: "rgba(251, 191, 36, 0.28)", hl: 2 },
+    { t: ["Climb the", "ranking"], b: "Points, streaks for days in a row, and 31 badges to earn. Every day counts.", bg: [10, 10, 16], glow: "rgba(251, 191, 36, 0.28)", hl: 2 },
   ];
   const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>';
   const XS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg>';
