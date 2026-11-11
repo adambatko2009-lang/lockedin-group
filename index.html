@@ -202,6 +202,8 @@
             mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.2 8.4 6.4 11.4 12.8 4.8' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
   .t:not(:disabled):active { transform: scale(0.96); filter: brightness(0.92); }
   .t:disabled { cursor: default; }
+  .t .lbl-short { display: none; }
+  @media (max-width: 600px) { .t .lbl-full { display: none; } .t .lbl-short { display: inline; } }
   /* small captions that say what the two bars on Today mean */
   .bar-cap { display: flex; justify-content: space-between; gap: 12px; margin-top: 6px; font: 500 12px var(--font-data); color: var(--muted); }
   /* someone else's box (owners and admins): a quieter look, and it needs a second tap */
@@ -2077,6 +2079,9 @@ function guideNudgeHtml() {
   return `<button class="guide-nudge" data-guide="people">${ic("target", 16)}Finish setting up your group · ${steps.filter(x => x[1]).length} of ${steps.length} done</button>`;
 }
 
+// Phones: member rows show the first word of a box name ("Chart" for "Chart with execution").
+const shortLabel = l => { const w = String(l).trim().split(/\s+/)[0] || l; return w.length > 11 ? w.slice(0, 10) + "…" : w; };
+
 // A day's result: one of these, or nothing picked yet. "No trade" uses the no_trade column.
 const RESULTS = [["win", "Win"], ["loss", "Loss"], ["notrade", "No trade"], ["gamble", "Gamble"]];
 const resultOf = rec => rec && rec.no_trade ? "notrade" : (rec && rec.result) || null;
@@ -3265,7 +3270,7 @@ function renderDay() {
     const st = statusOf(k, m.key), rec = tickOf(k, m.key) || {}, editable = canEdit(k, m.key);
     const toggles = RULES.map(([r, label, kind]) =>
       `<button class="t ${kind}${editable && m.key !== myKey() ? " guard" : ""}" data-tick="${m.key}:${r}" aria-pressed="${!!rec[r]}" ${editable ? "" : "disabled"}
-        aria-label="${esc(m.name)}: ${label}${kind === "bonus" ? " (bonus)" : ""}">${label}</button>`).join("");
+        aria-label="${esc(m.name)}: ${label}${kind === "bonus" ? " (bonus)" : ""}"><span class="lbl-full">${label}</span><span class="lbl-short" aria-hidden="true">${shortLabel(label)}</span></button>`).join("");
     const note = rec.note ? `<p>${linkify(rec.note)}</p>` : "";
     const images = rec.images || [];
     allShots.push(...images);
@@ -4555,12 +4560,13 @@ document.addEventListener("click", async e => {
     const [key, r] = d.tick.split(":");
     // Owners and admins changing someone else's box: the first tap only asks, so a careless tap while scrolling does nothing.
     if (t.classList.contains("guard") && t.dataset.armed !== "1") {
-      document.querySelectorAll(".t.armed").forEach(b => { b.classList.remove("armed"); b.dataset.armed = ""; b.textContent = b.dataset.label; });
-      t.dataset.armed = "1"; t.dataset.label = t.textContent; t.classList.add("armed");
+      const disarm = b => { b.classList.remove("armed"); b.dataset.armed = ""; b.innerHTML = b.dataset.label; b.setAttribute("aria-label", b.dataset.aria); };
+      document.querySelectorAll(".t.armed").forEach(disarm);
+      t.dataset.armed = "1"; t.dataset.label = t.innerHTML; t.dataset.aria = t.getAttribute("aria-label"); t.classList.add("armed");
       const who = (members.find(m => m.key === key) || {}).name || "them";
       t.textContent = "Tap again";
       t.setAttribute("aria-label", `Tap again to change this box for ${who}`);
-      clearTimeout(t._arm); t._arm = setTimeout(() => { if (t.isConnected && t.dataset.armed === "1") { t.dataset.armed = ""; t.classList.remove("armed"); t.textContent = t.dataset.label; } }, 2500);
+      clearTimeout(t._arm); t._arm = setTimeout(() => { if (t.isConnected && t.dataset.armed === "1") disarm(t); }, 2500);
       return;
     }
     if (t.animate && !matchMedia("(prefers-reduced-motion: reduce)").matches) t.animate([{ transform: "scale(0.94)" }, { transform: "scale(1.04)" }, { transform: "scale(1)" }], { duration: 280, easing: "ease-out" });
