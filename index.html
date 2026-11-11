@@ -604,7 +604,7 @@
     position: relative; overflow: clip; color: var(--lp-text); background: #000; }
   .lp :focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
   .lp .serif { font-family: "Instrument Serif", Georgia, "Times New Roman", serif; font-style: italic; font-weight: 400; letter-spacing: -0.01em; }
-  .lp .mono { font: 500 11px/1.4 var(--font-data); letter-spacing: 0.22em; text-transform: uppercase; color: var(--lp-2); margin: 0; }
+  .lp .mono { font: 500 13px/1.4 var(--font-data); letter-spacing: 0.12em; text-transform: uppercase; color: var(--lp-2); margin: 0; }   /* small labels: readable size, gentler spacing */
   .lp-nav { position: fixed; z-index: 20; top: max(12px, env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
     width: min(1120px, calc(100% - 24px)); display: flex; align-items: center; justify-content: space-between; padding: 6px 6px 6px 16px;
     border-radius: 16px; background: rgba(18, 18, 22, 0.55); border: 1px solid rgba(255, 255, 255, 0.08);
@@ -612,7 +612,7 @@
   .lp-nav .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
   .lp-nav .brand img { width: 26px; height: 26px; border-radius: 28%; }
   .lp-nav .links { display: none; gap: 26px; }
-  .lp-nav .links a { color: var(--lp-2); text-decoration: none; font: 500 11px var(--font-data); letter-spacing: 0.18em; text-transform: uppercase; }
+  .lp-nav .links a { color: var(--lp-2); text-decoration: none; font: 500 13px var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; }
   .lp-nav .links a:hover { color: #fff; }
   .lp-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 0 26px; border-radius: 12px;
     border: 0; font: 600 16px var(--font-ui); cursor: pointer; text-decoration: none; transition: transform .2s, box-shadow .2s, background .2s; }
@@ -640,7 +640,7 @@
   .nextlink .arrow { grid-row: 1 / span 2; grid-column: 2; font-size: 34px; transition: transform .3s; }
   .nextlink:hover .arrow { transform: translateX(8px); }
   .foot-links { display: flex; flex-wrap: wrap; gap: 8px 20px; }
-  .foot-links a { color: var(--lp-2); text-decoration: none; font: 500 11px var(--font-data); letter-spacing: 0.18em; text-transform: uppercase; }
+  .foot-links a { color: var(--lp-2); text-decoration: none; font: 500 13px var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; }
   .foot-links a:hover, .foot-links a[aria-current="page"] { color: #fff; }
   .legal { max-width: 720px; margin: 0 auto; padding: 150px 20px 40px; text-align: left; }
   .legal h1 { font-size: clamp(36px, 7vw, 56px); letter-spacing: -0.04em; font-weight: 600; margin: 14px 0 12px; line-height: 1.05; }
@@ -1264,7 +1264,7 @@
   .st-chapters { display: none; position: relative; z-index: 120; justify-self: end; width: 240px; list-style: none; margin: 0; padding: 0; }
   @media (min-width: 900px) { .st-chapters { display: grid; } }
   .st-chapters li { display: grid; grid-template-columns: 32px 1fr; align-items: center; padding: 11px 0; border-top: 1px solid var(--lp-line); color: #6b6b75; font-size: 14px; transition: color .3s; }
-  .st-chapters li span { font: 500 11px var(--font-data); letter-spacing: 0.1em; }
+  .st-chapters li span { font: 500 12px var(--font-data); letter-spacing: 0.08em; }
   .st-chapters li[aria-current="step"] { color: #fff; }
   .st-chapters .bar { grid-column: 1 / -1; height: 2px; margin-top: 10px; background: rgba(255, 255, 255, 0.1); border-radius: 1px; overflow: hidden; }
   .st-chapters .bar i { display: block; height: 100%; background: #fff; transform: scaleX(0); transform-origin: left; }
@@ -1387,7 +1387,7 @@
     opacity: 0; transition: opacity .4s .25s; }
   .lp-menu.open .mfoot { opacity: 1; }
   .lp-menu .mfoot .small-links { display: flex; gap: 20px; }
-  .lp .lp-menu .mfoot .small-links a { color: var(--lp-2); text-decoration: none; font: 500 11px var(--font-data); letter-spacing: 0.18em; text-transform: uppercase; }
+  .lp .lp-menu .mfoot .small-links a { color: var(--lp-2); text-decoration: none; font: 500 13px var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; }
   .lp .lp-menu .mfoot .small-links a:hover { color: #fff; }
   .lp-burger .x { display: none; } .menu-on .lp-burger .lines { display: none; } .menu-on .lp-burger .x { display: block; }
   .lp-burger svg { width: 18px; height: 18px; color: #fff; }
@@ -1448,6 +1448,9 @@
   .try-card { border-radius: 22px; padding: 20px; background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)), #0b0b0d;
     border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 30px 80px -40px rgba(0, 0, 0, 0.9); text-align: left; }
   .try-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .try-top { flex-wrap: wrap; row-gap: 6px; }
+  .try-top > * { white-space: nowrap; }
+  @media (max-width: 420px) { .try-top .mono { font-size: 12px; letter-spacing: 0.06em; } }
   .try-clock { display: inline-flex; align-items: center; gap: 6px; font: 500 13px var(--font-data); color: var(--lp-2); }
   .try-clock b { color: #fff; font-weight: 600; }
   .try-clock.urgent, .try-clock.urgent b { color: #f87171; }
@@ -3985,9 +3988,8 @@ function renderLanding() {
   }
   else body = `<header class="lp-hero home">
       <div class="hero-text">
-        <p class="mono rv in">For trading groups on Discord</p>
         <h1 class="rv in d1">Daily trading homework<span class="dim">Tracked as a group</span></h1>
-        <p class="lead rv in d2">Your group picks the boxes, like chart, journal and HTF. Everyone ticks them off after their session, and everyone can see who did.</p>
+        <p class="lead rv in d2">Your Discord group picks the boxes, like chart, journal and HTF. Everyone ticks them off after their session, and everyone can see who did.</p>
         <div class="lp-cta rv in d3">${signin()}${blink("how", "How it works")}</div>
         <button class="hero-own rv in d3" data-jump="start-own">Run a trading group? Start your own</button>
         ${errMsg}
