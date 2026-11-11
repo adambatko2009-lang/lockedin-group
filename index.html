@@ -616,8 +616,8 @@
   .lp-nav .links a:hover { color: #fff; }
   .lp-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 0 26px; border-radius: 12px;
     border: 0; font: 600 16px var(--font-ui); cursor: pointer; text-decoration: none; transition: transform .2s, box-shadow .2s, background .2s; }
-  .lp-btn.white { background: #fff; color: #000; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3), 0 12px 48px rgba(96, 165, 250, 0.35); }
-  .lp-btn.white:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px #fff, 0 16px 60px rgba(96, 165, 250, 0.5); }
+  .lp-btn.white { background: #fff; color: #000; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3), 0 12px 32px rgba(0, 0, 0, 0.45); }
+  .lp-btn.white:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px #fff, 0 14px 36px rgba(0, 0, 0, 0.5); }
   .lp-btn.ghost { background: rgba(255, 255, 255, 0.06); color: #fff; border: 1px solid rgba(255, 255, 255, 0.14); }
   .lp-btn.ghost:hover { background: rgba(255, 255, 255, 0.12); }
   .lp-btn.small { min-height: 40px; padding: 0 16px; font-size: 14px; box-shadow: none; }
@@ -683,7 +683,7 @@
   /* you alone vs your group */
   .versus { position: relative; display: grid; gap: 12px; margin-top: 48px; text-align: left; }
   .vcol { border-radius: 22px; padding: 26px; border: 1px solid var(--lp-line); background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)); }
-  .vcol.us { border-color: rgba(96, 165, 250, 0.35); background: linear-gradient(180deg, rgba(96, 165, 250, 0.14), rgba(96, 165, 250, 0.03)); box-shadow: 0 30px 80px -30px rgba(96, 165, 250, 0.45); }
+  .vcol.us { border-color: rgba(96, 165, 250, 0.35); background: linear-gradient(180deg, rgba(96, 165, 250, 0.14), rgba(96, 165, 250, 0.03)); box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.6); }
   .vcol h3, .lp .vcol h2 { font-size: 26px; line-height: 1.2; letter-spacing: -0.03em; margin: 12px 0 18px; font-weight: 600; }
   .vcol ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
   .vcol li { display: flex; gap: 12px; align-items: flex-start; font-size: 15.5px; line-height: 1.45; color: rgba(245, 245, 247, 0.82); }
@@ -1035,7 +1035,7 @@
     background: radial-gradient(55% 45% at 50% 46%, color-mix(in srgb, var(--acc) 30%, transparent), transparent 70%),
       radial-gradient(55% 45% at 8% 4%, var(--wash-a), transparent 70%), radial-gradient(50% 45% at 96% 30%, var(--wash-b), transparent 70%), var(--base);
     color: var(--text); font: 600 15px var(--font-ui); letter-spacing: 0.04em; }
-  #splash img { width: 68px; height: 68px; border-radius: 28%; box-shadow: 0 0 0 1px var(--card-line), 0 24px 70px color-mix(in srgb, var(--acc) 40%, transparent); animation: splash-in .6s cubic-bezier(.2, .8, .2, 1) both; }
+  #splash img { width: 68px; height: 68px; border-radius: 28%; box-shadow: 0 0 0 1px var(--card-line), 0 24px 60px rgba(0, 0, 0, 0.55); animation: splash-in .6s cubic-bezier(.2, .8, .2, 1) both; }
   #splash span { opacity: 0.85; animation: splash-in .6s .12s cubic-bezier(.2, .8, .2, 1) both; }
   @keyframes splash-in { from { opacity: 0; transform: scale(0.86) translateY(6px); } }
   #splash.opening { -webkit-mask: radial-gradient(circle at 50% 50%, transparent var(--hole), #000 calc(var(--hole) + 1px));
@@ -1086,7 +1086,7 @@
     /* the selected page: a lens of tinted glass in the group's color */
     .rail button[aria-current="page"] { color: var(--on-accent);
       background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 80%, white), var(--accent));
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -1px 0 rgba(0, 0, 0, 0.12), 0 6px 16px -6px color-mix(in srgb, var(--accent) 70%, transparent); }
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -1px 0 rgba(0, 0, 0, 0.12), 0 6px 16px -6px rgba(0, 0, 0, 0.45); }
     .rail .meav { width: 22px; height: 22px; box-shadow: 0 0 0 2px var(--lg-edge); }
     .rail .rail-sep { flex: 1; min-height: 14px; }
     .rail .count { margin-left: auto; min-width: 19px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--crit); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
@@ -1122,7 +1122,7 @@
   /* hero: a group's day on the right (computers only; phones get the scroll story right below) */
   .hero-app { display: none; margin: 0; justify-self: end; width: min(420px, 100%); }
   .hero-app .mock { transform: none; width: 100%; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 24px 60px -12px rgba(0, 0, 0, 0.85); }
-  .hero-own { display: inline-block; margin-top: 16px; color: rgba(245, 245, 247, 0.78); font-size: 15px; font-weight: 500;
+  .hero-own { display: inline-block; margin-top: 16px; padding: 0; border: 0; background: none; cursor: pointer; font-family: inherit; color: rgba(245, 245, 247, 0.78); font-size: 15px; font-weight: 500;
     text-decoration: underline; text-decoration-color: rgba(245, 245, 247, 0.35); text-underline-offset: 4px; transition: color .15s, text-decoration-color .15s; }
   .hero-own:hover { color: #fff; text-decoration-color: #fff; }
   #start-own { scroll-margin-top: 96px; }
@@ -1180,9 +1180,7 @@
   /* front page, round 2: app-style buttons, dot texture with blue glow, 3D phone */
   body.landing::after { display: block; content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
     background:
-      radial-gradient(70% 60% at 82% 12%, rgba(37, 99, 235, 0.42), transparent 70%),
-      radial-gradient(60% 55% at 8% 62%, rgba(29, 78, 216, 0.32), transparent 70%),
-      radial-gradient(55% 45% at 55% 100%, rgba(59, 130, 246, 0.22), transparent 70%),
+      radial-gradient(70% 60% at 82% 12%, rgba(37, 99, 235, 0.26), transparent 70%),   /* one quiet glow, behind the hero card */
       radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1.4px) 0 0 / 22px 22px; }
   .lp { background: transparent; }
   html:has(body.landing) { background: #000; }
@@ -1247,7 +1245,11 @@
   .story-grid { position: relative; height: 100%; display: grid; grid-template-rows: auto 1fr auto; padding: 92px 20px 20px; gap: 6px; }
   @media (min-width: 900px) { .story-grid { grid-template-columns: 1fr auto 1fr; grid-template-rows: 1fr; align-items: center; padding: 90px 40px 40px; gap: 32px; max-width: 1400px; margin: 0 auto; } }
   .story-text { position: relative; z-index: 120; max-width: 420px; }
-  .lp .story-text h2 { font-size: clamp(34px, 4.6vw, 64px); margin: 12px 0 0; }
+  .lp .story-text h2 { font-size: clamp(30px, 3.6vw, 48px); margin: 12px 0 0; }
+  /* quieter: giant type only at the start (the hero) and the end (Stop trading alone); sections in between speak smaller */
+  .lp-sec h2 { font-size: clamp(30px, 4vw, 52px); }
+  .lp .lp-own h2 { font-size: clamp(26px, 3.2vw, 40px) !important; }
+  .lp .chrome { font-size: clamp(72px, 10vw, 128px); }
   .st-clip { display: block; overflow: hidden; padding-bottom: 0.1em; margin-bottom: -0.1em; }
   .st-clip > span { display: inline-block; transform: translateY(115%); opacity: 0; transition: transform 800ms var(--ex) var(--delay, 0ms), opacity 800ms var(--ex) var(--delay, 0ms); }
   .story-text.play .st-clip > span { transform: none; opacity: 1; }
@@ -3981,7 +3983,7 @@ function renderLanding() {
         <h1 class="rv in d1">Daily trading homework<span class="dim">Tracked as a group</span></h1>
         <p class="lead rv in d2">Your group picks the boxes, like chart, journal and HTF. Everyone ticks them off after their session, and everyone can see who did.</p>
         <div class="lp-cta rv in d3">${signin()}${blink("how", "How it works")}</div>
-        <a class="hero-own rv in d3" href="#start-own">Run a trading group? Start your own</a>
+        <button class="hero-own rv in d3" data-jump="start-own">Run a trading group? Start your own</button>
         ${errMsg}
         <p class="fine rv in d3">${pendingInvite() ? "You've been invited to a group. Sign in with Discord and you'll be on its waiting list." : "Free. You'll need a join code from your group's owner."}</p>
         <p class="fine rv in d3">By signing in you agree to the ${link("terms", "Terms")} and the ${link("privacy", "Privacy policy")}.</p>
@@ -4488,6 +4490,11 @@ document.addEventListener("click", async e => {
   const t = e.target.closest("button");
   if (!t) return;
   const d = t.dataset;
+  if (d.jump) {   // scroll on the same page (a #link would count as a page change and jump back to the top)
+    const to = document.getElementById(d.jump);
+    if (to) to.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    return;
+  }
   if (d.tab) return setTab(d.tab);
   if (d.lobby) { lobbyMode = d.lobby; joinMsg = ""; render(); const f = document.getElementById(d.lobby === "create" ? "req-name" : "joincode"); if (f) f.focus(); return; }
   if (d.nav) { const [t2, v] = d.nav.split(":"); if (v) { adminView = v; error = ""; } if (settingsOpen || editing) closePanel(); return setTab(t2); }   // the sidebar
