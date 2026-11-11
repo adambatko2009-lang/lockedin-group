@@ -3,3 +3,6 @@
 node_modules/
 package*.json
 secrets/
+
+# Impeccable design reviews (local notes, not part of the website)
+.impeccable/
