@@ -302,6 +302,8 @@
   .repbtns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
   .admin-one { display: flex; flex-direction: column; gap: 16px; }
   .mem-name { flex: 1; min-width: 0; font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .datarow a.btn { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+  .panel .support-mail { margin-top: 8px; font: 500 13px var(--font-data); color: var(--text-2); user-select: all; -webkit-user-select: all; overflow-wrap: anywhere; }
   .numrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin-top: 10px; }
   .numfield { min-width: 0; display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border-radius: 12px; background: var(--surface-2); cursor: text; }
   .numfield span { font-size: 13px; font-weight: 600; color: var(--muted); }
@@ -2250,6 +2252,11 @@ function openSettings() {
     <h3>Celebrations</h3>
     <label class="switchrow"><span><b>Confetti</b><small>When you complete your day.</small></span>
       <input type="checkbox" id="set-confetti" role="switch" ${settings.confetti !== false ? "checked" : ""}></label>
+    ${cfg.contactEmail ? `<h3>Help &amp; contact</h3>
+    <p class="sub-hint">Questions, problems or ideas? Email us and we'll get back to you. Waiting to get into a group? Only that group's owner can approve you, so message them in Discord.</p>
+    <div class="datarow"><a class="btn plain small" href="mailto:${esc(cfg.contactEmail)}?subject=${encodeURIComponent("LockedIn question")}">${ic("megaphone", 16)}Email support</a>
+      <button class="btn plain small" id="copy-support">Copy address</button></div>
+    <p class="sub-hint support-mail">${esc(cfg.contactEmail)}</p>` : ""}
     <h3>Your data</h3>
     <p class="sub-hint">Download a copy of everything LockedIn stores about you, or delete your account.</p>
     <div class="datarow"><button class="btn plain small" id="export-data">Download my data</button>
@@ -4604,6 +4611,10 @@ document.addEventListener("click", async e => {
       const { error: e } = await sb.from("memberships").delete().eq("group_id", gid).eq("user_id", session.user.id);
       if (e) { error = e.message; return render(); }
       closePanel(); loaded = false; screen = "loading"; render(); return loadAll();
+    }
+    case "copy-support": {
+      try { await navigator.clipboard.writeText(cfg.contactEmail || ""); t.textContent = "Copied"; } catch (err) { t.textContent = "Select it below"; }
+      return setTimeout(() => { t.textContent = "Copy address"; }, 1600);
     }
     case "copy-invite": {
       setGuideFlag("s");
