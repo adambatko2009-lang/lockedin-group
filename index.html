@@ -704,6 +704,9 @@
   .mock-top b > span { grid-area: 1 / 1; }
   .mock-bar { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
   .mock-bar i { display: block; height: 100%; width: 80%; background: var(--lp-green); border-radius: 3px; }
+  /* says what the three squares in each row are */
+  .mock-legend { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: -4px; font: 500 12px var(--font-data); color: var(--lp-2); }
+  .mock-legend span:last-child { color: rgba(245, 245, 247, 0.82); }
   .mock-row { display: flex; align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.07); }
   .mock-row .av { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #fff; flex: none; }
   .mock-row > b { flex: 1; font-size: 15px; }
@@ -1239,6 +1242,8 @@
   .story { --st-bg: #020817; --st-glow: rgba(37, 99, 235, 0.5); --ex: cubic-bezier(0.16, 1, 0.3, 1); --qt: cubic-bezier(0.25, 1, 0.5, 1);
     position: relative; height: 420vh; background: linear-gradient(180deg, transparent, var(--st-bg) 60vh, var(--st-bg) calc(100% - 60vh), transparent); }
   .story-pin { position: sticky; top: 0; height: 100svh; overflow: hidden; isolation: isolate; }
+  /* phones: about half the scrolling (each of the 4 steps is one short swipe); the animation follows the height on its own */
+  @media (max-width: 759px) { .story { height: 270vh; } }
   .story-pin::before { content: ""; position: absolute; inset: 0; z-index: -2;
     background: radial-gradient(42% 52% at 50% 52%, var(--st-glow), transparent 70%),
                 radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1.4px) 0 0 / 22px 22px; }
@@ -3847,6 +3852,7 @@ function renderLanding() {
       <p class="mono rv in">${label}</p><h1 class="rv in d1">${title}</h1><p class="lead rv in d2">${sub}</p></div></header>`;
   const rows = `<div class="mock-top"><span><b><span class="count-old">4</span><span class="count-new">5</span></b>/5 done</span><span>1h 12m left</span></div>
       <div class="mock-bar"><i></i></div>
+      <div class="mock-legend"><span>Today's homework</span><span>Chart · Journal · HTF</span></div>
       ${person("Alex", "#2563eb", [1, 1, 1])}${person("Sam", "#0e7490", [1, 1, 1])}${person("Riley", "#0d9488", [1, 1, 1])}${person("Morgan", "#ea580c", [1, 1, 1])}${person("Jordan", "#db2777", [1, 0, 1], true)}`;
   // The real app (a demo group) in a tilted 3D phone, with big text behind it.
   const phone = `<div class="stage3d">
