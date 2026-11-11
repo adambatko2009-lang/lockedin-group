@@ -202,6 +202,12 @@
             mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.2 8.4 6.4 11.4 12.8 4.8' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
   .t:not(:disabled):active { transform: scale(0.96); filter: brightness(0.92); }
   .t:disabled { cursor: default; }
+  /* small captions that say what the two bars on Today mean */
+  .bar-cap { display: flex; justify-content: space-between; gap: 12px; margin-top: 6px; font: 500 12px var(--font-data); color: var(--muted); }
+  /* someone else's box (owners and admins): a quieter look, and it needs a second tap */
+  .t.guard:not(.armed) { opacity: 0.72; }
+  .t.armed { border-color: var(--warn); color: var(--text); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+  .t.armed::before { display: none; }
   .member.locked .t:not([aria-pressed="true"]) { opacity: 0.5; }
   .note { margin-top: 8px; }
   .note p { margin: 0; font-size: 14px; color: var(--text-2); overflow-wrap: anywhere; white-space: pre-wrap;
@@ -437,6 +443,21 @@
   .phead h1 { font-size: 24px; letter-spacing: -0.02em; margin: 0; }
   .phead p { margin: 2px 0 0; font-size: 14px; color: var(--muted); }
   .tiles-note { margin: 10px 0 0; }
+  /* People: each person's actions behind one small menu */
+  .person:has(> .pmenu) { grid-template-columns: 36px 1fr 40px; }
+  .person:has(> .pmenu) > b, .person:has(> .pmenu) > .sub { grid-column: 2; }
+  .pmenu { position: relative; grid-column: 3; grid-row: 1 / span 2; align-self: center; height: 40px; margin: 0; padding: 0; border: 0; }
+  .pmenu summary { list-style: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; cursor: pointer; color: var(--muted); }
+  .pmenu summary::-webkit-details-marker { display: none; }
+  .pmenu summary:hover, .pmenu[open] summary { background: var(--surface-2); color: var(--text); }
+  .pmenu summary .ic { stroke-width: 2.6; }
+  .pmenu-list { position: absolute; right: 0; top: 44px; z-index: 5; display: grid; gap: 6px; padding: 8px; min-width: 200px; border-radius: 14px;
+    background: var(--surface); border: 1px solid var(--line); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45); }
+  .pmenu-list .btn { width: 100%; justify-content: flex-start; }
+  .tg-h { margin: 18px 0 -6px; font-size: 13px; font-weight: 600; color: var(--muted); }
+  .more-badges { margin-top: 12px; }
+  .more-badges summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--accent-text); padding: 6px 0; }
+  .more-badges .badges { margin-top: 10px; }
   .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
   .tile { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; }
   .tile b { display: block; font: 600 22px var(--font-data); }
@@ -1625,6 +1646,7 @@ const ICON_PATHS = {
   users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.6a6 6 0 0 1 3.5 5.4"/>',
   sliders: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h12M20 18h0"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
   target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>',
+  more: '<circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.9.8c0 1.7-2.5 2.1-2.5 3.8"/><path d="M12 17.1v.2"/>',
   mail: '<rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4 7 8 6 8-6"/>',
 };
@@ -2795,6 +2817,8 @@ async function adminDo(promise, okMsg) {
   return res;
 }
 // Re-read groups, people and names after a change (and leave a group that no longer exists).
+// An open actions menu (People) closes when you click anywhere else.
+document.addEventListener("click", e => { document.querySelectorAll(".pmenu[open]").forEach(m => { if (!m.contains(e.target)) m.open = false; }); });
 // Approve and Reject show the result right away; the server and a refresh follow. If the server says no, it's undone.
 async function instantPerson(uid, patch, promise, okMsg) {
   const p = people.find(x => x.user_id === uid), before = p ? { ...p } : null;
@@ -3240,7 +3264,7 @@ function renderDay() {
   const rows = ordered.map(m => {
     const st = statusOf(k, m.key), rec = tickOf(k, m.key) || {}, editable = canEdit(k, m.key);
     const toggles = RULES.map(([r, label, kind]) =>
-      `<button class="t ${kind}" data-tick="${m.key}:${r}" aria-pressed="${!!rec[r]}" ${editable ? "" : "disabled"}
+      `<button class="t ${kind}${editable && m.key !== myKey() ? " guard" : ""}" data-tick="${m.key}:${r}" aria-pressed="${!!rec[r]}" ${editable ? "" : "disabled"}
         aria-label="${esc(m.name)}: ${label}${kind === "bonus" ? " (bonus)" : ""}">${label}</button>`).join("");
     const note = rec.note ? `<p>${linkify(rec.note)}</p>` : "";
     const images = rec.images || [];
@@ -3264,9 +3288,12 @@ function renderDay() {
   ensureShotUrls(allShots);
 
   const summary = `<div class="card">
-    <div class="track" title="Homework window"><div class="fill" style="width:${frac * 100}%"></div>${isFinal(k) ? "" : `<div class="now" style="left:${frac * 100}%"></div>`}</div>
+    <div class="track" title="The trading day, from when it opened to the cutoff"><div class="fill" style="width:${frac * 100}%"></div>${isFinal(k) ? "" : `<div class="now" style="left:${frac * 100}%"></div>`}</div>
+    <div class="bar-cap"><span>Day opened</span><span>Cutoff ${hh(CUTOFF_HOUR)} ${esc(TZ.split("/").pop().replace(/_/g, " "))}</span></div>
     <div class="meta"><div class="count">${counts.COMPLETE || 0}<span>/${list.length - (counts.EXCUSED || 0)} done</span></div><div class="time ${urgent ? "urgent" : ""}">${time}</div></div>
     <div class="stack" aria-hidden="true">${stack}</div>
+    <div class="bar-cap">${[[counts.COMPLETE, "done"], [counts.PARTIAL, "partly"], [(counts.MISSING || 0) + (counts.WAITING || 0) + (counts.UNLOGGED || 0), "not yet"], [counts.EXCUSED, "excused"]]
+      .filter(([n]) => n).map(([n, l]) => `${n} ${l}`).join(" · ") || "Nobody has started yet"}</div>
     ${banner}${nudge}
   </div>`;
   const err = error && !isWide() && error.length > 48 ? `<div class="card"><p class="msg err">${esc(error)}</p></div>` : "";
@@ -3394,13 +3421,17 @@ function renderProfile(key, part = "profile", withTabs = false) {
   const head = `<div class="card">
     <div class="phead">${avatarHtml(m, 64)}
       <div><h1>${esc(m.name)}${key === myKey() ? `<span class="you">YOU</span>` : ""}${(r => r ? `<span class="rolechip role-${r.toLowerCase()}">${r}</span>` : "")(roleForKey(key))}</h1><p>Rank #${rankOf(key) || "–"} · since ${since}</p></div></div>
+    <h3 class="tg-h">Habit</h3>
     <div class="tiles">
       <div class="tile"><b>${s.run}</b><span>Streak</span></div>
       <div class="tile"><b>${s.best}</b><span>Best streak</span></div>
-      <div class="tile"><b>${s.rate === null ? "–" : s.rate + "%"}</b><span>Complete</span></div>
+      <div class="tile"><b>${s.rate === null ? "–" : s.rate + "%"}</b><span>Days complete</span></div>
       <div class="tile"><b>${s.points}</b><span>Points</span></div>
       <div class="tile"><b>${s.completeDays}</b><span>Days done</span></div>
       <div class="tile"><b>${earned}</b><span>Badges</span></div>
+    </div>
+    ${s.wins + s.losses + s.gambles + s.sitOuts > 0 || s.pnl !== null || s.avgR !== null ? `<h3 class="tg-h">Trading</h3>
+    <div class="tiles">
       <div class="tile"><b>${s.winRate === null ? "–" : s.winRate + "%"}</b><span>Win rate · ${s.wins}W ${s.losses}L</span></div>
       <div class="tile"><b>${s.gambles}</b><span>Gambles</span></div>
       <div class="tile"><b>${s.sitOuts}</b><span>No-trade days</span></div>
@@ -3408,14 +3439,18 @@ function renderProfile(key, part = "profile", withTabs = false) {
       <div class="tile"><b>${s.avgR === null ? "–" : fmtR(s.avgR)}</b><span>Average R</span></div>
       <div class="tile"><b class="${s.bestDay > 0 ? "up" : ""}">${s.bestDay === null ? "–" : fmtPnl(s.bestDay)}</b><span>Best day</span></div>
     </div>
-    <p class="sub-hint tiles-note">Win rate counts days marked Win or Loss. Gambles and no-trade days don't count toward it. P&amp;L and R count only days where they were filled in.</p></div>`;
+    <p class="sub-hint tiles-note">Win rate counts days marked Win or Loss. Gambles and no-trade days don't count toward it. P&amp;L and R count only days where they were filled in.</p>` : ""}</div>`;
 
-  const order = [...badges.filter(b => b.earned), ...badges.filter(b => !b.earned)];
-  const ach = `<div class="card"><div class="cardhead"><h2>Achievements · ${earned}/${badges.length}</h2></div><div class="badges">
-    ${order.map(b => `<div class="badge tier-${b.tier} ${b.earned ? "" : "locked"}" title="${esc(b.title)}">
+  // Earned badges, then the 3 closest to being earned; the rest are folded away.
+  const locked = badges.filter(b => !b.earned).sort((a, b) => b.have / b.goal - a.have / a.goal);
+  const shown = [...badges.filter(b => b.earned), ...locked.slice(0, 3)], rest = locked.slice(3);
+  const badgeHtml = b => `<div class="badge tier-${b.tier} ${b.earned ? "" : "locked"}" title="${esc(b.title)}">
       <div class="medal"><span>${ic(b.icon, 26)}</span></div><b>${esc(b.title)}</b>
       ${b.earned ? `<small>${b.tier}</small>` : `<div class="bar" role="img" aria-label="${b.have} of ${b.goal}"><i style="width:${Math.round(100 * b.have / b.goal)}%"></i></div><small>${b.have}/${b.goal}</small>`}
-    </div>`).join("")}</div></div>`;
+    </div>`;
+  const ach = `<div class="card"><div class="cardhead"><h2>Achievements · ${earned}/${badges.length}</h2></div>
+    <div class="badges">${shown.map(badgeHtml).join("")}</div>
+    ${rest.length ? `<details class="more-badges"><summary>Show all ${badges.length} badges</summary><div class="badges">${rest.map(badgeHtml).join("")}</div></details>` : ""}</div>`;
 
   // Last 12 weeks, one column per week, Mon-Fri rows.
   const firstMon = addDays(mondayOf(today), -77);
@@ -3540,7 +3575,8 @@ function renderAdmin() {
     const removeBtn = !isOwner && !self && (isOwnerHere || p.role !== "admin") ? `<button class="btn danger small" data-revoke="${p.user_id}">Remove from group</button>` : "";
     return `<div class="person">${avatar(p)}<b>${esc(m ? m.name : p.discord_name)}${badge}</b>
       <span class="sub">${isOwner ? "Owns the group" : p.role === "admin" ? "Can approve people and excuse days" : "Member"}</span>
-      ${adminBtn || removeBtn ? `<div class="actions">${adminBtn}${removeBtn}</div>` : ""}</div>`;
+      ${adminBtn || removeBtn ? `<details class="pmenu"><summary aria-label="Actions for ${esc(m ? m.name : p.discord_name)}">${ic("more", 20)}</summary>
+        <div class="pmenu-list">${adminBtn}${removeBtn}</div></details>` : ""}</div>`;
   }).join("") : `<p class="empty">No one approved yet.</p>`;
 
   const rejectedHtml = rejected.length ? `<div class="card"><div class="cardhead"><h2>Rejected</h2></div>` + rejected.map(p => `<div class="person">${avatar(p)}<b>${esc(p.discord_name)}</b>
@@ -4517,6 +4553,16 @@ document.addEventListener("click", async e => {
   if (t.id === "profile-back") { profileKey = null; render(); return window.scrollTo(0, 0); }
   if (d.tick) {
     const [key, r] = d.tick.split(":");
+    // Owners and admins changing someone else's box: the first tap only asks, so a careless tap while scrolling does nothing.
+    if (t.classList.contains("guard") && t.dataset.armed !== "1") {
+      document.querySelectorAll(".t.armed").forEach(b => { b.classList.remove("armed"); b.dataset.armed = ""; b.textContent = b.dataset.label; });
+      t.dataset.armed = "1"; t.dataset.label = t.textContent; t.classList.add("armed");
+      const who = (members.find(m => m.key === key) || {}).name || "them";
+      t.textContent = "Tap again";
+      t.setAttribute("aria-label", `Tap again to change this box for ${who}`);
+      clearTimeout(t._arm); t._arm = setTimeout(() => { if (t.isConnected && t.dataset.armed === "1") { t.dataset.armed = ""; t.classList.remove("armed"); t.textContent = t.dataset.label; } }, 2500);
+      return;
+    }
     if (t.animate && !matchMedia("(prefers-reduced-motion: reduce)").matches) t.animate([{ transform: "scale(0.94)" }, { transform: "scale(1.04)" }, { transform: "scale(1)" }], { duration: 280, easing: "ease-out" });
     return editTick(selected, key, row => { row[r] = !row[r]; });
   }
