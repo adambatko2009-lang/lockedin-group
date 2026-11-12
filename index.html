@@ -1062,8 +1062,8 @@
   body:not(.landing)::after {
     background:
       radial-gradient(55% 45% at 8% 4%, var(--wash-a), transparent 70%),
-      radial-gradient(50% 45% at 96% 30%, var(--wash-b), transparent 70%),
-      radial-gradient(60% 50% at 70% 100%, var(--wash-c), transparent 70%);
+      radial-gradient(50% 45% at 96% 30%, var(--wash-b), transparent 70%);
+    /* no glow at the bottom: on the iPhone app the strip under the home bar is plain page colour, so the bottom must match it */
   }
   .card { background: var(--card-glass); border: 1px solid var(--card-line); box-shadow: inset 0 1px 0 var(--card-edge), var(--card-shadow); border-radius: 18px;
     -webkit-backdrop-filter: blur(18px) saturate(140%); backdrop-filter: blur(18px) saturate(140%); }
@@ -1473,7 +1473,7 @@
     .hero-app { display: block; }
   }
   .lp-hero.home .lead { max-width: 44ch; }
-  .story-grid { padding: 76px var(--lp-pad) 20px; }
+  .story-grid { padding: calc(max(12px, env(safe-area-inset-top, 0px)) + 72px) var(--lp-pad) 20px; }
   @media (min-width: 900px) { .story-grid { max-width: calc(var(--lp-max) + var(--lp-pad) * 2); padding: 76px var(--lp-pad) 40px; } }
   .lp-menu .in { width: min(var(--lp-max), calc(100% - var(--lp-pad) * 2)); padding-left: 12px; padding-right: 12px;
     padding-top: calc(max(12px, env(safe-area-inset-top, 0px)) + 66px); }
@@ -1481,8 +1481,8 @@
   /* front page menu bar: the same liquid glass bar as in the tracker */
   .lp-nav, .lp-tabs { isolation: isolate;
     /* same glass as the tracker, with a darker tint so the white text stays readable over the white band */
-    background: linear-gradient(180deg, rgba(44, 45, 52, 0.66), rgba(16, 17, 20, 0.66)); border: 1px solid rgba(255, 255, 255, 0.12);
-    -webkit-backdrop-filter: blur(26px) saturate(190%); backdrop-filter: blur(26px) saturate(190%);
+    background: linear-gradient(180deg, rgba(34, 35, 41, 0.96), rgba(14, 15, 18, 0.96)); border: 1px solid rgba(255, 255, 255, 0.12);
+    -webkit-backdrop-filter: none; backdrop-filter: none;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 1px 0 0 rgba(255, 255, 255, 0.10), inset 0 -1px 0 rgba(255, 255, 255, 0.07), 0 10px 24px -14px rgba(0, 0, 0, 0.35); }
   .lp-tabs a { color: #c9c9d1; }
   .lp-nav { border-radius: 14px; padding: 4px 4px 4px 12px; }
