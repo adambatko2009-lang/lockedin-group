@@ -2,12 +2,12 @@
 // 1. Keeps a copy of the website on the phone, so the app opens without internet.
 // 2. Shows the reminder notifications sent by supabase/functions/send-reminders.
 // Change VERSION when you change this file's list of files, so phones throw the old copy away.
-const VERSION = "lockedin-3";
+const VERSION = "lockedin-4";
 const FILES = ["./", "index.html", "config.js", "manifest.webmanifest",
   "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png", "icons/favicon-64.png", "icons/favicon-128.png",
   "vendor/supabase-2.57.4.js", "vendor/fonts.css",
-  "vendor/fonts/geist-normal-latin-ext-0.woff2", "vendor/fonts/geist-normal-latin-1.woff2",
-  "vendor/fonts/geist-mono-normal-latin-ext-2.woff2", "vendor/fonts/geist-mono-normal-latin-3.woff2",
+  "vendor/fonts/schibsted-grotesk-latin-ext.woff2", "vendor/fonts/schibsted-grotesk-latin.woff2",
+  "vendor/fonts/jetbrains-mono-latin-ext.woff2", "vendor/fonts/jetbrains-mono-latin.woff2",
   "vendor/fonts/instrument-serif-italic-latin-ext-4.woff2", "vendor/fonts/instrument-serif-italic-latin-5.woff2",
   "vendor/fonts/instrument-serif-normal-latin-ext-6.woff2", "vendor/fonts/instrument-serif-normal-latin-7.woff2"];
 

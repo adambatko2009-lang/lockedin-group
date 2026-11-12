@@ -6,8 +6,8 @@ The full license text for each one is in the `licenses` folder next to this file
 | What | Where it's used | License | Full text |
 |---|---|---|---|
 | supabase-js 2.57.4 (database and sign-in library), copied from npm | `supabase-2.57.4.js` | MIT License, Copyright (c) 2020 Supabase | `licenses/supabase-js-MIT.txt` |
-| Geist font by Vercel | `fonts/geist-normal-*.woff2` | SIL Open Font License 1.1, Copyright 2024 The Geist Project Authors | `licenses/geist-OFL.txt` |
-| Geist Mono font by Vercel | `fonts/geist-mono-*.woff2` | SIL Open Font License 1.1, Copyright 2024 The Geist Project Authors | `licenses/geist-mono-OFL.txt` |
+| Schibsted Grotesk font by Schibsted | `fonts/schibsted-grotesk-*.woff2` | SIL Open Font License 1.1, Copyright 2023 The Schibsted-Grotesk Project Authors | `licenses/schibsted-grotesk-OFL.txt` |
+| JetBrains Mono font by JetBrains | `fonts/jetbrains-mono-*.woff2` | SIL Open Font License 1.1, Copyright 2020 The JetBrains Mono Project Authors | `licenses/jetbrains-mono-OFL.txt` |
 | Instrument Serif font by Instrument | `fonts/instrument-serif-*.woff2` | SIL Open Font License 1.1, Copyright 2022 The Instrument Serif Project Authors | `licenses/instrument-serif-OFL.txt` |
 | Settings (gear) icon, adapted from Feather Icons | inside `index.html` | MIT License, Copyright (c) 2013-2023 Cole Bemis | `licenses/feather-icons-MIT.txt` |
 
