@@ -2648,6 +2648,28 @@ function renderLanding() {
         <div class="mock">${rows}</div>
       </figure>
     </header>
+    <section class="story" id="story" aria-labelledby="story-title">
+      <div class="story-pin">
+        <div class="floaters bg" id="fl-bg" aria-hidden="true"></div>
+        <div class="story-grid">
+          <div class="story-text" id="story-text" aria-live="polite">
+            <h2 id="story-title">Tick your homework</h2>
+            <p class="st-body" id="story-body"></p>
+          </div>
+          <div class="s-stage" aria-hidden="true">
+            <div class="s-phone" id="s-phone"><div class="s-screen" id="s-screen">
+              <div class="ma-toast" id="ma-toast"><span class="md">${ic("flame", 20)}</span><div><b>Achievement unlocked</b><span>20 day streak</span></div></div>
+              <div class="s-scale" id="s-scale"><div class="s-feed" id="s-feed"></div></div>
+              <div class="ma-tabbar" id="ma-tabbar"><i class="hl" id="ma-hl"></i>
+                <span class="on">${SVG.day}Day</span><span>${SVG.week}Week</span><span>${SVG.board}Ranking</span><span>${SVG.me}Me</span></div>
+            </div></div>
+          </div>
+          <ol class="st-chapters" id="st-chapters"></ol>
+          <div class="st-dots" id="st-dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="floaters fg" id="fl-fg" aria-hidden="true"></div>
+      </div>
+    </section>
     <section class="lp-sec tryit" aria-labelledby="try-title">
       <div class="try-text">
         <h2 class="rv" id="try-title">Tick your<span class="dim">own boxes</span></h2>
@@ -2759,9 +2781,220 @@ document.addEventListener("click", e => {
 document.addEventListener("keydown", e => { if (e.key === "Escape" && document.documentElement.classList.contains("menu-on")) { landMenu(false); const b = document.getElementById("lp-menu-btn"); if (b) b.focus(); } });
 
 
+// ---------------------------------------------------------------- front page scroll story
+// The phone stays in place while the app inside it plays one day: tick, notes, everyone done, ranking.
+// Made-up names only. The phone turns toward the mouse and the floating shapes move out of its way (computers only, not with reduced motion).
+let story = null;
+const storyMouse = { x: 0, y: 0, px: -9999, py: -9999 };
+addEventListener("pointermove", e => {
+  if (e.pointerType !== "mouse") return;
+  storyMouse.x = e.clientX / innerWidth - 0.5; storyMouse.y = e.clientY / innerHeight - 0.5; storyMouse.px = e.clientX; storyMouse.py = e.clientY;
+}, { passive: true });
+function initStory() {
+  const root = document.getElementById("story");
+  if (!root) { story = null; return; }
+  if (story && story.root === root) return;
+  const q = sel => root.querySelector(sel), qa = sel => [...root.querySelectorAll(sel)];
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches, fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const CH = [
+    { t: ["Tick your", "homework"], b: "One tap per box after your session. All required boxes ticked turns your circle green.", bg: [2, 8, 23], glow: "rgba(37, 99, 235, 0.5)", hl: 0 },
+    { t: ["Show your", "work"], b: "Write what happened and add chart screenshots. Your group reads it and learns from it.", bg: [2, 16, 28], glow: "rgba(14, 165, 233, 0.42)", hl: 0 },
+    { t: ["Beat the", "cutoff"], b: "Everyone sees who's done before the day closes. Turn on reminders and your phone nudges you first.", bg: [2, 20, 14], glow: "rgba(34, 197, 94, 0.38)", hl: 1 },
+    { t: ["Climb the", "ranking"], b: "Points, streaks for days in a row, and 31 badges to earn. Every day counts.", bg: [10, 10, 16], glow: "rgba(251, 191, 36, 0.28)", hl: 2 },
+  ];
+  const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>';
+  const XS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg>';
+  const HALF = '<svg viewBox="0 0 24 24"><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>';
+  const LINE = '<svg viewBox="0 0 64 64" preserveAspectRatio="none"><path d="M4 46 L18 40 L28 28 L40 36 L60 18" fill="none" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const icon = st => st === "ok" ? CHECK : st === "part" ? HALF : st === "miss" ? XS : "";
+  const MEM = [["Taylor", "#3b82f6", null, true], ["Alex", "#b45309", "ok"], ["Sam", "#be185d", "ok"], ["Morgan", "#0f766e", "ok"], ["Riley", "#1d4ed8", "part"], ["Jordan", "#15803d", "miss"], ["Casey", "#047857", "miss"]];
+  const BOX = [["Chart with execution", "Required"], ["Journal", "Required"], ["HTF", "Required"], ["Social", "Bonus"]];
+  const RANK: any[] = [["Alex", "#b45309", 118, "47-day best streak"], ["Taylor", "#3b82f6", 103, "20-day streak"], ["Sam", "#be185d", 81, "68% complete"], ["Morgan", "#0f766e", 60, "12-day streak"], ["Riley", "#1d4ed8", 32, "41% complete"]];
+  const NOTE = "Waited for the 9:45 retest and took 1R. Stopped after two trades.";
+  const weekRow = (n, cells) => `<span class="n">${n}</span>` + cells.map(c => `<i style="background:${{ o: "#22c55e", p: "#fbbf24", m: "#ef4444", e: "#2a2b31" }[c]}"></i>`).join("");
+  q("#s-feed").innerHTML = `
+    <div class="ma-card ma-top"><span class="ma-chip"><b>L</b>LockedIn</span><span class="ma-date">Fri 6 Nov</span></div>
+    <div class="ma-card"><div class="ma-track"><i></i></div>
+      <div class="ma-meta"><span class="ma-count"><span id="ma-done">3</span><small>/7 done</small></span><span class="ma-left">2h 30m left</span></div>
+      <div class="ma-stack" id="ma-stack"></div></div>
+    <div class="ma-card"><p class="ma-h">Your homework</p><div class="ma-boxes">${BOX.map(([l, k]) => `<div class="ma-box"><span class="c">${CHECK}</span><span><b>${l}</b><small>${k}</small></span></div>`).join("")}</div></div>
+    <div class="ma-card">${MEM.map(([n, col, st, you]) => `<div class="ma-mem">
+        <span class="ma-av" style="background:${col}">${n[0]}</span><span class="ma-name">${n}${you ? '<span class="ma-you">YOU</span>' : ""}</span>
+        <span class="ma-st ${st || ""}">${icon(st)}</span>
+        ${you ? `<p class="ma-note" id="ma-note"></p><div class="ma-shots"><span class="ma-shot">${LINE}</span><span class="ma-shot">${LINE}</span></div>` : ""}</div>`).join("")}</div>
+    <div class="ma-card"><p class="ma-h">This week</p><div class="ma-week"><span></span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span>
+      ${weekRow("Taylor", ["o", "o", "o", "o", "e"])}${weekRow("Alex", ["o", "o", "o", "o", "o"])}${weekRow("Sam", ["o", "p", "o", "o", "o"])}${weekRow("Morgan", ["p", "o", "o", "m", "o"])}${weekRow("Riley", ["m", "o", "p", "o", "e"])}</div></div>
+    <div class="ma-card"><p class="ma-h">Ranking</p><ol class="ma-rank">${RANK.map(([n, col, pts, d], i) => `<li><span class="r">${i + 1}</span><span class="ma-av" style="background:${col}">${n[0]}</span><span><b>${n}</b><small>${d}</small></span><span class="pts" data-pts="${pts}">${pts - 6}</span></li>`).join("")}</ol></div>`;
+  const feed = q("#s-feed"), scaleBox = q("#s-scale"), screenEl = q("#s-screen"), pin = q(".story-pin"), phoneEl = q("#s-phone");
+  const boxes = qa(".ma-box"), mems = qa(".ma-mem"), note = q("#ma-note"), shots = qa(".ma-shot"), pts = qa(".pts");
+  const sText = q("#story-text"), sTitle = q("#story-title"), sBody = q("#story-body");
+  q("#st-chapters").innerHTML = CH.map((c, i) => `<li><span>0${i + 1}</span>${c.t.join(" ")}<div class="bar"><i></i></div></li>`).join("");
+  const chLis = qa("#st-chapters li"), chBars = qa("#st-chapters .bar i"), dots = qa("#st-dots i"), tabs = qa("#ma-tabbar span");
+  const S: any = { root, chap: -1, feedY: 0, smoothY: 0, spin: 0, spinV: 0, visible: false, green: false, anchors: [0, 0, 0, 0], cm: { x: 0, y: 0 }, last: performance.now() };
+  function measure() {
+    const sc = screenEl.clientWidth / 375;
+    scaleBox.style.transform = `scale(${sc})`;
+    const viewH = screenEl.clientHeight / sc, maxY = Math.max(0, feed.scrollHeight - viewH);
+    S.anchors = [0, Math.min(maxY, mems[0].offsetTop - 100), Math.min(maxY, mems[3].offsetTop - 60), maxY];
+  }
+  // floating shapes. On computers: x is a share of the free space between the text and the chapter list, y a share of the height;
+  // "far" ones sit above or below the text (left) and the chapter list (right). On phones they keep to the sides, below the text.
+  const SPOTS = [[0.04, 0.17, 60, "fg"], [0.96, 0.83, 56, "fg"], [0.06, 0.82, 70, "fg"], [0.94, 0.2, 64, "fg"], [0.14, 0.47, 38, "bg"], [0.86, 0.55, 42, "bg"],
+                 [0.4, 0.11, 34, "bg"], [0.6, 0.93, 36, "bg"], [0.2, 0.14, 52, "far"], [0.8, 0.13, 56, "far"], [0.2, 0.86, 62, "far"], [0.8, 0.88, 58, "far"]];
+  const SETS = [
+    ["box", "ok", "box", "part", "ok", "box", "ok", "box", "part", "ok", "box", "ok"],
+    ["chart", "ok", "chart", "chart", "ok", "chart", "part", "chart", "ok", "chart", "ok", "chart"],
+    ["miss", "ok", "miss", "ok", "miss", "ok", "miss", "ok", "ok", "miss", "ok", "miss"],
+    ["medal", "ok", "medal", "ok", "medal", "ok", "medal", "ok", "medal", "ok", "medal", "ok"],
+  ];
+  const look = t => ({
+    ok: `<div class="circ" style="background:radial-gradient(circle at 35% 30%,#86efac,#16a34a);color:#052e16">${CHECK}</div>`,
+    part: `<div class="circ" style="background:radial-gradient(circle at 35% 30%,#fde68a,#d97706);color:#451a03">${HALF}</div>`,
+    miss: `<div class="circ" style="background:radial-gradient(circle at 35% 30%,#fca5a5,#dc2626);color:#fff">${XS}</div>`,
+    box: `<div class="tile box" style="background:linear-gradient(160deg,#60a5fa,#1d4ed8);color:#fff">${CHECK}</div>`,
+    chart: `<div class="tile" style="background:linear-gradient(160deg,#1e3a5f,#0f1f36)">${LINE}</div>`,
+    medal: `<div class="circ" style="background:radial-gradient(circle at 35% 30%,#fde68a,#b45309);color:#451a03">${ic("flame", 24)}</div>`,
+  })[t];
+  const textEl = q("#story-text"), chapEl = q("#st-chapters");
+  let zones = null;   // measured once per frame: where the text and the chapter list are, inside the pinned area
+  function measureZones() {
+    const pb = pin.getBoundingClientRect(), t = textEl.getBoundingClientRect(), c = chapEl.getBoundingClientRect();
+    zones = { W: pb.width, H: pb.height, tl: t.left - pb.left, tr: t.right - pb.left, tt: t.top - pb.top, tb: t.bottom - pb.top,
+      cl: c.left - pb.left, cr: c.right - pb.left, ct: c.top - pb.top, cb: c.bottom - pb.top };
+  }
+  // returns the centre of a shape in pixels
+  const spot = f => {
+    const z = zones, W = z.W, H = z.H;
+    if (W < 900) return [(f.x < 0.5 ? 0.06 + f.x * 0.2 : 0.94 - (1 - f.x) * 0.2) * W, (0.42 + f.y * 0.52) * H];
+    if (f.far) {   // above or below the text on the left, the chapter list on the right
+      const left = f.x < 0.5, x0 = left ? z.tl : z.cl, x1 = left ? z.tr : z.cr, top = left ? z.tt : z.ct, bot = left ? z.tb : z.cb;
+      const x = x0 + (x1 - x0) * (left ? 0.25 : 0.75);
+      return f.y < 0.5 ? [x, Math.max(90, top - 60) * (f.y / 0.15)] : [x, Math.min(H - 50, bot + 60 + (H - bot - 110) * ((f.y - 0.85) / 0.15))];
+    }
+    const L = z.tr + 40, R = z.cl - 40;
+    return [L + (R - L) * f.x, 70 + (H - 120) * f.y];
+  };
+  const setLook = (f, kind) => { f.el.innerHTML = look(kind); f.el.firstElementChild.style.width = f.el.firstElementChild.style.height = (f.sz || f.size) + "px"; };
+  const fls = SPOTS.map(([x, y, size, layer], i) => {
+    const el = document.createElement("div");
+    el.className = "fl" + (layer === "far" ? " far" : "");
+    q(layer === "fg" ? "#fl-fg" : "#fl-bg").appendChild(el);
+    const f: any = { el, x, y, size, far: layer === "far", angle: Math.random() * 30 - 15, rx: 0, ry: 0, bx: 0, by: 0, s: 1, o: 1, hold: false, extra: 0, depth: layer === "fg" ? 1 : -0.5 };
+    setLook(f, SETS[0][i]);
+    return f;
+  });
+  // implode toward the phone, swap, then burst back out to a new spot
+  function burst(kinds) {
+    fls.forEach((f, i) => {
+      if (reduce) return setLook(f, kinds[i]);
+      f.hold = true;
+      const t0 = performance.now(), d1 = 420, d2 = 260, d3 = 820, nbx = (Math.random() - 0.5) * 120, nby = (Math.random() - 0.5) * 120, sbx = f.bx, sby = f.by;
+      if (!zones) measureZones();
+      const W = zones.W, H = zones.H, [sx, sy] = spot(f), cx = W / 2 - sx, cy = (W < 900 ? 0.62 : 0.5) * H - sy;
+      let swapped = false;
+      const step = now => {
+        const t = now - t0 - i * 18;
+        if (t < 0) return requestAnimationFrame(step);
+        if (t < d1) { const k = (t / d1) ** 2; f.bx = sbx + (cx - sbx) * k; f.by = sby + (cy - sby) * k; f.s = 1 - 0.9 * k; f.o = 1 - k; }
+        else if (t < d1 + d2) { if (!swapped) { swapped = true; setLook(f, kinds[i]); } }
+        else if (t < d1 + d2 + d3) { const u = (t - d1 - d2) / d3, c = 1.5, k = 1 + (c + 1) * (u - 1) ** 3 + c * (u - 1) ** 2;
+          f.bx = cx + (nbx - cx) * k; f.by = cy + (nby - cy) * k; f.s = 0.1 + 0.9 * k; f.o = Math.min(1, u * 2); }
+        else { f.bx = nbx; f.by = nby; f.s = 1; f.o = 1; f.hold = false; return; }
+        requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+  }
+  function setChapter(i) {
+    if (i === S.chap) return;
+    const first = S.chap === -1; S.chap = i;
+    const c = CH[i];
+    sTitle.setAttribute("aria-label", c.t.join(" "));
+    sTitle.innerHTML = c.t.map((l, j) => `<span class="st-clip" aria-hidden="true"><span style="--delay:${j * 90}ms">${l}</span></span>`).join("");
+    sBody.innerHTML = c.b.split(" ").map((w, j) => `<span class="w" style="--delay:${200 + j * 22}ms">${w}</span>`).join(" ");
+    sText.classList.remove("play"); void sText.offsetWidth;
+    requestAnimationFrame(() => sText.classList.add("play"));
+    chLis.forEach((li, j) => j === i ? li.setAttribute("aria-current", "step") : li.removeAttribute("aria-current"));
+    dots.forEach((d, j) => d.classList.toggle("on", j === i));
+    q("#ma-hl").style.transform = `translateX(calc(${c.hl * 100}% + ${c.hl * 6}px))`;
+    tabs.forEach((t2, j) => t2.classList.toggle("on", j === c.hl));
+    if (!first) { S.spinV += 900; burst(SETS[i]); }
+  }
+  const lerp = (a, b, t) => a + (b - a) * t, clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v)), ease = t => t * t * (3 - 2 * t);
+  function apply(p) {
+    const ci = Math.min(3, Math.floor(p * 4)), local = clamp(p * 4 - ci);
+    setChapter(ci);
+    chBars.forEach((b, j) => b.style.transform = `scaleX(${j < ci ? 1 : j === ci ? local : 0})`);
+    const nxt = CH[Math.min(3, ci + 1)], mix = ci < 3 ? ease(clamp((local - 0.7) / 0.3)) : 0;
+    root.style.setProperty("--st-bg", `rgb(${CH[ci].bg.map((v, j) => Math.round(lerp(v, nxt.bg[j], mix)))})`);
+    root.style.setProperty("--st-glow", mix > 0.5 ? nxt.glow : CH[ci].glow);
+    S.feedY = ci < 3 ? lerp(S.anchors[ci], S.anchors[ci + 1], ease(clamp((local - 0.75) / 0.25))) : S.anchors[3];
+    const ticks = ci > 0 ? 4 : Math.floor(clamp((local - 0.1) / 0.6) * 4.999);
+    boxes.forEach((bx, j) => { const on = j < ticks; if (on !== bx.classList.contains("on")) { bx.classList.toggle("on", on); if (on) { bx.classList.add("pop"); setTimeout(() => bx.classList.remove("pop"), 260); } } });
+    const youDone = ticks >= 3, fixed = ci > 2 ? 3 : ci === 2 ? Math.floor(clamp((local - 0.15) / 0.55) * 3.999) : 0;
+    mems.forEach((m, j) => {
+      const st = j === 0 ? (youDone ? "ok" : null) : (j >= 4 && j - 4 < fixed ? "ok" : MEM[j][2]);
+      const dot = m.querySelector(".ma-st"), cur = ["ok", "part", "miss"].find(k => dot.classList.contains(k)) || null;
+      if (cur !== st) { dot.className = "ma-st " + (st || "") + " flip"; dot.innerHTML = icon(st); setTimeout(() => dot.classList.remove("flip"), 30); }
+    });
+    const done = 3 + (youDone ? 1 : 0) + fixed;
+    q("#ma-done").textContent = done;
+    const part = fixed >= 1 ? 0 : 1, miss = Math.max(0, 2 - Math.max(0, fixed - 1)), none = youDone ? 0 : 1;
+    q("#ma-stack").innerHTML = [["#22c55e", done], ["#fbbf24", part], ["#ef4444", miss], ["#2a2b31", none]].filter(x => x[1]).map(([c2, n]) => `<i style="flex-grow:${n};background:${c2}"></i>`).join("");
+    if (ci === 2 && fixed === 3 && !S.green) { S.green = true; burst(SETS[2].map(() => "ok")); }
+    if (ci < 2) S.green = false;
+    const chars = ci > 1 ? NOTE.length : ci === 1 ? Math.floor(clamp((local - 0.08) / 0.5) * NOTE.length) : 0;
+    note.innerHTML = NOTE.slice(0, chars) + (ci === 1 && chars < NOTE.length ? '<span class="caret"></span>' : "");
+    shots.forEach((s2, j) => s2.classList.toggle("on", ci > 1 || (ci === 1 && local > 0.6 + j * 0.08)));
+    const k = ci === 3 ? ease(clamp(local / 0.5)) : 0;
+    pts.forEach(el => el.textContent = Math.round(+el.dataset.pts - 6 + 6 * k));
+    q("#ma-toast").classList.toggle("on", ci === 3 && local > 0.45 && local < 0.95);
+  }
+  S.frame = now => {
+    const dt = Math.min(0.05, (now - S.last) / 1000); S.last = now;
+    if (!S.visible) return;
+    const r = root.getBoundingClientRect(), total = r.height - innerHeight, pr = clamp(-r.top / total);
+    apply(pr);
+    S.smoothY += (S.feedY - S.smoothY) * (reduce ? 1 : 0.12);
+    feed.style.transform = `translate3d(0, ${(-S.smoothY).toFixed(1)}px, 0)`;
+    const mx = fine && !reduce ? storyMouse.x : 0, my = fine && !reduce ? storyMouse.y : 0;
+    S.cm.x += (mx - S.cm.x) * 0.05; S.cm.y += (my - S.cm.y) * 0.05;
+    S.spinV += (-170 * S.spin - 22 * S.spinV) * dt; S.spin += S.spinV * dt;   // a quick turn at a new chapter, settling back like a spring
+    const t = now / 1000, ry = -22 + pr * 34 + S.cm.x * 26 + (reduce ? 0 : S.spin * 0.8), rx = 8 + S.cm.y * -14, bob = reduce ? 0 : Math.sin(t * 1.05) * 8;
+    phoneEl.style.transform = `translateY(${bob.toFixed(1)}px) perspective(1600px) rotateY(${ry.toFixed(2)}deg) rotateX(${rx.toFixed(2)}deg) rotateZ(${(3 - pr * 6).toFixed(2)}deg)`;
+    phoneEl.style.filter = !reduce && Math.abs(S.spinV) > 150 ? `blur(${Math.min(2.5, Math.abs(S.spinV) / 500).toFixed(2)}px)` : "none";
+    measureZones();
+    const W = zones.W, pb = pin.getBoundingClientRect();
+    fls.forEach((f, i) => {
+      const per = 6.2 + (i * 2.9) % 5.3, ph = (t + i * 1.3) * (Math.PI * 2 / per);   // each shape bobs at its own slow pace
+      const sz = W < 900 ? f.size * 0.6 : f.size;
+      if (f.sz !== sz) { f.sz = sz; f.el.firstElementChild.style.width = f.el.firstElementChild.style.height = sz + "px"; }
+      const [sx, sy] = spot(f), baseX = sx - sz / 2, baseY = sy - sz / 2;
+      let tx = 0, ty = 0, spd = 1;
+      if (fine && !reduce && !f.hold) {
+        const ex = pb.left + baseX + f.bx + sz / 2, ey = pb.top + baseY + f.by + sz / 2, dx = storyMouse.px - ex, dy = storyMouse.py - ey, dist = Math.hypot(dx, dy);
+        if (dist < 260 && dist > 0) { const force = (260 - dist) / 260; tx = dx / dist * force * -70; ty = dy / dist * force * -70; spd = 1 + force * 4; }
+      }
+      f.rx += (tx - f.rx) * 0.1; f.ry += (ty - f.ry) * 0.1;
+      f.extra = (f.extra + (spd - 1) * 0.8 * (i % 2 ? 1 : -1)) * 0.97;
+      const fy = reduce ? 0 : Math.sin(ph) * 12, fa = reduce ? 0 : Math.cos(ph) * 6, par = S.cm.x * 50 * f.depth, par2 = S.cm.y * 50 * f.depth;
+      f.el.style.transform = `translate3d(${(baseX + f.bx + f.rx + par).toFixed(1)}px, ${(baseY + f.by + f.ry + fy + par2).toFixed(1)}px, 0) rotate(${(f.angle + fa + f.extra).toFixed(1)}deg) scale(${f.s.toFixed(3)})`;
+      f.el.style.opacity = f.o.toFixed(3);
+    });
+  };
+  if ("IntersectionObserver" in window) new IntersectionObserver(l => l.forEach(e => { S.visible = e.isIntersecting; })).observe(root); else S.visible = true;
+  S.measure = measure;
+  measure(); if (document.fonts) document.fonts.ready.then(() => story === S && measure());
+  apply(0);
+  story = S;
+}
+addEventListener("resize", () => { if (story && story.root.isConnected) story.measure(); });
+(function storyLoop(now) { if (story && story.root.isConnected) story.frame(now); else if (story) story = null; requestAnimationFrame(storyLoop); })(performance.now());
+
 // Fade sections in as they scroll into view (everything shows at once if motion is reduced).
 function revealLanding() {
   landMenu(false);
+  initStory();
   const els = document.querySelectorAll(".lp .rv:not(.in), .lp .stage:not(.in)");
   if (!("IntersectionObserver" in window) || matchMedia("(prefers-reduced-motion: reduce)").matches) { els.forEach(el => el.classList.add("in")); return; }
   const io = new IntersectionObserver(list => list.forEach(x => { if (x.isIntersecting) { x.target.classList.add("in"); io.unobserve(x.target); } }), { threshold: 0.18 });
