@@ -2029,34 +2029,28 @@ function renderProfile(key, part = "profile", withTabs = false) {
       <div><h1>${esc(m.name)}${key === myKey() ? `<span class="you">YOU</span>` : ""}${(r => r ? `<span class="rolechip role-${r.toLowerCase()}">${r}</span>` : "")(roleForKey(key))}</h1><p>Rank #${rankOf(key) || "–"} · since ${since}</p></div></div>
     <h3 class="tg-h">Habit</h3>
     <div class="tiles">
-      <div class="tile"><b>${s.run}</b><span>Streak</span></div>
-      <div class="tile"><b>${s.best}</b><span>Best streak</span></div>
-      <div class="tile"><b>${s.rate === null ? "–" : s.rate + "%"}</b><span>Days complete</span></div>
+      <div class="tile"><b>${s.run}</b><span>Streak</span><small>Best ${s.best}</small></div>
+      <div class="tile"><b>${s.rate === null ? "–" : s.rate + "%"}</b><span>Of days done</span></div>
       <div class="tile"><b>${s.points}</b><span>Points</span></div>
-      <div class="tile"><b>${s.completeDays}</b><span>Days done</span></div>
-      <div class="tile"><b>${earned}</b><span>Badges</span></div>
     </div>
     ${s.wins + s.losses + s.gambles + s.sitOuts > 0 || s.pnl !== null || s.avgR !== null ? `<h3 class="tg-h">Trading</h3>
     <div class="tiles">
-      <div class="tile"><b>${s.winRate === null ? "–" : s.winRate + "%"}</b><span>Win rate · ${s.wins}W ${s.losses}L</span></div>
-      <div class="tile"><b>${s.gambles}</b><span>Gambles</span></div>
-      <div class="tile"><b>${s.sitOuts}</b><span>No-trade days</span></div>
+      <div class="tile"><b>${s.winRate === null ? "–" : s.winRate + "%"}</b><span>Win rate</span><small>${s.wins}W ${s.losses}L</small></div>
       <div class="tile"><b class="${s.pnl > 0 ? "up" : s.pnl < 0 ? "down" : ""}">${s.pnl === null ? "–" : fmtPnl(s.pnl)}</b><span>Total P&amp;L</span></div>
       <div class="tile"><b>${s.avgR === null ? "–" : fmtR(s.avgR)}</b><span>Average R</span></div>
-      <div class="tile"><b class="${s.bestDay > 0 ? "up" : ""}">${s.bestDay === null ? "–" : fmtPnl(s.bestDay)}</b><span>Best day</span></div>
     </div>
-    <p class="sub-hint tiles-note">Win rate counts days marked Win or Loss. Gambles and no-trade days don't count toward it. P&amp;L and R count only days where they were filled in.</p>` : ""}</div>`;
+    <p class="sub-hint tiles-note">Win rate counts only Win and Loss days. P&amp;L and R count only days where they were filled in.</p>` : ""}</div>`;
 
-  // Earned badges, then the 3 closest to being earned; the rest are folded away.
+  // Only the badges you've earned; the rest are folded away. With none earned yet, the 3 closest show instead.
   const locked = badges.filter(b => !b.earned).sort((a, b) => b.have / b.goal - a.have / a.goal);
-  const shown = [...badges.filter(b => b.earned), ...locked.slice(0, 3)], rest = locked.slice(3);
+  const shown = earned ? badges.filter(b => b.earned) : locked.slice(0, 3), rest = earned ? locked : locked.slice(3);
   const badgeHtml = b => `<div class="badge tier-${b.tier} ${b.earned ? "" : "locked"}" title="${esc(b.title)}">
       <div class="medal"><span>${ic(b.icon, 26)}</span></div><b>${esc(b.title)}</b>
       ${b.earned ? `<small>${b.tier}</small>` : `<div class="bar" role="img" aria-label="${b.have} of ${b.goal}"><i style="width:${Math.round(100 * b.have / b.goal)}%"></i></div><small>${b.have}/${b.goal}</small>`}
     </div>`;
-  const ach = `<div class="card"><div class="cardhead"><h2>Achievements · ${earned}/${badges.length}</h2></div>
+  const ach = `<div class="card"><div class="cardhead"><h2>Badges · ${earned} of ${badges.length}</h2></div>
     <div class="badges">${shown.map(badgeHtml).join("")}</div>
-    ${rest.length ? `<details class="more-badges"><summary>Show all ${badges.length} badges</summary><div class="badges">${rest.map(badgeHtml).join("")}</div></details>` : ""}</div>`;
+    ${rest.length ? `<details class="more-badges"><summary>${earned ? `Show the ${rest.length} still to earn` : `Show all ${badges.length} badges`}</summary><div class="badges">${rest.map(badgeHtml).join("")}</div></details>` : ""}</div>`;
 
   // Last 12 weeks, one column per week, Mon-Fri rows.
   const firstMon = addDays(mondayOf(today), -77);
@@ -2118,7 +2112,7 @@ function checkUnlocks() {
   const fresh = earned.filter(b => !seen.includes(b.id));
   if (!fresh.length) return;
   const b = fresh[fresh.length - 1], t = document.getElementById("toast");
-  t.innerHTML = `<div class="medal tier-${b.tier}"><span>${ic(b.icon, 26)}</span></div><div><b>Achievement unlocked</b><span>${esc(b.title)}${fresh.length > 1 ? ` · +${fresh.length - 1} more` : ""}</span></div>`;
+  t.innerHTML = `<div class="medal tier-${b.tier}"><span>${ic(b.icon, 26)}</span></div><div><b>Badge earned</b><span>${esc(b.title)}${fresh.length > 1 ? ` · +${fresh.length - 1} more` : ""}</span></div>`;
   t.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { t.hidden = true; }, 4500);
