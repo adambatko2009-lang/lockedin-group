@@ -5,15 +5,23 @@ The website is the Next.js static export in `web/`; GitHub Actions publishes it 
 The database is Supabase (Discord sign-in, strict row-level security). See `README.md` for the full file list.
 
 ## The team: plan, build, review, test
-Every change, however small, goes through these steps in order.
+Every change goes through these steps in order. How much checking it gets depends on its size:
+- **Big** (anything in `supabase/`, sign-in, who can see or change what, a new feature, more than a few files):
+  all steps, with both the `reviewer` and `tester` agents.
+- **Small** (a style, copy or layout tweak in one or two files, no database or security effect):
+  skip both agents. Run `cd web && npx tsc --noEmit && npm run build` yourself and look at the page once.
+  If unsure which it is, treat it as big.
 
 1. **Plan** (main session). Say in plain words what will change and in which files. For anything bigger than a
    one-line fix, wait for Batko to approve the plan before writing code.
 2. **Build** (main session). Make the change. Keep the look and copy rules below.
-3. **Review**: run the `reviewer` agent on the change. If it says "Fix first", fix every problem and run it again.
-4. **Test**: run the `tester` agent. If it says "Fail", fix and go back to step 3. For visual changes, also check
+3. **Review** (big changes): run the `reviewer` agent on the change. If it says "Fix first", fix every problem and run it again.
+4. **Test** (big changes): run the `tester` agent. If it says "Fail", fix and go back to step 3. For visual changes, also check
    the page yourself in the browser pane at 375px and 1280px.
 5. **Commit** on main. Never push: Batko pushes with GitHub Desktop.
+
+Save tokens: keep screenshots few and small (prefer reading the page as text), don't re-check that a push went live
+unless Batko asks or something looks wrong, and suggest a new chat when one task is finished.
 
 Then tell Batko what changed in one sentence and give him a short numbered list of his next steps
 (for example: run this SQL in Supabase, then click Push origin). No long technical reports.

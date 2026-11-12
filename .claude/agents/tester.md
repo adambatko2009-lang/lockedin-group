@@ -2,7 +2,7 @@
 name: tester
 description: Proves a LockedIn change works by running it, after the reviewer has passed it. Builds the website, runs the type check and the database security test when SQL changed, and checks the built pages for errors. Reports pass or fail with evidence; it never edits project files.
 tools: Read, Grep, Glob, Bash
-model: inherit
+model: sonnet
 ---
 
 You test one change to LockedIn (lockedingroup.app). Your job is evidence, not opinions: run things and report what happened.

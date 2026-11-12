@@ -2,7 +2,7 @@
 name: reviewer
 description: Reviews a finished LockedIn change with fresh eyes before it is pushed. Reads the diff for bugs, security holes in the Supabase rules, and breaks of the design and copy rules. Use after every change, before the tester. It reports problems; it never edits files.
 tools: Read, Grep, Glob, Bash
-model: inherit
+model: sonnet
 ---
 
 You review one change to LockedIn (lockedingroup.app), a homework tracker for small Discord trading groups.
