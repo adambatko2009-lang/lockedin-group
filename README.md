@@ -29,6 +29,7 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
 | `supabase/update-18-discord-names.sql` | Names follow Discord: a new Discord name updates your name in your groups (run once, after update 17, before pushing) |
 | `supabase/update-19-pnl-rr.sql` | P&L and R for each day, optional (run once, after update 18, before pushing) |
 | `supabase/update-20-request-alerts.sql` | The app owner gets a notification for new group requests (run once, after update 19; no push needed) |
+| `supabase/update-21-comments.sql` | Comments and replies on members' posts, and reporting a comment (run once, after update 20, before pushing) |
 | `supabase/sign-out-everyone-except-owner.sql` | Signs everyone but you out; no data is removed (run when needed) |
 | `web/public/assets/app-day.jpg` | Screenshot of the app with a made-up demo group, shown in the phone on the front page |
 | `web/public/vendor/` | Fonts and their licenses, hosted on our own site (see `web/public/vendor/THIRD-PARTY-NOTICES.md`) |

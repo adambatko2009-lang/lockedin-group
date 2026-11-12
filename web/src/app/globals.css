@@ -351,6 +351,22 @@
   button.react:hover { color: var(--text); border-color: var(--line-strong); }
   .react.on { color: var(--accent-text); border-color: color-mix(in srgb, var(--accent) 55%, transparent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
   @media (prefers-reduced-motion: no-preference) { button.react:active { transform: scale(0.92); } }
+  /* comments and replies under a post */
+  .cmts { margin-top: 10px; padding: 12px 14px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); }
+  .cmts .empty { margin: 0; }
+  .clist { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .cmt .chead { display: flex; align-items: center; gap: 8px; font-size: 14px; min-width: 0; }
+  .cmt .chead b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cmt .ctime { margin-left: auto; flex: none; color: var(--muted); font: 12px var(--font-data); }
+  .cmt p { margin: 4px 0 0 28px; font-size: 15px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .cmt.reply { margin-left: 28px; padding-left: 12px; border-left: 2px solid var(--line-strong); }
+  .cacts { display: flex; gap: 16px; margin: 2px 0 0 28px; }
+  .clink { border: 0; background: none; padding: 4px 0; min-height: 28px; color: var(--muted); font: 600 13px var(--font-ui); cursor: pointer; }
+  .clink:hover { color: var(--text); }
+  .clink:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; border-radius: 4px; }
+  .cform { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; margin-top: 12px; }
+  .cform .cbox { width: 100%; resize: vertical; min-height: 44px; background: var(--surface); font: 15px/1.4 var(--font-ui); padding: 9px 10px; }
+  .creplying { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
   .guide .cardhead { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
   .guide-n { font: 600 13px var(--font-data); color: var(--muted); }
   .guide-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 4px; }
@@ -982,10 +998,11 @@
     .desk .maincol, .desk .side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
     .card { padding: 18px 20px; }
     .member { display: grid; grid-template-columns: 180px minmax(0, 1fr) 36px 28px;
-              grid-template-areas: "name tg nb st" ". breaks breaks breaks" ". note note note" ". shots shots shots" ". reacts reacts reacts";
+              grid-template-areas: "name tg nb st" ". breaks breaks breaks" ". note note note" ". shots shots shots" ". reacts reacts reacts" ". cmts cmts cmts";
               align-items: center; column-gap: 12px; padding: 10px 0; }
     .member .shots { grid-area: shots; margin-top: 6px; }
     .member .reacts { grid-area: reacts; }
+    .member .cmts { grid-area: cmts; }
     .member .breaks { grid-area: breaks; margin-top: 6px; }
     .shot { width: 56px; height: 56px; }
     .member:first-child { padding-top: 0; }

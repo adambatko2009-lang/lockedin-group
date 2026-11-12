@@ -53,6 +53,7 @@ const ICON_PATHS = {
   pen: '<path d="M4 20h4L19 9l-4-4L4 16v4z"/>',
   pause: '<rect x="6.5" y="5" width="3.5" height="14" rx="1"/><rect x="14" y="5" width="3.5" height="14" rx="1"/>',
   gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/>',
+  chat: '<path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8l-4 3.5V16H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/>',
   flame: '<path d="M12 3c1 4 5.5 5.6 5.5 10.2A5.5 5.5 0 0 1 6.5 13c0-2.6 1.5-4.2 2.6-5.1.3 1.7 1.1 2.8 2.5 3.2C11 8 11.6 5.4 12 3z"/>',
   check: '<circle cx="12" cy="12" r="9"/><path d="m8 12.3 2.8 2.8L16.2 9"/>',
   calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
@@ -150,7 +151,7 @@ const sb = configured ? createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
 }) : null;
 
 // The date of the current Terms and Privacy policy. Change it when they change, and everyone is asked to accept again.
-const TERMS_VERSION = "2026-11-10";
+const TERMS_VERSION = "2026-11-12";
 let screen = "loading";          // loading | setup | signin | waiting | rejected | app
 let session = null, profile = null;
 let isAdmin = false;             // can manage the open group: its owner, a group admin, or the app owner
@@ -313,6 +314,7 @@ async function openGroup(id) {
   reflections = {};
   ((rf.error && snap ? snap.reflections : rf.data) || []).forEach(r => { reflections[r.week_start + "|" + r.member_key] = r; });
   await loadReactions(id);
+  await loadComments(id);
   loadStep = "admin list";
   people = [];
   if (isAdmin) await loadPeople();
@@ -419,6 +421,16 @@ function subscribe() {
       addReactionLocal(payload.new);
       scheduleRender();
     })
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "comments", filter }, (payload: any) => {
+      if (here !== gid || !payload.new || payload.new.group_id !== gid) return;
+      addCommentLocal(payload.new);
+      scheduleRender();
+    })
+    .on("postgres_changes", { event: "DELETE", schema: "public", table: "comments" }, (payload: any) => {
+      // Deletes only carry the comment's number, never its text.
+      if (here !== gid || !payload.old || payload.old.id == null) return;
+      if (dropCommentLocal(payload.old.id)) scheduleRender();
+    })
     .on("postgres_changes", { event: "*", schema: "public", table: "memberships", filter }, () => {
       // Someone typed the join code (managers see them appear in Admin right away).
       if (isAdmin && here === gid) loadPeople().then(autoRender);
@@ -452,7 +464,7 @@ function reactBarHtml(day, key) {
     return canReact
       ? `<button class="react${mine ? " on" : ""}" data-react="${kind}|${day}|${key}" aria-pressed="${mine}" title="${esc(tip)}" aria-label="${esc(tip)}">${inner}</button>`
       : `<span class="react" title="${esc(tip)}" role="img" aria-label="${esc(tip)}">${inner}</span>`;
-  }).join("");
+  }).join("") + commentToggleHtml(day, key);
   return chips ? `<div class="reacts">${chips}</div>` : "";
 }
 async function toggleReaction(kind, day, key) {
@@ -465,6 +477,90 @@ async function toggleReaction(kind, day, key) {
     ? await sb.from("reactions").delete().eq("day", day).eq("member_key", key).eq("user_id", uid).eq("kind", kind)
     : await sb.from("reactions").insert({ day, member_key: key, kind });
   if (e && !/duplicate/i.test(e.message)) { if (mineNow) add(); else drop(); error = e.message; render(); }
+}
+
+// ---------------------------------------------------------------- comments and replies on someone's post
+let comments: Record<string, any[]> = {};   // "day|member" -> comments, oldest first
+const commentsOpen = new Set<string>();     // posts whose comments are showing
+const commentDrafts: Record<string, string> = {}, replyTo: Record<string, number> = {};
+let commentSending = "";
+function addCommentLocal(c) {
+  const k = c.day + "|" + c.member_key, l = comments[k] || (comments[k] = []);
+  if (!l.some(x => x.id === c.id)) { l.push(c); l.sort((a, b) => a.created_at.localeCompare(b.created_at)); }
+}
+// Removes a comment and its replies; true if it was here.
+function dropCommentLocal(id) {
+  let found = false;
+  for (const k of Object.keys(comments)) {
+    const before = comments[k].length;
+    comments[k] = comments[k].filter(x => x.id !== id && x.reply_to !== id);
+    if (comments[k].length !== before) found = true;
+  }
+  return found;
+}
+const findComment = id => { for (const l of Object.values(comments)) { const c = l.find(x => x.id === id); if (c) return c; } return null; };
+async function loadComments(id) {
+  const r = await sb.from("comments").select("id, day, member_key, author_key, user_id, reply_to, body, created_at")
+    .eq("group_id", id).order("created_at").limit(5000);
+  comments = {};
+  if (!r.error) (r.data || []).forEach(addCommentLocal);   // before database update 21 there's simply nothing
+}
+const canComment = () => !!session && !!myKey();
+function commentToggleHtml(day, key) {
+  const k = day + "|" + key, n = (comments[k] || []).length, open = commentsOpen.has(k);
+  if (!n && !canComment()) return "";
+  const label = n ? `${n} comment${n === 1 ? "" : "s"}` : "Comment";
+  return `<button class="react cmt-toggle${open ? " on" : ""}" data-comments="${k}" aria-expanded="${open}">${ic("chat", 15)}<span>${label}</span></button>`;
+}
+const commentTime = iso => new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+function commentHtml(c) {
+  const m = members.find(x => x.key === c.author_key) || { key: c.author_key, name: "Former member" };
+  const mine = !!session && c.user_id === session.user.id;
+  const acts = [
+    canComment() ? `<button class="clink" data-creply="${c.id}">Reply</button>` : "",
+    mine || isAdmin ? `<button class="clink" data-cdel="${c.id}">Delete</button>` : "",
+    !mine && !isAdmin && canComment() && c.author_key !== myKey() ? `<button class="clink" data-creport="${c.id}">Report</button>` : "",
+  ].join("");
+  return `<li class="cmt${c.reply_to ? " reply" : ""}">
+    <div class="chead">${avatarHtml(m, 20)}<b>${esc(m.name)}</b><span class="ctime">${esc(commentTime(c.created_at))}</span></div>
+    <p>${linkify(c.body)}</p>${acts ? `<div class="cacts">${acts}</div>` : ""}</li>`;
+}
+function commentsPanelHtml(day, key) {
+  const k = day + "|" + key;
+  if (!commentsOpen.has(k)) return "";
+  const list = comments[k] || [], top = list.filter(c => !c.reply_to);
+  const items = top.map(c => commentHtml(c) + list.filter(x => x.reply_to === c.id).map(commentHtml).join("")).join("");
+  if (replyTo[k] && !findComment(replyTo[k])) delete replyTo[k];   // the comment you were answering was deleted
+  const replying = replyTo[k] ? findComment(replyTo[k]) : null;
+  const rname = replying ? (members.find(x => x.key === replying.author_key) || { name: "this comment" }).name : "";
+  const fid = "cbox-" + k.replace(/[^a-z0-9]/gi, "-");
+  const form = canComment() ? `<div class="cform">
+      ${replying ? `<div class="creplying">Replying to <b>${esc(rname)}</b> <button class="clink" data-creply-cancel="${k}">Cancel</button></div>` : ""}
+      <textarea class="field cbox" id="${fid}" data-cbox="${k}" rows="2" maxlength="500" placeholder="${replying ? "Write a reply" : "Write a comment"}" aria-label="${replying ? "Write a reply" : "Write a comment"}">${esc(commentDrafts[k] || "")}</textarea>
+      <button class="btn primary small" data-csend="${k}" ${commentSending === k ? "disabled" : ""}>${commentSending === k ? "Sending…" : "Send"}</button></div>` : "";
+  return `<div class="cmts">${items ? `<ul class="clist">${items}</ul>` : `<p class="empty">No comments yet.</p>`}${form}</div>`;
+}
+async function sendComment(k) {
+  const body = (commentDrafts[k] || "").trim();
+  if (!body || !canComment() || commentSending) return;
+  const i = k.indexOf("|"), day = k.slice(0, i), key = k.slice(i + 1);
+  if (replyTo[k] && !findComment(replyTo[k])) delete replyTo[k];
+  commentSending = k; render();
+  const { data, error: e } = await sb.from("comments").insert({ day, member_key: key, body, reply_to: replyTo[k] || null })
+    .select("id, day, member_key, author_key, user_id, reply_to, body, created_at").single();
+  commentSending = "";
+  if (e) { error = isNetErr(e) ? "No connection. Your comment wasn't sent; try again." : e.message; return render(); }
+  addCommentLocal(data);
+  delete commentDrafts[k]; delete replyTo[k];
+  render();
+}
+async function deleteComment(id) {
+  const c = findComment(id);
+  if (!c) return;
+  const { error: e } = await sb.from("comments").delete().eq("id", id);
+  if (e) { error = e.message; return render(); }
+  dropCommentLocal(id);
+  render();
 }
 
 // ---------------------------------------------------------------- setup guide for a new group owner
@@ -1081,7 +1177,7 @@ function openReport(kind, day, key, image?) {
   if (!canReport(day, key)) return;
   const m = members.find(x => x.key === key);
   reporting = { kind, day, key, image: image || "" };
-  document.getElementById("report-title").textContent = kind === "picture" ? "Report this picture" : "Report this note";
+  document.getElementById("report-title").textContent = kind === "picture" ? "Report this picture" : kind === "comment" ? "Report this comment" : "Report this note";
   document.getElementById("report-what").textContent = `From ${m ? m.name : key} · ${fmtDay(day)}`;
   document.querySelectorAll('input[name="rep-reason"]').forEach(r => { r.checked = false; });
   document.getElementById("report-detail").value = "";
@@ -1114,11 +1210,11 @@ function reportsCardHtml(list, withGroup) {
       ? `<button class="repthumb" data-report-view="${r.id}" aria-label="Open the reported picture" style="${shotUrls[r.image] ? `background-image:url('${shotUrls[r.image]}')` : ""}"></button>`
       : `<span class="repnote" aria-hidden="true">${ic("book", 22)}</span>`;
     return `<div class="reprow">${thumb}<div>
-      <b>${r.kind === "picture" ? "Picture" : "Note"} from ${esc(who)}</b>
+      <b>${r.kind === "picture" ? "Picture" : r.kind === "comment" ? "Comment" : "Note"} from ${esc(who)}</b>
       <span class="sub">${esc(REASON_LABEL[r.reason] || r.reason)} · ${esc(fmtDay(r.day))}${withGroup && g ? ` · ${esc(g.name)}` : ""}</span>
       ${r.detail ? `<span class="sub">“${esc(r.detail)}”</span>` : ""}
       ${r.excerpt ? `<blockquote>${esc(r.excerpt)}</blockquote>` : ""}
-      <div class="actions"><button class="btn danger small" data-report-remove="${r.id}">Remove ${r.kind === "picture" ? "picture" : "note"}</button>
+      <div class="actions"><button class="btn danger small" data-report-remove="${r.id}">Remove ${r.kind === "picture" ? "picture" : r.kind === "comment" ? "comment" : "note"}</button>
         <button class="btn plain small" data-report-keep="${r.id}">Keep it</button></div></div></div>`;
   }).join("");
   return `<div class="card"><div class="cardhead"><h2>Reports <span class="count">${list.length}</span></h2></div>
@@ -1128,6 +1224,13 @@ function reportsCardHtml(list, withGroup) {
 async function resolveReport(id, remove) {
   const r = reports.find(x => x.id === id);
   if (!r) return;
+  if (remove && r.kind === "comment") {
+    const del = await sb.from("comments").delete().eq("id", Number(r.image));
+    if (del.error) { error = del.error.message; return render(); }
+    dropCommentLocal(Number(r.image));
+    const same = reports.filter(x => x.kind === "comment" && x.image === r.image).map(x => x.id);
+    return adminDo(sb.from("reports").update({ status: "handled" }).in("id", same), "Comment removed.");
+  }
   if (remove) {
     const cur = await sb.from("ticks").select("images, note").eq("day", r.day).eq("member_key", r.member_key).maybeSingle();
     if (cur.error) { error = cur.error.message; return render(); }
@@ -1746,7 +1849,7 @@ function renderDay() {
       ${(rec.rule_breaks || []).length || pnlChipHtml(rec) ? `<div class="breaks">${pnlChipHtml(rec)}${(rec.rule_breaks || []).map(b => `<span class="bchip">${ic("alert", 13)}${esc(BREAK_LABEL[b] || b)}</span>`).join("")}</div>` : ""}
       ${note ? `<div class="note">${note}${canReport(k, m.key) ? `<button class="reportlink" data-report-note="${k}|${m.key}">Report note</button>` : ""}</div>` : ""}
       ${shots ? `<div class="shots">${shots}</div>` : ""}
-      ${rec.note || images.length ? reactBarHtml(k, m.key) : ""}
+      ${rec.note || images.length ? reactBarHtml(k, m.key) + commentsPanelHtml(k, m.key) : ""}
       ${open ? `<div id="inline-slot" data-persist></div>` : ""}
     </div>`;
   }).join("");
@@ -1941,6 +2044,7 @@ function renderProfile(key, part = "profile", withTabs = false) {
       ${r.note ? `<p>${linkify(r.note)}</p>` : ""}
       ${(r.images || []).length ? `<div class="shots">${r.images.map((p, i) => `<button class="shot" data-view-shot="${key}|${esc(p)}" aria-label="Picture ${i + 1}, ${fmtDay(r.day)}"
         style="${shotUrls[p] ? `background-image:url('${shotUrls[p]}')` : ""}"></button>`).join("")}</div>` : ""}
+      ${commentToggleHtml(r.day, key) ? `<div class="reacts">${commentToggleHtml(r.day, key)}</div>` : ""}${commentsPanelHtml(r.day, key)}
     </div>`).join("") : `<p class="empty">No notes or pictures yet.</p>`}</div>`;
 
   const since30 = addDays(today, -30), bcounts: Record<string, number> = {};
@@ -2433,8 +2537,8 @@ function renderLanding() {
       ${sec("Who is responsible", `<p>LockedIn is a free, non-commercial project run by Adam Batko, a private individual in Norway. He decides how your data is used (the "data controller"). Contact: ${mail}.</p>`)}
       ${sec("What we store", `<ul>
         <li><b>From Discord, when you sign in:</b> your Discord username, profile picture, email address and Discord account ID. LockedIn doesn't use your email address for anything and never emails you. We never see your Discord password, messages or servers.</li>
-        <li><b>What you add:</b> your ticks, notes, rule-break tags, weekly reflections, screenshots, P&amp;L and R if you fill them in, reactions to other members' posts, your settings, and requests to join or start a group.</li>
-        <li><b>Reports:</b> if you report a picture or note, we store the report, your reason and which post it is about. For notes, the start of the note is kept with the report as evidence.</li>
+        <li><b>What you add:</b> your ticks, notes, rule-break tags, weekly reflections, screenshots, P&amp;L and R if you fill them in, reactions and comments on members' posts, your settings, and requests to join or start a group.</li>
+        <li><b>Reports:</b> if you report a picture, note or comment, we store the report, your reason and which post it is about. For notes and comments, the start of the text is kept with the report as evidence.</li>
         <li><b>Reminders, only if you turn them on:</b> a push address for that phone or computer (made by your browser's push service, such as Apple, Google or Mozilla), how long before the cutoff you want a reminder, and a note of which reminders were sent. If you own or help run a group, the same notifications also tell you when someone asks to join or reports something.</li>
       </ul>`)}
       ${sec("Why, and the legal basis", `<ul>
@@ -2443,8 +2547,8 @@ function renderLanding() {
         <li><b>Keeping the service safe and working</b>, for example the technical logs our providers keep: our legitimate interest in a secure service (Article 6(1)(f)).</li>
       </ul><p>We don't sell your data, show ads, build profiles of you, or make automated decisions about you.</p>`)}
       ${sec("Who can see it", `<ul>
-        <li><b>Your group</b> sees your name, picture, ticks, notes, screenshots, P&amp;L and R, reflections, streaks, badges, and the reactions you give and get.</li>
-        <li><b>Your group's owner and admins</b> can also approve or remove members, excuse days and correct ticks.</li>
+        <li><b>Your group</b> sees your name, picture, ticks, notes, screenshots, P&amp;L and R, reflections, streaks, badges, the reactions you give and get, and the comments you write.</li>
+        <li><b>Your group's owner and admins</b> can also approve or remove members, excuse days, correct ticks and delete comments.</li>
         <li><b>Reports</b> are seen only by the group's owner and the app owner. The person who was reported isn't told who reported them.</li>
         <li><b>Your group's Discord server, if the group owner turns on Discord recaps:</b> LockedIn then posts each member's name, whether they finished the day's homework, and a weekly count of days done, wins and losses in a channel the owner picks. Everyone who can read that channel sees it. Your group owner decides this, so ask them if you'd rather not be included.</li>
         <li><b>The app owner</b> (Adam Batko) can see every group, to run and support the service.</li>
@@ -3088,6 +3192,23 @@ document.addEventListener("click", async e => {
   if (t.id === "viewer-next") return stepViewer(1);
   if (t.id === "note-retry" && editing) { const v = document.getElementById("panel-note").value; return editTick(editing.day, editing.key, row => { row.note = v; }, true); }
   if (d.react) { const [kind, day, key] = d.react.split("|"); return toggleReaction(kind, day, key); }
+  if (d.comments) { if (commentsOpen.has(d.comments)) commentsOpen.delete(d.comments); else commentsOpen.add(d.comments); return render(); }
+  if (d.creply) {
+    const c = findComment(Number(d.creply));
+    if (!c) return;
+    const k = c.day + "|" + c.member_key;
+    replyTo[k] = c.reply_to || c.id; commentsOpen.add(k); render();
+    const box = document.querySelector(`[data-cbox="${CSS.escape(k)}"]`) as HTMLTextAreaElement;
+    if (box) box.focus();
+    return;
+  }
+  if (d.creplyCancel) { delete replyTo[d.creplyCancel]; return render(); }
+  if (d.csend) return sendComment(d.csend);
+  if (d.cdel) {
+    if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Delete?"; return; }
+    return deleteComment(Number(d.cdel));
+  }
+  if (d.creport) { const c = findComment(Number(d.creport)); return c && openReport("comment", c.day, c.author_key, String(c.id)); }
   if (d.guide) {
     if (d.guide === "notif") return openSettings();
     tab = "admin"; profileKey = null; adminView = d.guide; flash = ""; error = ""; fixAdminView();
@@ -3256,6 +3377,7 @@ document.addEventListener("click", async e => {
   }
 });
 document.addEventListener("input", e => {
+  if (e.target.dataset && e.target.dataset.cbox) { commentDrafts[e.target.dataset.cbox] = e.target.value; return; }
   if (e.target.id === "faq-search") { faqQuery = e.target.value.slice(0, 80); return render(); }
   if (tab === "admin" && e.target.closest && e.target.closest("#app")) adminDirty = true;
   if (e.target.id === "terms-ok") { document.getElementById("accept-terms").disabled = !e.target.checked; return; }
