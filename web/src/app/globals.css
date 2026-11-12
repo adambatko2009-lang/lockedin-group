@@ -358,17 +358,8 @@
   .cform { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; margin-top: 12px; }
   .cform .cbox { width: 100%; resize: vertical; min-height: 44px; background: var(--surface); font: 15px/1.4 var(--font-ui); padding: 9px 10px; }
   .creplying { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
-  .guide .cardhead { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-  .guide-n { font: 600 13px var(--font-data); color: var(--muted); }
-  .guide-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 4px; }
-  .guide-list li { display: flex; align-items: center; gap: 10px; min-height: 40px; font-size: 15px; }
-  .guide-list li.ok { color: var(--muted); }
-  .guide-list li.ok .ic { color: var(--good); flex: none; }
-  .guide-dot { width: 18px; height: 18px; flex: none; border-radius: 50%; border: 2px solid var(--line-strong); }
   .linkbtn { border: 0; background: none; padding: 0; color: var(--accent-text); font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
   .linkbtn:hover { text-decoration: underline; }
-  .guide-nudge { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 0 14px; margin-bottom: 12px; border-radius: 14px;
-    border: 1px dashed color-mix(in srgb, var(--accent) 60%, transparent); background: transparent; color: var(--accent-text); font-size: 15px; font-weight: 600; cursor: pointer; }
   .okchip { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--good); }
   .howto { margin: 0 0 6px; font-size: 14px; color: var(--text-2); }
   .howto summary { cursor: pointer; font-weight: 600; color: var(--accent-text); padding: 4px 0; }
@@ -488,9 +479,10 @@
   .mini-badge { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; color: var(--tier); margin-left: 6px; vertical-align: -4px;
                 background: color-mix(in srgb, var(--tier) 22%, var(--surface)); box-shadow: inset 0 0 0 1.5px var(--tier); }
   .heat-wrap { overflow-x: auto; }
-  table.heat { border-collapse: separate; border-spacing: 3px; }
+  table.heat { border-collapse: separate; border-spacing: 3px; width: 100%; table-layout: fixed; }
+  .heat th { width: 34px; }
   .heat th { font: 600 11px var(--font-ui); color: var(--muted); text-align: left; padding-right: 4px; }
-  .heat td i { display: block; width: 16px; height: 16px; border-radius: 4px; background: var(--surface-2); }
+  .heat td i { display: block; width: 100%; max-width: 26px; aspect-ratio: 1; border-radius: 4px; background: var(--surface-2); }
   .heat td i.none { background: transparent; }
   .heat td i.COMPLETE { background: var(--good); }
   .heat td i.PARTIAL { background: var(--warn); }
@@ -991,6 +983,7 @@
     #app { gap: 16px; }
     .desk { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(340px, 1fr); gap: 16px; align-items: start; }
     .desk .maincol, .desk .side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    .desk.even { align-items: stretch; } .desk.even > div > .card:last-child { flex: 1; }   /* side by side cards end at the same line */
     .card { padding: 18px 20px; }
     .member { display: grid; grid-template-columns: 180px minmax(0, 1fr) 36px 28px;
               grid-template-areas: "name tg nb st" ". breaks breaks breaks" ". note note note" ". shots shots shots" ". reacts reacts reacts" ". cmts cmts cmts";
@@ -1513,17 +1506,18 @@
 
 /* ================================================================ Today: one summary that says how long is left and who is still open.
    Mono only for the numbers; the words around them are in the interface font. */
-.sum-time, .sum-until, .sum-done p { margin: 0; }
+.sum-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.sum-count, .sum-time, .sum-until { margin: 0; }
 .daysum .num { font-family: var(--font-data); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
-.sum-time { font: 650 32px/1.1 var(--font-ui); color: var(--text); letter-spacing: -0.02em; }
+.sum-count { font-size: 15px; font-weight: 600; color: var(--text-2); padding-bottom: 2px; white-space: nowrap; }
+.sum-count .num { color: var(--text); }
+.sum-when { margin-left: auto; text-align: right; min-width: 0; }
+.sum-time { font: 650 32px/1.1 var(--font-ui); color: var(--text); letter-spacing: -0.02em; white-space: nowrap; }
 .sum-time .num { letter-spacing: -0.04em; }
 .sum-time.urgent { color: var(--crit-text); }
 .sum-until { margin-top: 4px; font-size: 15px; color: var(--muted); }
-.sum-done { margin-top: 16px; }
-.sum-done p { font-size: 15px; font-weight: 600; color: var(--text-2); }
-.sum-done p .num { color: var(--text); }
-.donebar { height: 6px; margin-top: 8px; border-radius: 3px; background: var(--line); overflow: hidden; }
-.sum-done + .open-line { margin-top: 14px; }
+.donebar { height: 6px; margin-top: 14px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.donebar + .open-line { margin-top: 14px; }
 .donebar i { display: block; height: 100%; border-radius: 3px; background: var(--good); }
 .open-line { margin: 12px 0 0; font-size: 15px; line-height: 1.45; color: var(--text-2); text-wrap: pretty; }
 .open-line b { font-weight: 600; color: var(--text); margin-right: 4px; }

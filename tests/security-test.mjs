@@ -812,5 +812,28 @@ ok(!r.error && r.rows[0].v.comments_you_wrote.length >= 1, "your data download i
 ok((await as("m3", `delete from public.comments where id=$1`, [c1])).count === 1, "you can delete your own comment");
 ok((await one(`select count(*)::int n from public.comments where reply_to=$1`, [c1])).n === 0, "deleting a comment also deletes its replies");
 
+
+// ================================================================ update 22: notifications removed
+// A device and a waiting owner alert exist before the update, so we can see both disappear.
+await db.query(`insert into public.push_subscriptions (user_id, endpoint, p256dh, auth) values ($1, 'https://push.example.com/before-22', $2, $3)`, [U.m3, "B".repeat(87), "A".repeat(22)]);
+await db.query(`insert into public.owner_alerts (user_id, group_id, kind) select $1, id, 'join' from public.groups limit 1`, [U.batko]);
+const u22 = readFileSync(dir + "update-22-remove-notifications.sql", "utf8");
+await db.exec(u22.slice(0, u22.indexOf("-- ================================================================ SCHEDULE")));
+console.log("\nloaded: update-22-remove-notifications.sql (without the schedule check)");
+section("notifications removed");
+ok((await one(`select count(*)::int n from public.push_subscriptions`)).n === 0, "every saved push address is deleted");
+ok((await one(`select count(*)::int n from public.owner_alerts`)).n === 0, "waiting owner alerts are deleted");
+ok(!!(await rpc("m3", "save_push_subscription", ["https://push.example.com/x", "B".repeat(87), "A".repeat(22), 60])).error, "nobody can save a push address any more");
+r = await rpc("m4", "report_content", [d3, k3, "note", "", "spam", ""]);
+ok(!r.error && (await one(`select count(*)::int n from public.owner_alerts`)).n === 0, "a new report is saved but no longer makes an owner alert");
+r = await db.query(`select * from public.due_reminders()`);
+ok(r.rows.length === 0, "the server job finds nobody to remind");
+r = await db.query(`select * from public.due_owner_alerts()`);
+ok(r.rows.length === 0, "the server job finds no owner alerts to send");
+r = await rpc("m3", "export_my_data", []);
+ok(!r.error, "Download my data still works");
+r = await db.query(`select p from public.old_pictures(10) as p`);
+ok(Array.isArray(r.rows), "the old-picture cleanup still works");
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

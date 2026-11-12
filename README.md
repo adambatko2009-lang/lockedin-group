@@ -18,7 +18,7 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
 | `supabase/update-7-custom-rulebreaks.sql` | Lets members add their own rule-break tags (run once, after update 6) |
 | `supabase/update-8-long-notes.sql` | Removes the 140-character note limit (run once, after update 7) |
 | `supabase/update-9-groups.sql` | Many groups: join codes, group owners, group settings (run once, after update 8) |
-| `supabase/update-10-reminders.sql` | Reminder notifications (run once, after update 9; see "Reminders" below) |
+| `supabase/update-10-reminders.sql` | Reminder notifications (run once, after update 9; removed again by update 22) |
 | `supabase/update-11-your-data.sql` | Download my data and Delete my account (run once, after update 10) |
 | `supabase/update-12-lockdown.sql` | Signed-out visitors can't use the database's helper functions (run once, after update 11) |
 | `supabase/update-13-accept-terms.sql` | Everyone accepts the Terms once; saves when (run once, after update 12, before pushing) |
@@ -30,11 +30,12 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
 | `supabase/update-19-pnl-rr.sql` | P&L and R for each day, optional (run once, after update 18, before pushing) |
 | `supabase/update-20-request-alerts.sql` | The app owner gets a notification for new group requests (run once, after update 19; no push needed) |
 | `supabase/update-21-comments.sql` | Comments and replies on members' posts, and reporting a comment (run once, after update 20, before pushing) |
+| `supabase/update-22-remove-notifications.sql` | Notifications removed: deletes saved push addresses and stops owner alerts (run once, after update 21, before pushing) |
 | `supabase/sign-out-everyone-except-owner.sql` | Signs everyone but you out; no data is removed (run when needed) |
 | `web/public/assets/app-day.jpg` | Screenshot of the app with a made-up demo group, shown in the phone on the front page |
 | `web/public/vendor/` | Fonts and their licenses, hosted on our own site (see `web/public/vendor/THIRD-PARTY-NOTICES.md`) |
-| `supabase/functions/send-reminders/index.ts` | Sends the reminders. Lives in Supabase (Edge Functions), not on the website |
-| `web/public/sw.js` | Background helper: the app opens without internet, and shows reminders |
+| `supabase/functions/send-reminders/index.ts` | Runs every 5 minutes in Supabase (Edge Functions) and deletes pictures older than 60 days. Its reminder part finds nobody since update 22 |
+| `web/public/sw.js` | Background helper: the app opens without internet |
 | `web/public/manifest.webmanifest`, `web/public/icons/` | App icon for "Add to Home Screen" |
 | `web/public/CNAME` | The site's address: lockedingroup.app (DNS is at Porkbun) |
 | `.github/workflows/deploy-web.yml` | Builds `web/` and puts it on GitHub Pages after every push to main |
@@ -119,22 +120,11 @@ This folder is connected to GitHub, with a history of every change. Use this ins
 
 If you ever do upload on github.com again, click **Fetch origin** → **Pull origin** in GitHub Desktop afterwards, so both stay the same.
 
-## Reminders (one-time setup)
+## Notifications (removed)
 
-Members get a notification if their homework isn't done before the day closes (they pick 30 min, 1, 2 or 3 hours before).
-
-1. **Database:** Supabase → **SQL Editor** → **New query** → paste everything from `supabase/update-10-reminders.sql` → **Run**.
-   - If it says `pg_cron` or `pg_net` isn't available: **Database → Extensions** → switch on **pg_cron** and **pg_net** → run it again.
-2. **The sender:** Supabase → **Edge Functions** → **Deploy a new function** → **Via Editor**.
-   Name it exactly `send-reminders`, delete the example code, paste everything from `supabase/functions/send-reminders/index.ts` → **Deploy**.
-   Then open the function → **Details** (or Settings) → switch **off** "Enforce JWT verification" / "Verify JWT" → **Save**.
-   *(Safe: calling it can only send reminders that are due anyway, once.)*
-3. **The keys:** Supabase → **Edge Functions** → **Secrets** → add these three, copying name and value from `secrets/reminder-keys.txt` on your computer:
-   `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` → **Save**. Never paste the private key anywhere else.
-4. **Publish** the website (see above).
-5. **Try it:** Me → Settings → Reminders → switch on → **Allow**. You get a "Reminders are on" notification.
-   - **iPhone:** reminders only work in the app from the Home Screen (Safari → Share → Add to Home Screen), iOS 16.4 or newer.
-   - Check the sender: Supabase → Edge Functions → send-reminders → **Logs**. Every 5 minutes it runs and shows how many were sent.
+Reminders and owner alerts were removed on 12 November 2026 (update 22). Keep the `send-reminders` Edge Function
+and its every-5-minutes job in Supabase: they also delete pictures older than 60 days, which the privacy policy promises.
+Also keep the three `VAPID_*` keys in Supabase (Edge Functions settings): without them the function stops early and skips the picture cleanup.
 
 ## Without internet
 

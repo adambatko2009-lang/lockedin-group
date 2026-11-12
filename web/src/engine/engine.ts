@@ -562,41 +562,6 @@ async function deleteComment(id) {
   render();
 }
 
-// ---------------------------------------------------------------- setup guide for a new group owner
-// Progress is saved with your settings: og[group] holds "b" (boxes saved), "s" (invite shared), "x" (hidden).
-const guideFlags = () => ((settings.og || {})[gid] || "");
-function setGuideFlag(f) {
-  if (!gid || guideFlags().includes(f)) return;
-  settings.og = Object.assign({}, settings.og || {}, { [gid]: guideFlags() + f });
-  saveSettings();
-}
-function guideSteps() {
-  const g = group();
-  if (!g || !session || g.owner_id !== session.user.id || guideFlags().includes("x")) return null;
-  const steps = [
-    ["Set your homework boxes, points and cutoff time", guideFlags().includes("b"), "group"],
-    ["Share your invite link in your Discord", guideFlags().includes("s"), "people"],
-    ["Approve your first member", people.some(p => p.status === "approved" && p.user_id !== g.owner_id), "people"],
-    ["Turn on notifications, so you hear about join requests", !!push.sub, "notif"],
-    ["Connect Discord recaps (optional)", !!discordCfg, "group"],
-  ];
-  return steps.every(x => x[1]) ? null : steps;
-}
-function ownerGuideHtml() {
-  const steps = guideSteps();
-  if (!steps) return "";
-  const done = steps.filter(x => x[1]).length;
-  return `<div class="card guide"><div class="cardhead"><h2>Set up ${esc(group().name)}</h2><span class="guide-n">${done} of ${steps.length} done</span></div>
-    <ol class="guide-list">${steps.map(([label, ok, go]) => `<li class="${ok ? "ok" : ""}">${ok ? ic("check", 18) : `<span class="guide-dot" aria-hidden="true"></span>`}
-      ${ok ? `<span>${esc(label)}</span>` : `<button class="linkbtn" data-guide="${go}">${esc(label)}</button>`}</li>`).join("")}</ol>
-    <button class="btn plain small" id="guide-hide">Hide this</button></div>`;
-}
-function guideNudgeHtml() {
-  const steps = guideSteps();
-  if (!steps) return "";
-  return `<button class="guide-nudge" data-guide="people">${ic("target", 16)}Finish setting up your group · ${steps.filter(x => x[1]).length} of ${steps.length} done</button>`;
-}
-
 // Phones: member rows show the first word of a box name ("Chart" for "Chart with execution").
 const shortLabel = l => { const w = String(l).trim().split(/\s+/)[0] || l; return w.length > 11 ? w.slice(0, 10) + "…" : w; };
 
@@ -804,7 +769,6 @@ const FAQ: any[] = [
   ["How do I start my own group?", "Open <b>Groups</b> → <b>Start your own group</b>, type a name and send the request. Once it's approved you're the owner: your own join code, boxes, points, cutoff time, color and logo."],
   ["When does the day close?", "Each group has a cutoff time and time zone (by default 09:00 New York time). You can tick a day's boxes until the cutoff on the next trading day. After that the day is closed."],
   ["I missed the cutoff or ticked the wrong box", "Closed days can't be changed by members. Ask your group's owner or an admin: they can correct ticks, and excuse a day (sick, travelling) so it doesn't break your streak."],
-  ["How do I get reminders on my iPhone?", "Notifications only work in the app from your Home Screen. In Safari tap <b>Share</b> → <b>Add to Home Screen</b>, open LockedIn from there, then <b>Settings</b> → <b>Remind me</b> and tap <b>Allow</b>."],
   ["What do Win, Loss, No trade and Gamble mean?", "Pick how your day went in your note panel. Gamble is a trade outside your plan. P&amp;L and R are optional; if you type a P&amp;L and haven't picked anything yet, it picks Win or Loss for you."],
   ["How long are my pictures kept?", "Up to 10 pictures per day. They're deleted automatically 60 days after the day, so save any you want to keep."],
   ["Who can see my notes, pictures and P&amp;L?", "Only the people in your group. Your group's owner and admins, and the app owner, can also see them to run the group and the app. Other groups never see anything of yours."],
@@ -897,14 +861,13 @@ function renderHelp() {
 }
 
 // Settings and Groups are normal pages (no side window).
-function openSettings() { if (editing) closePanel(); setTab("settings"); loadPush(); }
+function openSettings() { if (editing) closePanel(); setTab("settings"); }
 function renderSettings() {
   const opt = (v, label) => `<button data-theme-set="${v}" aria-pressed="${settings.theme === v}">${label}</button>`;
   const look = `<section class="card setpage"><div class="cardhead"><h2>Appearance</h2></div>
     <div class="segset" role="group" aria-label="Appearance">${opt("system", "System")}${opt("light", "Light")}${opt("dark", "Dark")}</div>
     <p class="sub-hint" style="margin-top:8px">Dark is the default. System follows your phone or computer.</p>
 </section>`;
-  const remind = VAPID ? `<section class="card setpage"><div class="cardhead"><h2>Reminders</h2></div><div id="remind-box">${remindHtml()}</div></section>` : "";
   const breaks = `<section class="card setpage"><div class="cardhead"><h2>My rule breaks</h2></div><div id="settings-breaks">${customBreaksListHtml()}</div></section>`;
   const data = `<section class="card setpage"><div class="cardhead"><h2>Your data</h2></div>
     <p class="sub-hint">Download a copy of everything LockedIn stores about you, or delete your account.</p>
@@ -915,8 +878,8 @@ function renderSettings() {
   const help = `<button class="helprow" data-nav="help">${ic("help", 20)}<span><b>Help &amp; support</b><small>Questions, contact, the app on your phone</small></span><span class="chev" aria-hidden="true">›</span></button>`;
   const intro = `<p class="page-intro">Only for you. Changes save to your account right away.</p>`;
   return isWide()
-    ? intro + `<div class="desk"><div class="maincol">${look}${remind}${breaks}</div><div class="side">${data}${help}</div></div>`
-    : intro + look + remind + breaks + data + help;
+    ? intro + `<div class="desk"><div class="maincol">${look}${breaks}</div><div class="side">${data}${help}</div></div>`
+    : intro + look + breaks + data + help;
 }
 
 // ---------------------------------------------------------------- weekly reflection
@@ -1464,7 +1427,7 @@ async function saveGroupSettings() {
   };
   msg.textContent = "Saving…";
   const saved = await adminDo(sb.from("groups").update(patch).eq("id", gid), "Group settings saved.");
-  if (!saved.error) { setGuideFlag("b"); render(); }
+  if (!saved.error) render();
   window.scrollTo(0, 0);
 }
 
@@ -1888,19 +1851,20 @@ function renderDay() {
     : `<p class="open-line all">${due ? "Everyone is done." : "Everyone is excused."}</p>`;
   // Read top to bottom: how long, until when, how many are done. One bar: the share that is done.
   const pct = due ? Math.round(doneN / due * 100) : 0;
-  const progress = due ? `<div class="sum-done">
-      <p><span class="num">${doneN}</span> of <span class="num">${due}</span> done</p>
-      <div class="donebar" role="progressbar" aria-label="Members done" aria-valuemin="0" aria-valuemax="${due}" aria-valuenow="${doneN}"><i style="width:${pct}%"></i></div>
-    </div>` : "";
+  const count = due ? `<p class="sum-count"><span class="num">${doneN}</span> of <span class="num">${due}</span> done</p>` : "";
+  const bar = due ? `<div class="donebar" role="progressbar" aria-label="Members done" aria-valuemin="0" aria-valuemax="${due}" aria-valuenow="${doneN}"><i style="width:${pct}%"></i></div>` : "";
+  // How many are done on the left, how long is left on the right; one bar under both.
   const summary = `<div class="card daysum">
-    <p class="sum-time ${urgent ? "urgent" : ""}">${time}</p>
-    <p class="sum-until">${isFinal(k) ? "Cutoff was" : "until"} ${cutoff}</p>
-    ${progress}
+    <div class="sum-head">
+      ${count}
+      <div class="sum-when"><p class="sum-time ${urgent ? "urgent" : ""}">${time}</p><p class="sum-until">${isFinal(k) ? "Cutoff was" : "until"} ${cutoff}</p></div>
+    </div>
+    ${bar}
     ${openLine}
     ${banner}${nudge}
   </div>`;
   const err = error && !isWide() && error.length > 48 ? `<div class="card"><p class="msg err">${esc(error)}</p></div>` : "";
-  return { summary: guideNudgeHtml() + summary + quick, list: err + `<div class="card"><div class="cardhead"><h2>${esc((group() || {}).name || "Your group")} ${k === today ? "today" : "on " + fmtDay(k, { weekday: "short" })}</h2></div>${rows || `<p class="empty">No members yet.</p>`}</div>` };
+  return { summary: summary + quick, list: err + `<div class="card"><div class="cardhead"><h2>${esc((group() || {}).name || "Your group")} ${k === today ? "today" : "on " + fmtDay(k, { weekday: "short" })}</h2></div>${rows || `<p class="empty">No members yet.</p>`}</div>` };
 }
 
 function renderWeek() {
@@ -2095,7 +2059,7 @@ function renderProfile(key, part = "profile", withTabs = false) {
     ? `<div class="desk"><div class="maincol">${journal}</div><div class="side">${breaksCard}${reflCard}</div></div>`
     : journal + breaksCard + reflCard);
   return tabs + (isWide()
-    ? `${head}<div class="desk"><div class="maincol">${ach}</div><div class="side">${heat}</div></div>`
+    ? `${head}<div class="desk even"><div class="maincol">${ach}</div><div class="side">${heat}</div></div>`
     : head + heat + ach);
 }
 
@@ -2211,10 +2175,9 @@ function renderAdmin() {
   const segs = !isWide() && views.length > 1 ? `<div class="segset adminseg" style="grid-template-columns:repeat(${views.length},1fr)" role="group" aria-label="Admin view">
       ${views.map(([v, l]) => `<button data-admin-view="${v}" aria-pressed="${adminView === v}">${l === "Group settings" ? "Settings" : l}${v === "people" && pendingCount() ? ` <span class="count">${pendingCount()}</span>` : v === "all" && reqN ? ` <span class="count">${reqN}</span>` : ""}</button>`).join("")}</div>` : "";
   if (adminView === "all") return segs + note + reportsCardHtml(reports, true) + owner;
-  const guide = ownerGuideHtml();
-  if (adminView === "group") return segs + note + paused + guide + groupSettingsHtml(g);
+  if (adminView === "group") return segs + note + paused + groupSettingsHtml(g);
   const repCard = isOwnerHere ? reportsCardHtml(reports.filter(r => r.group_id === gid), false) : "";
-  return segs + note + paused + guide + repCard + (isWide() ? `<div class="admin-grid"><div>${cols[0]}</div><div>${cols[1]}</div></div>` : `<div class="admin-one">${cols.join("")}</div>`);
+  return segs + note + paused + repCard + (isWide() ? `<div class="admin-grid"><div>${cols[0]}</div><div>${cols[1]}</div></div>` : `<div class="admin-one">${cols.join("")}</div>`);
 }
 let adminView = "people";
 
@@ -2526,7 +2489,7 @@ function renderLanding() {
         <div class="vcol them rv"><p class="mono">On your own</p><h2>Good intentions</h2><ul>
           ${li(SYM.x, "Skip the journal \"just today\"")}${li(SYM.x, "Nobody notices the missed days")}${li(SYM.x, "Repeat the same revenge trade next week")}${li(SYM.x, "Motivation gone by midweek")}</ul></div>
         <div class="vcol us rv d1"><p class="mono">In a LockedIn group</p><h2>Proof, every day</h2><ul>
-          ${li(SYM.check, "Everyone sees who's done before the cutoff")}${li(SYM.check, "Streaks you really don't want to break")}${li(SYM.check, "Notes and charts your group learns from")}${li(SYM.check, "A reminder before the day closes")}</ul></div>
+          ${li(SYM.check, "Everyone sees who's done before the cutoff")}${li(SYM.check, "Streaks you really don't want to break")}${li(SYM.check, "Notes and charts your group learns from")}${li(SYM.check, "Time left on screen until the cutoff")}</ul></div>
       </div>
     </section>
     ${goal}
@@ -2552,13 +2515,12 @@ function renderLanding() {
       ${next("features", "Features")}
     </section>`;
   else if (page === "features") body = head("Features", `Built for traders<span class="dim">who show up.</span>`,
-      "What's in the app, from daily ticks to reminders.") + `
+      "What's in the app, from daily ticks to the ranking.") + `
     <section class="lp-sec">
       <div class="flist" style="margin-top:0">
         ${row("Daily homework", "One tap per box. Your group decides the boxes: chart with execution, journal, HTF, or your own.")}
         ${row("Notes &amp; chart pictures", "Write what happened and paste screenshots of your trades. Tap any picture to zoom in.")}
         ${row("Streaks, points &amp; badges", "A ranking for your group, streaks for days in a row, and 31 badges to earn.")}
-        ${row("Reminders", "A notification on your phone before the day closes, only if your homework isn't done yet.")}
         ${row("Works like an app", "Add it to your home screen. It opens full screen and keeps working with bad signal.")}
         ${row("Kept inside your group", "Other groups can't see your ticks, notes or pictures. Only your group, its owner and the app owner can.")}
       </div>
@@ -2576,11 +2538,9 @@ function renderLanding() {
         <li><b>From Discord, when you sign in:</b> your Discord username, profile picture, email address and Discord account ID. LockedIn doesn't use your email address for anything and never emails you. We never see your Discord password, messages or servers.</li>
         <li><b>What you add:</b> your ticks, notes, rule-break tags, weekly reflections, screenshots, P&amp;L and R if you fill them in, reactions and comments on members' posts, your settings, and requests to join or start a group.</li>
         <li><b>Reports:</b> if you report a picture, note or comment, we store the report, your reason and which post it is about. For notes and comments, the start of the text is kept with the report as evidence.</li>
-        <li><b>Reminders, only if you turn them on:</b> a push address for that phone or computer (made by your browser's push service, such as Apple, Google or Mozilla), how long before the cutoff you want a reminder, and a note of which reminders were sent. If you own or help run a group, the same notifications also tell you when someone asks to join or reports something.</li>
       </ul>`)}
       ${sec("Why, and the legal basis", `<ul>
         <li><b>To run the app you signed up for</b> (your account, groups, ticks, notes, pictures, ranking): this is needed to provide the service (GDPR Article 6(1)(b)). Without it you can't use LockedIn.</li>
-        <li><b>Reminders:</b> only with your consent, given when you switch them on (Article 6(1)(a)). Switch them off in Settings at any time.</li>
         <li><b>Keeping the service safe and working</b>, for example the technical logs our providers keep: our legitimate interest in a secure service (Article 6(1)(f)).</li>
       </ul><p>We don't sell your data, show ads, build profiles of you, or make automated decisions about you.</p>`)}
       ${sec("Who can see it", `<ul>
@@ -2592,24 +2552,23 @@ function renderLanding() {
         <li><b>Other groups</b> can't see anything of yours.</li>
       </ul>`)}
       ${sec("Services that handle data for us", `<ul>
-        <li><b>Supabase</b> (database, sign-in, screenshot storage, sending reminders). Your data is stored in Ireland, in the EU. ${ext("https://supabase.com/privacy", "Supabase privacy policy")}</li>
+        <li><b>Supabase</b> (database, sign-in, screenshot storage). Your data is stored in Ireland, in the EU. ${ext("https://supabase.com/privacy", "Supabase privacy policy")}</li>
         <li><b>Discord</b> (sign-in, and Discord recaps if your group owner turns them on): ${ext("https://discord.com/privacy", "Discord privacy policy")}</li>
         <li><b>GitHub Pages</b> (hosts the website; receives your IP address when the page loads): ${ext("https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement", "GitHub privacy statement")}</li>
-        <li><b>Your browser's push service</b> (delivers reminders, only if you turn them on).</li>
       </ul><p>Some of these companies are based in the United States, so your data may be transferred there. They protect these transfers with the legal safeguards described in their privacy policies, such as the EU Standard Contractual Clauses. Fonts and code are hosted on our own site, so no other companies are contacted when you open LockedIn.</p>`)}
       ${sec("Cookies and storage on your device", `<p>LockedIn doesn't use cookies for tracking, analytics or advertising. It stores only what's needed for features you use, in your browser's storage:</p>
       <ul>
         <li><b>Your sign-in</b>, so you stay signed in.</li>
         <li><b>A copy of your group's data and ticks not uploaded yet</b>, so the app works without internet.</li>
         <li><b>Backups of notes you're typing</b>, so a closed tab doesn't lose them.</li>
-        <li><b>Your choices</b>, such as light or dark mode, your last tab and group, reminder timing and which badges you've seen.</li>
+        <li><b>Your choices</b>, such as light or dark mode, your last tab and group and which badges you've seen.</li>
         <li><b>A copy of the website's files</b>, so it opens quickly and offline.</li>
       </ul><p>Because all of this is needed for the app to work, we don't ask for cookie consent. Signing out removes your sign-in, the copy of your group and unsent ticks. Deleting your account also removes your note backups and choices from that device.</p>`)}
-      ${sec("How long we keep it", `<p>Your data is kept while you have an account. Screenshots are deleted automatically 60 days after the day they belong to, and right away if you delete them. The record of which reminders were sent is deleted after 7 days. Reports are deleted 90 days after they are handled. When you delete your account, your account, ticks, notes, reflections, pictures, settings and reminder devices are deleted. Group owners can also remove members.</p>`)}
+      ${sec("How long we keep it", `<p>Your data is kept while you have an account. Screenshots are deleted automatically 60 days after the day they belong to, and right away if you delete them. Reports are deleted 90 days after they are handled. When you delete your account, your account, ticks, notes, reflections, pictures and settings are deleted. Group owners can also remove members.</p>`)}
       ${sec("Your rights", `<ul>
         <li><b>See and download</b> your data: Settings → Your data → Download my data.</li>
         <li><b>Delete</b> your account and data: Settings → Your data → Delete my account.</li>
-        <li><b>Correct, restrict or object</b> to how your data is used, or <b>withdraw consent</b> for reminders: switch reminders off in Settings, or write to ${mail}.</li>
+        <li><b>Correct, restrict or object</b> to how your data is used: write to ${mail}.</li>
       </ul><p>If you think we handle your data wrongly, you can complain to your data protection authority. In Norway that's ${ext("https://www.datatilsynet.no/en/", "Datatilsynet")}.</p>`)}
       ${sec("Age", `<p>You must be at least 13 to use LockedIn, the same as Discord's minimum age. If you're under 13, don't sign in. If we learn that someone under 13 has an account, we delete it.</p>`)}
       ${sec("Changes", `<p>If this policy changes, we update this page and the date at the top. For big changes we'll also tell you in the app.</p>`)}
@@ -2794,7 +2753,7 @@ function initStory() {
   const CH = [
     { t: ["Tick your", "homework"], b: "One tap per box after your session. All required boxes ticked turns your circle green.", bg: [2, 8, 23], glow: "rgba(37, 99, 235, 0.5)", hl: 0 },
     { t: ["Show your", "work"], b: "Write what happened and add chart screenshots. Your group reads it and learns from it.", bg: [2, 16, 28], glow: "rgba(14, 165, 233, 0.42)", hl: 0 },
-    { t: ["Beat the", "cutoff"], b: "Everyone sees who's done before the day closes. Turn on reminders and your phone nudges you first.", bg: [2, 20, 14], glow: "rgba(34, 197, 94, 0.38)", hl: 1 },
+    { t: ["Beat the", "cutoff"], b: "Everyone sees who's done before the day closes. Nobody wants to be the red circle.", bg: [2, 20, 14], glow: "rgba(34, 197, 94, 0.38)", hl: 1 },
     { t: ["Climb the", "ranking"], b: "Points, streaks for days in a row, and 31 badges to earn. Every day counts.", bg: [10, 10, 16], glow: "rgba(251, 191, 36, 0.28)", hl: 2 },
   ];
   const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>';
@@ -3005,7 +2964,7 @@ function renderMe(part = "profile") {
   const who = profile ? profile.discord_name : "";
   const account = `<div class="card"><div class="cardhead"><h2>Account</h2></div><div class="melist">
       ${row("open-groups", groupLogo(g, 34), "Groups", `${esc(g ? g.name : "")}${roleOf() ? " · " + esc(roleOf()) : ""} · switch, join or start one`)}
-      ${row("open-settings", tile("gear"), "Settings", "Reminders, light / dark mode, rule-break tags, app icon")}
+      ${row("open-settings", tile("gear"), "Settings", "Light / dark mode, rule-break tags, app icon")}
       ${row("start-tour", tile("target"), "Tutorial", "A one-minute tour of the app")}
     </div>
     <div class="account"><span>Signed in as <b>${esc(who)}</b></span><button class="linkbtn" id="signout">Sign out</button></div></div>`;
@@ -3116,7 +3075,7 @@ document.addEventListener("click", async e => {
   }
   if (d.tab) return setTab(d.tab);
   if (d.lobby) { lobbyMode = d.lobby; joinMsg = ""; render(); const f = document.getElementById(d.lobby === "create" ? "req-name" : "joincode"); if (f) f.focus(); return; }
-  if (d.nav) { const [t2, v] = d.nav.split(":"); if (v) { adminView = v; error = ""; } if (settingsOpen || editing) closePanel(); setTab(t2); if (t2 === "settings") loadPush(); return; }   // the sidebar
+  if (d.nav) { const [t2, v] = d.nav.split(":"); if (v) { adminView = v; error = ""; } if (settingsOpen || editing) closePanel(); setTab(t2); return; }   // the sidebar
   if (d.part) { profilePart = d.part; render(); requestAnimationFrame(pageEnter); return; }
   if (d.expand) { openRow = openRow === d.expand ? null : d.expand; render(); return; }
   if (d.profile) { profileKey = d.profile; profilePart = "profile"; if (tab === "admin") tab = "day"; render(); requestAnimationFrame(pageEnter); return window.scrollTo(0, 0); }
@@ -3155,12 +3114,6 @@ document.addEventListener("click", async e => {
     screen = "loading"; render(); watchLoading(); return startLoad();
   }
   if (t.id === "delete-account") return deleteMyAccount(t);
-  if (d.remind) {
-    remindMins = +d.remind;
-    try { localStorage.setItem("remindMins", d.remind); } catch (e) {}
-    renderRemind();
-    return savePushSub().catch(err => { push.msg = err.message; renderRemind(); });
-  }
   if (t.id === "retry-load") { t.disabled = true; try { await refreshNow(); } catch (err) { render(); } return; }
   if (t.id === "install-app" && installPrompt) { installPrompt.prompt(); installPrompt = null; t.remove(); return; }
   if (t.id === "show-add-break") { const row = document.getElementById("add-break-row"); row.hidden = false; document.getElementById("newbreak").focus(); return; }
@@ -3226,11 +3179,6 @@ document.addEventListener("click", async e => {
     return deleteComment(Number(d.cdel));
   }
   if (d.creport) { const c = findComment(Number(d.creport)); return c && openReport("comment", c.day, c.author_key, String(c.id)); }
-  if (d.guide) {
-    if (d.guide === "notif") return openSettings();
-    tab = "admin"; profileKey = null; adminView = d.guide; flash = ""; error = ""; fixAdminView();
-    return render();
-  }
   if (t.id === "viewer-report") { const v = viewing; return v && openReport("picture", v.day, v.key, v.path); }
   if (t.id === "report-cancel") return document.getElementById("reportdlg").close();
   if (t.id === "report-send") return sendReport();
@@ -3323,7 +3271,6 @@ document.addEventListener("click", async e => {
       return;
     }
     case "signout":
-      if (push.sub) await turnRemindersOff();   // this device stops getting your reminders
       try { localStorage.removeItem(OUTBOX); } catch (e) {}
       await idbClear();   // nothing of yours stays on this device
       await sb.auth.signOut(); return;
@@ -3350,12 +3297,10 @@ document.addEventListener("click", async e => {
       return setTimeout(() => { t.textContent = "Copy address"; }, 1600);
     }
     case "copy-invite": {
-      setGuideFlag("s");
       try { await navigator.clipboard.writeText(inviteLink(group().join_code)); t.textContent = "Link copied"; } catch (err) { t.textContent = inviteLink(group().join_code); }
       return setTimeout(() => { t.textContent = "Copy invite link"; }, 1800);
     }
     case "copy-code": {
-      setGuideFlag("s");
       try { await navigator.clipboard.writeText(group().join_code); t.textContent = "Copied"; } catch (err) { t.textContent = "Select and copy"; }
       return setTimeout(() => { t.textContent = "Copy"; }, 1500);
     }
@@ -3366,7 +3311,6 @@ document.addEventListener("click", async e => {
     case "save-group": return saveGroupSettings();
     case "dc-save": return saveDiscord();
     case "xfer-go": return transferGroup();
-    case "guide-hide": setGuideFlag("x"); return render();
     case "dc-test": {
       const m = document.getElementById("dc-msg"); m.textContent = "Sending…";
       const { error: e } = await sb.rpc("send_discord_test", { g: gid });
@@ -3398,7 +3342,6 @@ document.addEventListener("input", e => {
   if (e.target.id === "faq-search") { faqQuery = e.target.value.slice(0, 80); return render(); }
   if (tab === "admin" && e.target.closest && e.target.closest("#app")) adminDirty = true;
   if (e.target.id === "terms-ok") { document.getElementById("accept-terms").disabled = !e.target.checked; return; }
-  if (e.target.id === "set-remind") return e.target.checked ? turnRemindersOn() : turnRemindersOff();
   if ((e.target.id === "panel-pnl" || e.target.id === "panel-rr") && editing) {
     const isPnl = e.target.id === "panel-pnl", v = parseNum(e.target.value, isPnl ? 10000000 : 100), hint = document.getElementById("num-hint");
     if (v === undefined) return;
@@ -3578,7 +3521,7 @@ function tourSteps() {
     mine && { el: wide ? q(`[data-edit="${me}"]`) : q(".quick .qnote"), title: "Note & pictures",
       text: "Write your note, add chart screenshots" + (wide ? " (you can paste them with ⌘V / Ctrl+V)" : "") + ", tag rule breaks, mark the day as a win, loss, no trade or gamble, and on Fridays write your weekly reflection. Everything saves by itself." },
     { el: () => { return document.querySelector("#app .daysum"); }, title: "Time left today",
-      text: "How many of you are done, who still has homework open, and how much time is left. In the last hour the timer turns red, and you get a reminder if you're not done yet." },
+      text: "How many of you are done, who still has homework open, and how much time is left. In the last hour the timer turns red." },
     { el: () => { const m = [...document.querySelectorAll("#app .member")].find(x => !x.querySelector(`[data-edit="${me}"]`)); return m; }, title: "Everyone's day",
       text: "The circle shows each person's status: green complete, yellow partial, red missing. Tap a name for their profile and badges, tap a picture to see it full screen." },
     { el: q(".topbar .datepick"), title: "Change the day",
@@ -3768,7 +3711,7 @@ async function startLoad() {
   if (!navigator.onLine && await restoreSnapshot()) return;
   try {
     await loadAll();
-    loadPush();
+    dropOldPush();
   } catch (err) {
     if (isNetErr(err) || !navigator.onLine || /Couldn't load groups: (TypeError|Failed|Load failed)/i.test(err.message)) {
       if (await restoreSnapshot()) return;
@@ -3778,71 +3721,17 @@ async function startLoad() {
   }
 }
 
-// ---------------------------------------------------------------- reminders (notifications)
-// Settings → Reminders asks for permission and saves this device's push address in the database. The
-// send-reminders function (supabase/functions) then notifies you if your homework isn't done before the day closes.
-const VAPID = cfg.vapidPublicKey || "";
-const pushSupported = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
-const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-const push = { sub: null, busy: false, msg: "" };
-let remindMins = 60;
-try { remindMins = +localStorage.getItem("remindMins") || 60; } catch (e) {}
-const unb64u = s => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4)), c => c.charCodeAt(0));
+// ---------------------------------------------------------------- notifications were removed (update 22)
+// Phones and computers that had reminders on still hold a push address in the browser; let it go quietly.
 // The background helper (sw.js); null if it isn't running.
 function swReg() {
   if (!("serviceWorker" in navigator)) return Promise.resolve(null);
   return Promise.race([navigator.serviceWorker.ready, new Promise(r => setTimeout(() => r(null), 6000))]);
 }
-async function loadPush() {
-  if (!VAPID || !pushSupported() || !session) return;
-  try { const reg = await swReg(); push.sub = reg ? await reg.pushManager.getSubscription() : null; } catch (e) { push.sub = null; }
-  // Keeps this device's address up to date and under the account that's signed in now.
-  if (push.sub && Notification.permission === "granted") savePushSub().catch(() => {});
-  renderRemind();
+async function dropOldPush() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+  try { const reg = await swReg(), sub = reg && await reg.pushManager.getSubscription(); if (sub) await sub.unsubscribe(); } catch (e) {}
 }
-async function savePushSub() {
-  const j = push.sub.toJSON();
-  const { error: e } = await sb.rpc("save_push_subscription", { sub_endpoint: j.endpoint, sub_p256dh: j.keys.p256dh, sub_auth: j.keys.auth, sub_minutes: remindMins });
-  if (e) throw new Error(/function|schema cache/i.test(e.message) ? "Reminders aren't set up yet (database update 10)." : e.message);
-}
-async function turnRemindersOn() {
-  const asked = Notification.requestPermission();   // first, while it still counts as your tap
-  push.busy = true; push.msg = ""; renderRemind();
-  try {
-    const perm = await asked;
-    if (perm !== "granted") throw new Error(perm === "denied" ? "" : "You didn't allow notifications.");
-    const reg = await swReg();
-    if (!reg) throw new Error("Reminders couldn't start. Reload the page and try again.");
-    push.sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: unb64u(VAPID) });
-    await savePushSub();
-    reg.showNotification("Reminders are on", { body: "You'll get a notification here if your homework isn't done before the day closes.", icon: "icons/icon-192.png", tag: "remind-on" });
-  } catch (e) { push.msg = e.message || String(e); }
-  push.busy = false; renderRemind();
-}
-async function turnRemindersOff() {
-  push.busy = true; renderRemind();
-  try {
-    if (push.sub) { await sb.from("push_subscriptions").delete().eq("endpoint", push.sub.endpoint); await push.sub.unsubscribe(); }
-  } catch (e) {}
-  push.sub = null; push.busy = false; push.msg = ""; renderRemind();
-}
-function remindHtml() {
-  if (!VAPID) return "";
-  const head = "";   // the Settings page gives this section its own heading
-  if (!pushSupported()) return head + `<p class="sub-hint">${isIOS() && !isInstalled()
-    ? "On iPhone, reminders work in the app: add LockedIn to your Home Screen first (see <b>App on your phone</b>), then open it from there and turn reminders on."
-    : "This browser can't show reminders. Try Chrome, Edge, Firefox or Safari."}</p>`;
-  const blocked = Notification.permission === "denied", on = !!push.sub && Notification.permission === "granted";
-  const opt = (m, l) => `<button data-remind="${m}" aria-pressed="${remindMins === m}">${l}</button>`;
-  const owns = groups.some(g => session && (g.owner_id === session.user.id || (myMembership(g.id) || {}).role === "admin"));
-  return head + `<label class="switchrow"><span><b>Remind me</b><small>A notification on this ${isWide() ? "computer" : "phone"} if your homework isn't done before the day closes.${owns ? " You'll also be told when someone asks to join your group or reports something." : ""}</small></span>
-      <input type="checkbox" id="set-remind" role="switch" ${on ? "checked" : ""} ${push.busy || blocked ? "disabled" : ""}></label>
-    ${on ? `<div class="segset four" role="group" aria-label="How long before the day closes">${opt(30, "30 min")}${opt(60, "1 hour")}${opt(120, "2 hours")}${opt(180, "3 hours")}</div>
-      <p class="sub-hint" style="margin-top:8px">before the day closes. Turn it on on each phone or computer you use.</p>` : ""}
-    ${blocked ? `<p class="sub-hint bad">Notifications are blocked for this site. Allow them in ${isIOS() ? "iPhone Settings → Notifications → LockedIn" : "your browser's site settings (the icon left of the address)"}, then reload.</p>` : ""}
-    ${push.msg ? `<p class="sub-hint bad">${esc(push.msg)}</p>` : ""}`;
-}
-function renderRemind() { const el = document.getElementById("remind-box"); if (el) el.innerHTML = remindHtml(); }
 if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("sw.js").catch(() => {});
 
 // ---------------------------------------------------------------- your data (download / delete)
@@ -3875,7 +3764,6 @@ async function deleteMyAccount(btn) {
   }
   const { error: e } = await sb.rpc("delete_my_account");
   if (e) { btn.disabled = false; return dataMsg(notSetUp(e.message), true); }
-  if (push.sub) try { await push.sub.unsubscribe(); } catch (err) {}
   try { Object.keys(localStorage).filter(k => /^(draft:|badges:|outbox|remindMins|group|tab|mnq-settings)/.test(k)).forEach(k => localStorage.removeItem(k)); } catch (err) {}
   await idbClear();
   closePanel();
