@@ -2320,7 +2320,7 @@ let joinMsg = "", requestOpen = false;
 function renderGate() {
   const name = profile ? profile.discord_name : (session && session.user.user_metadata && (session.user.user_metadata.full_name || session.user.user_metadata.name)) || "";
   const avatar = session && session.user.user_metadata && session.user.user_metadata.avatar_url;
-  if (screen === "setup") return `<div class="gate card"><h1>Almost there</h1><p>Paste your Supabase address and key into <b>config.js</b>, then reload.</p></div>`;
+  if (screen === "setup") return `<div class="gate card"><h1>Almost there</h1><p>Paste your Supabase address and key into <b>web/src/config.ts</b>, then reload.</p></div>`;
   if (screen === "signin") return renderLanding();
   if (screen === "terms") return `<div class="gate card termsgate">
     <h1>Welcome to LockedIn</h1>

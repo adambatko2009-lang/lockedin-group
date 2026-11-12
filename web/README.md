@@ -1,6 +1,6 @@
 # LockedIn website (Next.js version)
 
-The same website as `../index.html`, built with Next.js and TypeScript. It looks and works the same.
+The LockedIn website, built with Next.js and TypeScript. It replaced the old single-file `index.html` on 12 November 2026 and looks and works the same.
 
 - `src/app/layout.tsx`: the `<head>` (security policy, icons, fonts) and the script that sets your theme before the page is drawn.
 - `src/app/page.tsx`: the page skeleton (menus, panel, picture viewer, report form, tutorial).
