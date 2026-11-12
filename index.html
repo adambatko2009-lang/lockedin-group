@@ -1058,7 +1058,10 @@
           --lg-fill: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.04));
           --lg-rim: rgba(255, 255, 255, 0.22); --lg-edge: rgba(255, 255, 255, 0.10); --lg-glow: rgba(255, 255, 255, 0.16);
           --lg-shadow: 0 24px 50px -20px rgba(0, 0, 0, 0.75); --rail-icon: #c9c9d1; --rail-hover: rgba(255, 255, 255, 0.08); --rail-ind: #ffffff; }
-  body:not(.landing) { background: var(--base); }
+  body:not(.landing) { background: var(--base);
+    /* iPhone home-screen app: when a page is shorter than the screen, iOS measures the screen without the status bar
+       and the bottom bar floats up. A page at least screen-tall (plus the status bar) keeps the bar at the bottom on every page. */
+    min-height: calc(100vh + env(safe-area-inset-top, 0px)); }
   body:not(.landing)::after {
     background:
       radial-gradient(55% 45% at 8% 4%, var(--wash-a), transparent 70%),
