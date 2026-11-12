@@ -3982,9 +3982,9 @@ function renderLanding() {
   const row = (title, text) => `<div class="frow rv"><b>${title}</b><p>${text}</p></div>`;
   const li = (mark, text) => `<li><b aria-hidden="true">${mark}</b><span>${text}</span></li>`;
   const errMsg = error ? `<p class="msg err" style="margin-top:16px">${esc(error)}</p>` : "";
-  // A page's opening: small label, huge uppercase title, one line under it.
-  const head = (label, title, sub) => `<header class="lp-hero pagehead"><div>
-      <p class="mono rv in">${label}</p><h1 class="rv in d1">${title}</h1><p class="lead rv in d2">${sub}</p></div></header>`;
+  // A page's opening: huge uppercase title, one line under it (the label only names the page for screen readers).
+  const head = (label, title, sub) => `<header class="lp-hero pagehead" aria-label="${label}"><div>
+      <h1 class="rv in">${title}</h1><p class="lead rv in d2">${sub}</p></div></header>`;
   const rows = `<div class="mock-top"><span><b><span class="count-old">4</span><span class="count-new">5</span></b>/5 done</span><span>1h 12m left</span></div>
       <div class="mock-bar"><i></i></div>
       <div class="mock-legend"><span>Today's homework</span><span>Chart · Journal · HTF</span></div>
@@ -3997,15 +3997,14 @@ function renderLanding() {
       </div></div></div>
     </div>`;
   const own = `<div class="lp-own rv">
-      <div><p class="mono">Run a trading group?</p><h2>Start your own group</h2>
+      <div><h2>Start your own group</h2>
         <p>Sign in and tap <b>Start your own group</b>. Once approved you get your own join code, homework boxes, points, time zone, color and logo. You decide who gets in.</p></div>
       ${signin("signin-own", "Sign in to start")}
     </div>`;
   const next = (p, label) => `<div class="lp-next rv">${link(p, `<span class="mono">Next</span><b>${label}</b><span class="arrow" aria-hidden="true">→</span>`, "nextlink")}</div>`;
   const goal = `<section class="lp-sec center">
-      <p class="mono rv">The daily goal</p>
-      <div class="chrome rv d1" aria-label="5 out of 5">5/5</div>
-      <p class="sub rv d2">Every member ticks every required box before the cutoff.</p>`;
+      <div class="chrome rv" aria-label="5 out of 5">5/5</div>
+      <p class="sub rv d1">The daily goal: every member ticks every required box before the cutoff.</p>`;
   let body;
   if (page === "why") body = head("Why LockedIn", `Everyone says they'll journal.<span class="dim">Nobody checks.</span>`,
       "Homework done alone quietly stops by Wednesday. A red circle next to your name, in front of your group, doesn't let it.") + `
@@ -4031,8 +4030,7 @@ function renderLanding() {
       ${phone}
     </div></section>
     <section class="lp-sec">
-      <p class="mono rv">Getting in</p>
-      <h2 class="rv d1">Join your group<span class="dim">in a minute</span></h2>
+      <h2 class="rv">Join your group<span class="dim">in a minute</span></h2>
       <div class="bigsteps cols">
         <div class="rv"><b>Sign in with Discord.</b><p>No new password to remember. Your Discord account is your login.</p></div>
         <div class="rv d1"><b>Type the join code.</b><p>Your group's owner gives you a code like LOCK-7K2P.</p></div>
@@ -4137,7 +4135,6 @@ function renderLanding() {
         <div class="floaters bg" id="fl-bg" aria-hidden="true"></div>
         <div class="story-grid">
           <div class="story-text" id="story-text" aria-live="polite">
-            <p class="mono" id="story-num">01 / 04</p>
             <h2 id="story-title">Tick your homework</h2>
             <p class="st-body" id="story-body"></p>
           </div>
@@ -4157,8 +4154,7 @@ function renderLanding() {
     </section>
     <section class="lp-sec tryit" aria-labelledby="try-title">
       <div class="try-text">
-        <p class="mono rv">Try it yourself</p>
-        <h2 class="rv d1" id="try-title">Tick your<span class="dim">own boxes</span></h2>
+        <h2 class="rv" id="try-title">Tick your<span class="dim">own boxes</span></h2>
         <p class="sub rv d2">This is your row in LockedIn. Tick the boxes and watch your circle change. Nothing here is saved.</p>
       </div>
       <div class="try-card rv d1" id="try-card">${tryCardHtml()}</div>
@@ -4171,7 +4167,7 @@ function renderLanding() {
       </div>
     </section>
     <section class="lp-sec split">
-      <div><p class="mono rv">Why it works</p><h2 class="rv d1">Discipline is<span class="dim">a group sport</span></h2></div>
+      <div><h2 class="rv">Discipline is<span class="dim">a group sport</span></h2></div>
       <div class="rv d2"><p class="sub" style="margin:0 0 24px">Your group sees who's done before the cutoff. Nobody wants to be the red circle.</p>${blink("why", "On your own vs. in a group")}</div>
     </section>
     ${goal}
@@ -4195,8 +4191,7 @@ function renderLanding() {
     </div>
     ${body}
     ${LEGAL.includes(page) ? "" : `<section class="lp-final">
-      <p class="mono rv">Ready?</p>
-      <h2 class="rv d1">Stop trading<span class="dim">alone</span></h2>
+      <h2 class="rv">Stop trading<span class="dim">alone</span></h2>
       <div class="lp-cta rv d2" style="margin-top:30px">${signin("signin-end")}</div>
       ${page !== "home" ? errMsg : ""}
       <p class="fine rv d3">Sign in, type your group's join code, and the owner lets you in.</p>
@@ -4427,7 +4422,6 @@ function initStory() {
     if (i === S.chap) return;
     const first = S.chap === -1; S.chap = i;
     const c = CH[i];
-    q("#story-num").textContent = `0${i + 1} / 04`;
     sTitle.setAttribute("aria-label", c.t.join(" "));
     sTitle.innerHTML = c.t.map((l, j) => `<span class="st-clip" aria-hidden="true"><span style="--delay:${j * 90}ms">${l}</span></span>`).join("");
     sBody.innerHTML = c.b.split(" ").map((w, j) => `<span class="w" style="--delay:${200 + j * 22}ms">${w}</span>`).join(" ");
