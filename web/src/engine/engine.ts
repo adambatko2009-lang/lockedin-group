@@ -69,6 +69,7 @@ const ICON_PATHS = {
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.9.8c0 1.7-2.5 2.1-2.5 3.8"/><path d="M12 17.1v.2"/>',
   mail: '<rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4 7 8 6 8-6"/>',
   "chevron-left": '<path d="m14.5 6-6 6 6 6"/>',
+  "chevron-down": '<path d="m6 9.5 6 6 6-6"/>',
   search: '<circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/>',
   link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
 };
@@ -1859,10 +1860,10 @@ function renderDay() {
     const compact = !isWide() && m.key !== myKey() && openRow !== m.key;
     const showToggles = !(quickOn && m.key === me) && !compact;   // yours is already at the top as big buttons
     const mini = !compact ? "" : editable
-      ? `<button class="mini" data-expand="${m.key}" aria-label="${esc(m.name)}: ${miniStatus(k, m.key, rec)}. Change their boxes">${miniStatus(k, m.key, rec)}<span class="mini-edit">Change</span></button>`
+      ? `<button class="mini" data-expand="${m.key}" aria-expanded="false" aria-label="${esc(m.name)}: ${miniStatus(k, m.key, rec)}. Open their boxes">${miniStatus(k, m.key, rec)}<span class="mini-edit" aria-hidden="true">${ic("chevron-down", 18)}</span></button>`
       : `<p class="mini">${miniStatus(k, m.key, rec)}</p>`;
     return `<div class="member ${editable ? "" : "locked"}">
-      <div class="mrow"><span class="name">${avatarHtml(m, 26)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === myKey() ? `<span class="you">YOU</span>` : ""}${resultTag(rec)}</span>${editBtn}${dot(st, m.name)}</div>
+      <div class="mrow"><span class="name">${avatarHtml(m, 26)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === myKey() ? `<span class="you">YOU</span>` : ""}${resultTag(rec)}</span>${compact ? `<span class="nb-space"></span>` : editBtn}${dot(st, m.name)}</div>
       ${showToggles ? `<div class="toggles" style="${togglesStyle()}">${toggles}</div>` : mini}
       ${(rec.rule_breaks || []).length || pnlChipHtml(rec) ? `<div class="breaks">${pnlChipHtml(rec)}${(rec.rule_breaks || []).map(b => `<span class="bchip">${ic("alert", 13)}${esc(BREAK_LABEL[b] || b)}</span>`).join("")}</div>` : ""}
       ${note ? `<div class="note">${note}${canReport(k, m.key) ? `<button class="reportlink" data-report-note="${k}|${m.key}">Report note</button>` : ""}</div>` : ""}
