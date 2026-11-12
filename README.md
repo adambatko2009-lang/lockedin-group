@@ -5,8 +5,8 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
 
 | File | What it is |
 |---|---|
-| `index.html` | The whole website |
-| `config.js` | Your Supabase address + public key (step 3) |
+| `web/` | The whole website (Next.js). GitHub builds it and puts it online by itself; see `web/README.md` |
+| `web/src/config.ts` | Your Supabase address + public key (step 3) |
 | `supabase/setup.sql` | Creates the database and all security rules (step 2) |
 | `supabase/import-old-ticks.sql` | Copies your ticks from the old claude.ai page (step 2) |
 | `supabase/make-me-admin.sql` | Makes you the admin (step 8) |
@@ -30,13 +30,14 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
 | `supabase/update-19-pnl-rr.sql` | P&L and R for each day, optional (run once, after update 18, before pushing) |
 | `supabase/update-20-request-alerts.sql` | The app owner gets a notification for new group requests (run once, after update 19; no push needed) |
 | `supabase/sign-out-everyone-except-owner.sql` | Signs everyone but you out; no data is removed (run when needed) |
-| `assets/app-day.jpg` | Screenshot of the app with a made-up demo group, shown in the phone on the front page |
-| `vendor/` | Fonts and the Supabase library, hosted on our own site (see `vendor/THIRD-PARTY-NOTICES.md`) |
+| `web/public/assets/app-day.jpg` | Screenshot of the app with a made-up demo group, shown in the phone on the front page |
+| `web/public/vendor/` | Fonts and their licenses, hosted on our own site (see `web/public/vendor/THIRD-PARTY-NOTICES.md`) |
 | `supabase/functions/send-reminders/index.ts` | Sends the reminders. Lives in Supabase (Edge Functions), not on the website |
-| `sw.js` | Background helper: the app opens without internet, and shows reminders |
-| `manifest.webmanifest`, `icons/` | App icon for "Add to Home Screen" |
-| `CNAME` | Tells GitHub Pages the site's address: lockedingroup.app (DNS is at Porkbun) |
-| Privacy policy and Terms | Pages inside `index.html` (`?p=privacy`, `?p=terms`). The contact email comes from `contactEmail` in `config.js` |
+| `web/public/sw.js` | Background helper: the app opens without internet, and shows reminders |
+| `web/public/manifest.webmanifest`, `web/public/icons/` | App icon for "Add to Home Screen" |
+| `web/public/CNAME` | The site's address: lockedingroup.app (DNS is at Porkbun) |
+| `.github/workflows/deploy-web.yml` | Builds `web/` and puts it on GitHub Pages after every push to main |
+| Privacy policy and Terms | Pages inside the website (`?p=privacy`, `?p=terms`). The contact email comes from `contactEmail` in `web/src/config.ts` |
 | `secrets/` | Your private reminder key. **Never uploaded** (git ignores it). Don't share it |
 | `tests/` | Checks every database rule and the reminder sender (see the first line of each file for how to run) |
 
@@ -69,7 +70,7 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
 
 ### 3. Connect the website to the database
 1. Left menu → **Project Settings** (gear) → **API Keys** (or **Data API**).
-2. Copy the **Project URL** (looks like `https://abcd1234.supabase.co`) → paste into `config.js` in place of `PASTE_PROJECT_URL_HERE`.
+2. Copy the **Project URL** (looks like `https://abcd1234.supabase.co`) → paste into `web/src/config.ts` in place of `PASTE_PROJECT_URL_HERE`.
 3. Copy the **Publishable key** (starts with `sb_publishable_`), or if you only see **anon public**, copy that → paste in place of `PASTE_ANON_PUBLIC_KEY_HERE`. Save the file.
    - This key is *meant* to be public. The **secret / service_role** key must **never** go in any file.
 
@@ -86,7 +87,7 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
 ### 5. Put the website online (GitHub Pages)
 1. GitHub Desktop → **File → Add Local Repository** → choose this `mnq-homework` folder → if asked, **create a repository** here.
 2. Summary: `First version` → **Commit to main** → **Publish repository** → untick **Keep this code private** → **Publish**.
-3. On github.com, open the repo → **Settings** → **Pages** → Source: **Deploy from a branch** → Branch: **main**, folder **/ (root)** → **Save**.
+3. On github.com, open the repo → **Settings** → **Pages** → Source: **GitHub Actions**. The next push to main builds and publishes the website (watch it under **Actions**).
 4. After about a minute the page shows your address: `https://YOUR-GITHUB-NAME.github.io/lockedin-group/`. Copy it.
 
 ### 6. Tell Supabase your website's address
