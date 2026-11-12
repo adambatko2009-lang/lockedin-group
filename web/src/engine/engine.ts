@@ -627,7 +627,7 @@ function pnlChipHtml(rec) {
   const p = hasNum(rec.pnl) ? +rec.pnl : null, r = hasNum(rec.rr) ? +rec.rr : null;
   if (p === null && r === null) return "";
   const sign = p !== null ? Math.sign(p) : Math.sign(r);
-  return `<span class="bchip pnlchip ${sign > 0 ? "up" : sign < 0 ? "down" : ""}">${[p !== null ? fmtPnl(p) : "", r !== null ? fmtR(r) : ""].filter(Boolean).join(" · ")}</span>`;
+  return `<span class="pnlchip ${sign > 0 ? "up" : sign < 0 ? "down" : ""}">${[p !== null ? fmtPnl(p) : "", r !== null ? fmtR(r) : ""].filter(Boolean).join(" · ")}</span>`;
 }
 const resultTag = rec => {
   const r = resultOf(rec); if (!r) return "";
@@ -1506,6 +1506,31 @@ const pendingCount = () => people.filter(p => p.status === "pending").length + (
 
 function tabsList() { return isAdmin ? ["day", "week", "board", "admin", "me"] : ["day", "week", "board", "me"]; }
 
+// Phones: once the summary card has scrolled away, the top bar shows the time left and how many are still open
+// in place of the group name, so the cutoff never leaves the screen.
+function topClockHtml() {
+  if (tab !== "day" || selected !== today || isFinal(today)) return "";
+  const list = activeMembers(), mins = Math.max(0, Math.round((closesAt(today) - Date.now()) / 60000));
+  const open = list.filter(m => !["COMPLETE", "EXCUSED"].includes(statusOf(today, m.key))).length;
+  const time = `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, "0")}m left`;
+  return `<span class="topclock ${mins <= 60 ? "urgent" : ""}" aria-hidden="true">${time} · ${open ? `${open} open` : "all done"}</span>`;
+}
+let sumWatchOn = false;
+function watchSummary() {
+  const check = () => {
+    const el = document.querySelector("#app .daysum"), top = document.getElementById("topbar");
+    const off = !!el && !isWide() && !!top && el.getBoundingClientRect().bottom < top.getBoundingClientRect().bottom;
+    document.body.classList.toggle("sum-off", off);
+  };
+  if (!sumWatchOn) {
+    sumWatchOn = true;
+    let queued = false;
+    addEventListener("scroll", () => { if (!queued) { queued = true; requestAnimationFrame(() => { queued = false; check(); }); } }, { passive: true });
+    addEventListener("resize", check);
+  }
+  requestAnimationFrame(check);
+}
+
 function statusText() {
   if (error) return `<small class="err">${esc(error.length > 48 ? "Not saved" : error)}</small>`;
   return saving || Object.keys(pending).length ? `<small>Saving…</small>` : "";
@@ -1626,7 +1651,8 @@ function renderTop() {
     mid = `<b>${PAGE_TITLE[tab] || ""}</b>${statusText()}`;
     if (tab === "admin" || tab === "me" || tab === "journal") next = `<button class="round" id="close-admin" aria-label="Close ${PAGE_TITLE[tab]}">${SYM.x}</button>`;
   }
-  morph(top, prev + `<div class="mid">${groupButton(16)}${mid}</div>` + next);
+  morph(top, prev + `<div class="mid">${groupButton(16)}${topClockHtml()}${mid}</div>` + next);
+  watchSummary();
 }
 
 // Computers: the sidebar on the left. One page per thing, grouped: your group, you, and (for admins) running the group.
@@ -1764,6 +1790,17 @@ function togglesStyle() {
   return `--cols:${cols};--pcols:${phone}`;
 }
 // ---------------------------------------------------------------- views
+// Phones: other people's rows are one short line ("Missing Journal, HTF"). An owner taps it to get the boxes.
+let openRow = null;
+function miniStatus(k, key, rec) {
+  const st = statusOf(k, key);
+  if (st === "EXCUSED") return "Excused";
+  const req = RULES.filter(r => r[2] === "req"), bonus = RULES.filter(r => r[2] === "bonus" && rec[r[0]]);
+  if (st === "COMPLETE") return "All done" + (bonus.length ? `, plus ${bonus.map(r => esc(r[1])).join(", ")}` : "");
+  const missing = req.filter(r => !rec[r[0]]);
+  if (missing.length === req.length && !bonus.length) return "Nothing ticked yet";
+  return `Missing ${missing.map(r => esc(r[1])).join(", ")}`;
+}
 function renderDay() {
   const k = selected, now = Date.now(), list = activeMembers();
   const close = closesAt(k);
@@ -1814,10 +1851,14 @@ function renderDay() {
     const shots = images.map((p, i) => `<button class="shot" data-view-shot="${m.key}|${esc(p)}" aria-label="Screenshot ${i + 1} from ${esc(m.name)}"
         style="${shotUrls[p] ? `background-image:url('${shotUrls[p]}')` : ""}"></button>`).join("")
       + Array.from({ length: uploading[m.key] || 0 }, () => `<span class="shot busy">Uploading…</span>`).join("");
-    const showToggles = !(quickOn && m.key === me);   // already at the top as big buttons
+    const compact = !isWide() && m.key !== myKey() && openRow !== m.key;
+    const showToggles = !(quickOn && m.key === me) && !compact;   // yours is already at the top as big buttons
+    const mini = !compact ? "" : editable
+      ? `<button class="mini" data-expand="${m.key}" aria-label="${esc(m.name)}: ${miniStatus(k, m.key, rec)}. Change their boxes">${miniStatus(k, m.key, rec)}<span class="mini-edit">Change</span></button>`
+      : `<p class="mini">${miniStatus(k, m.key, rec)}</p>`;
     return `<div class="member ${editable ? "" : "locked"}">
       <div class="mrow"><span class="name">${avatarHtml(m, 26)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === myKey() ? `<span class="you">YOU</span>` : ""}${resultTag(rec)}</span>${editBtn}${dot(st, m.name)}</div>
-      ${showToggles ? `<div class="toggles" style="${togglesStyle()}">${toggles}</div>` : ""}
+      ${showToggles ? `<div class="toggles" style="${togglesStyle()}">${toggles}</div>` : mini}
       ${(rec.rule_breaks || []).length || pnlChipHtml(rec) ? `<div class="breaks">${pnlChipHtml(rec)}${(rec.rule_breaks || []).map(b => `<span class="bchip">${ic("alert", 13)}${esc(BREAK_LABEL[b] || b)}</span>`).join("")}</div>` : ""}
       ${note ? `<div class="note">${note}${canReport(k, m.key) ? `<button class="reportlink" data-report-note="${k}|${m.key}">Report note</button>` : ""}</div>` : ""}
       ${shots ? `<div class="shots">${shots}</div>` : ""}
@@ -3082,6 +3123,7 @@ document.addEventListener("click", async e => {
   if (d.lobby) { lobbyMode = d.lobby; joinMsg = ""; render(); const f = document.getElementById(d.lobby === "create" ? "req-name" : "joincode"); if (f) f.focus(); return; }
   if (d.nav) { const [t2, v] = d.nav.split(":"); if (v) { adminView = v; error = ""; } if (settingsOpen || editing) closePanel(); setTab(t2); if (t2 === "settings") loadPush(); return; }   // the sidebar
   if (d.part) { profilePart = d.part; render(); requestAnimationFrame(pageEnter); return; }
+  if (d.expand) { openRow = openRow === d.expand ? null : d.expand; render(); return; }
   if (d.profile) { profileKey = d.profile; profilePart = "profile"; if (tab === "admin") tab = "day"; render(); requestAnimationFrame(pageEnter); return window.scrollTo(0, 0); }
   if (t.id === "goto-reflect") {
     openPanel(today, myKey());

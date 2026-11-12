@@ -12,6 +12,7 @@
     --accent: var(--acc); --accent-text: var(--acc-lt); --on-accent: #ffffff;
     --good: #28c840; --warn: #febc2e; --crit: #ff5f57; --on-good: #0a0a0b; --on-warn: #0a0a0b; --on-crit: #0a0a0b;
     --crit-text: #c4271f;   /* red text that's readable on white (the bright red is for backgrounds) */
+    --good-text: #17803a;   /* the same for green */
     --discord: #5865f2;
     --glass: rgba(255, 255, 255, 0.6); --glass-edge: rgba(10, 10, 11, 0.10); --glass-shade: rgba(0, 0, 0, 0.08);
     --glass-pill: rgba(10, 10, 11, 0.07); --glass-hi: rgba(255, 255, 255, 0.8);
@@ -27,7 +28,7 @@
       --text: #f5f5f7; --text-2: #c9c9d1; --muted: #9a9aa6;
       --accent: var(--acc); --accent-text: var(--acc-dk); --on-accent: #ffffff;
       --good: #28c840; --warn: #febc2e; --crit: #ff5f57; --on-good: #0a0a0b; --on-warn: #0a0a0b; --on-crit: #0a0a0b;
-      --crit-text: #ff7a73;
+      --crit-text: #ff7a73; --good-text: #3ddc5a;
       --glass: rgba(255, 255, 255, 0.08); --glass-edge: rgba(255, 255, 255, 0.18); --glass-shade: rgba(0, 0, 0, 0.35);
       --glass-pill: rgba(255, 255, 255, 0.14); --glass-hi: rgba(255, 255, 255, 0.14);
       color-scheme: dark;
@@ -40,7 +41,7 @@
       --text: #f5f5f7; --text-2: #c9c9d1; --muted: #9a9aa6;
       --accent: var(--acc); --accent-text: var(--acc-dk); --on-accent: #ffffff;
       --good: #28c840; --warn: #febc2e; --crit: #ff5f57; --on-good: #0a0a0b; --on-warn: #0a0a0b; --on-crit: #0a0a0b;
-      --crit-text: #ff7a73;
+      --crit-text: #ff7a73; --good-text: #3ddc5a;
       --glass: rgba(255, 255, 255, 0.08); --glass-edge: rgba(255, 255, 255, 0.18); --glass-shade: rgba(0, 0, 0, 0.35);
       --glass-pill: rgba(255, 255, 255, 0.14); --glass-hi: rgba(255, 255, 255, 0.14);
       color-scheme: dark;
@@ -325,9 +326,10 @@
   .numfield input { flex: 1; min-width: 0; width: 100%; border: 0; background: transparent; color: var(--text); font: 600 16px var(--font-data); outline: none; text-align: right; }
   .numfield:focus-within { box-shadow: 0 0 0 2px var(--accent); }
   #num-hint.bad { color: var(--crit); }
-  .pnlchip { font-family: var(--font-data); font-weight: 600; }
-  .pnlchip.up, .tile b.up { color: var(--good); }
-  .pnlchip.down, .tile b.down { color: var(--crit); }
+  /* P&L and R: a plain grey chip; only the numbers are green or red (the red chip is for rule breaks) */
+  .pnlchip { display: inline-flex; align-items: center; font: 600 12px var(--font-data); padding: 2px 8px; border-radius: 6px; background: var(--surface-2); color: var(--text-2); }
+  .pnlchip.up, .tile b.up { color: var(--good-text); }
+  .pnlchip.down, .tile b.down { color: var(--crit-text); }
   .reacts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .react { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line);
     background: transparent; color: var(--muted); font: 600 13px var(--font-data); cursor: default; }
@@ -458,9 +460,10 @@
   .more-badges { margin-top: 12px; }
   .more-badges summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--accent-text); padding: 6px 0; }
   .more-badges .badges { margin-top: 10px; }
-  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+  .tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
   .tile { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; }
-  .tile b { display: block; font: 600 22px var(--font-data); }
+  .tile b { display: block; font: 600 22px var(--font-data); white-space: nowrap; }
+  @media (max-width: 420px) { .tile { padding: 10px; } .tile b { font-size: 17px; } }
   .tile span { font-size: 12px; color: var(--muted); }
   .badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 14px 10px; }
   .badge { text-align: center; min-width: 0; }
@@ -494,7 +497,7 @@
            display: flex; align-items: center; gap: 12px; padding: 10px 18px 10px 10px; border-radius: 14px; max-width: calc(100% - 32px); }
   .toast .medal { width: 42px; height: 42px; margin: 0; }
   .toast b { display: block; font-size: 15px; } .toast span { font-size: 13px; color: var(--text-2); }
-  @media (prefers-reduced-motion: no-preference) { .toast { animation: toast-in .45s cubic-bezier(.3, 1.4, .5, 1); } @keyframes toast-in { from { transform: translate(-50%, -30px); opacity: 0; } } }
+  @media (prefers-reduced-motion: no-preference) { .toast { animation: toast-in .45s cubic-bezier(.2, .8, .2, 1); } @keyframes toast-in { from { transform: translate(-50%, -30px); opacity: 0; } } }
 
   /* ---------- no-trade, countdown, reflection ---------- */
   .ic { flex: none; vertical-align: -3px; }
@@ -909,7 +912,7 @@
   .tabbar.lensing .pill { opacity: 0; }
   .tabbar.lensing button { transform: none; }
   .tabbar button.hot, .tabbar button.hot svg { color: var(--accent-text); }
-  .tablens { position: fixed; z-index: 7; pointer-events: none; overflow: hidden; border-radius: 30px; isolation: isolate;
+  .tablens { position: fixed; z-index: 7; pointer-events: none; overflow: hidden; border-radius: 22px; isolation: isolate;
     /* clear glass: barely tinted, the bar underneath is softly blurred and brightened, the copy on top is sharp */
     background: color-mix(in srgb, var(--lg-glow) 7%, transparent);
     -webkit-backdrop-filter: blur(7px) saturate(190%) brightness(1.12); backdrop-filter: blur(7px) saturate(190%) brightness(1.12);
@@ -922,9 +925,9 @@
       inset 0 0 18px rgba(255, 255, 255, .08),
       0 12px 30px rgba(0, 0, 0, .35), 0 2px 6px rgba(0, 0, 0, .2);
     transform: scale(.6, .5); opacity: 0;
-    transition: transform .42s cubic-bezier(.25, 1.6, .45, 1), opacity .16s; }
+    transition: transform .42s cubic-bezier(.2, .8, .2, 1), opacity .16s; }
   .tablens.up { transform: scale(1); opacity: 1; }
-  .tablens.drop { transition: left .34s cubic-bezier(.3, 1.35, .5, 1), transform .34s cubic-bezier(.3, 1.35, .5, 1), opacity .24s .1s;
+  .tablens.drop { transition: left .34s cubic-bezier(.2, .8, .2, 1), transform .34s cubic-bezier(.2, .8, .2, 1), opacity .24s .1s;
     transform: scale(.78, .66); opacity: 0; }
   /* the shine: a soft highlight that slides across the glass as you drag */
   .tablens::before { content: ""; position: absolute; inset: 0; z-index: 2; border-radius: inherit; pointer-events: none;
@@ -949,7 +952,7 @@
   @media (prefers-reduced-motion: reduce) { .tablens, .tablens.drop { transition: opacity .15s; transform: none; } }
 
   @media (prefers-reduced-motion: no-preference) {
-    .tabbar .pill { transition: transform .35s cubic-bezier(.3, 1.3, .5, 1); }
+    .tabbar .pill { transition: transform .35s cubic-bezier(.2, .8, .2, 1); }
     .t, .cell, .round, .tabbar button { transition: background-color .15s, border-color .15s, color .15s, transform .1s; }
   }
   @media (max-width: 380px) { .t { font-size: 12px; } }
@@ -1061,7 +1064,7 @@
     --hole: 150vmax; transition: --hole .8s cubic-bezier(.7, 0, .2, 1), opacity .35s .55s ease; opacity: 0; }
   /* the icon bar's highlight slides to the page you pick */
   .rail-ind { position: absolute; left: 0; top: 0; width: 3px; height: 20px; border-radius: 0 3px 3px 0; background: #fff; opacity: 0;
-    transition: transform .4s cubic-bezier(.3, 1.3, .5, 1), opacity .2s; pointer-events: none; }
+    transition: transform .4s cubic-bezier(.2, .8, .2, 1), opacity .2s; pointer-events: none; }
   .rail .rail-ind { background: var(--rail-ind); }
 
   /* top bar (and the phone's bottom bar): the same liquid glass as the icon bar */
@@ -1227,26 +1230,6 @@
   .stage3d .phone-screen::before { z-index: 2; }
   @media (prefers-reduced-motion: reduce) { .stage3d .phone { transition: none; } }
   @media (max-width: 899px) { .stage3d { min-height: 0; padding: 30px 0 10px; } .behind { font-size: 19vw; } .stage3d .phone { width: min(270px, 70vw); } }
-
-  /* ================================================================ Apple-style button corners
-     Rounder corners, and where the browser can draw it, Apple's smooth "squircle" curve (continuous corners). Never full pills. */
-  .btn, .lp-btn { border-radius: 15px; }
-  .btn.small, .lp-btn.small, .topbar .end button, .tagpick button { border-radius: 12px; }
-  .t { border-radius: 13px; } .q { border-radius: 18px; } .gitem { border-radius: 16px; }
-  .reflect-nudge, .switchrow, .addpic { border-radius: 15px; }
-  .segset { border-radius: 14px; } .segset button { border-radius: 11px; } .cell { border-radius: 10px; }
-  .rail button { border-radius: 15px; } .tabbar button, .tabbar .pill { border-radius: 18px; }
-  @supports (corner-shape: squircle) {
-    .btn, .lp-btn, .t, .q, .gitem, .reflect-nudge, .switchrow, .addpic, .segset, .segset button, .cell, .tagpick button,
-    .topbar .end button, .rail button, .tabbar button, .tabbar .pill, .merow { corner-shape: squircle; }
-    /* the squircle curve is gentler, so it needs a larger radius to look as round */
-    .btn, .lp-btn { border-radius: 22px; }
-    .btn.small, .lp-btn.small, .topbar .end button, .tagpick button { border-radius: 17px; }
-    .t { border-radius: 19px; } .q { border-radius: 26px; } .gitem { border-radius: 23px; }
-    .reflect-nudge, .switchrow, .addpic { border-radius: 22px; }
-    .segset { border-radius: 20px; } .segset button { border-radius: 16px; } .cell { border-radius: 14px; }
-    .rail button { border-radius: 21px; } .tabbar button, .tabbar .pill { border-radius: 25px; }
-  }
 
 
   /* ================================================================ front page: the scroll story (the phone stays put while the app inside it plays out) */
@@ -1491,19 +1474,19 @@
   .try-note { margin: 12px 0 0; font-size: 12.5px; color: var(--lp-2); }
   @supports (corner-shape: squircle) { .try-box { corner-shape: squircle; border-radius: 22px; } }
 
-  /* ================================================================ rounder buttons everywhere (front page and tracker). Still not full pills.
-     Plain corners first; where the browser draws Apple's smooth squircle, a larger radius looks just as round. */
-  .btn, .lp-btn, .try-box, .reflect-nudge, .switchrow, .addpic, .merow { border-radius: 18px; }
-  .btn.small, .lp-btn.small, .topbar .end button, .tagpick button, .lp-burger { border-radius: 14px; }
-  .t { border-radius: 16px; } .q { border-radius: 22px; } .gitem { border-radius: 20px; }
-  .segset { border-radius: 18px; } .segset button { border-radius: 14px; } .cell { border-radius: 12px; }
-  .rail button { border-radius: 18px; } .tabbar button, .tabbar .pill { border-radius: 22px; }
+  /* ================================================================ corners: one scale for the tracker.
+     A corner is never more than about a third of the control's height, so nothing turns into a pill. */
+  .btn, .reflect-nudge, .switchrow, .addpic, .merow { border-radius: 12px; }
+  .btn.small, .topbar .end button, .tagpick button { border-radius: 10px; }
+  .t { border-radius: 10px; } .q { border-radius: 14px; } .gitem { border-radius: 14px; }
+  .segset { border-radius: 12px; } .segset button { border-radius: 9px; } .cell { border-radius: 8px; }
+  .rail button { border-radius: 12px; } .tabbar button, .tabbar .pill { border-radius: 17px; }
+  /* the front page keeps its own, rounder buttons */
+  .lp-btn, .try-box { border-radius: 18px; }
+  .lp-btn.small, .lp-burger { border-radius: 14px; }
   @supports (corner-shape: squircle) {
-    .btn, .lp-btn, .try-box, .reflect-nudge, .switchrow, .addpic, .merow { border-radius: 26px; }
-    .btn.small, .lp-btn.small, .topbar .end button, .tagpick button, .lp-burger, .lp-nav .lp-btn.small { border-radius: 20px; }
-    .t { border-radius: 23px; } .q { border-radius: 30px; } .gitem { border-radius: 28px; }
-    .segset { border-radius: 26px; } .segset button { border-radius: 20px; } .cell { border-radius: 17px; }
-    .rail button { border-radius: 26px; } .tabbar button, .tabbar .pill { border-radius: 30px; }
+    .lp-btn, .try-box { corner-shape: squircle; border-radius: 26px; }
+    .lp-btn.small, .lp-burger, .lp-nav .lp-btn.small { border-radius: 20px; }
   }
 
   /* front page bar: a short centred bar, 300px wide */
@@ -1546,3 +1529,19 @@
 .open-line b { font-weight: 600; color: var(--text); margin-right: 4px; }
 .open-line.all { color: var(--text); font-weight: 600; }
 @media (min-width: 960px) { .daysum .count .num:first-child { font-size: 36px; } .daysum .time { font-size: 22px; } }
+
+/* Phones: once the summary card has scrolled away, the time left takes the group name's place in the top bar (same height, so nothing jumps) */
+.topbar .mid { position: relative; }
+.topclock { position: absolute; left: 0; right: 0; top: 2px; height: 18px; font: 600 13px/18px var(--font-data); color: var(--text);
+  opacity: 0; pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topclock.urgent { color: var(--crit-text); }
+.topbar .mid .gname { transition: opacity .2s ease; }
+body.sum-off .topclock { opacity: 1; }
+body.sum-off .topbar .mid .gname { opacity: 0; pointer-events: none; }
+@media (prefers-reduced-motion: no-preference) { .topclock { transition: opacity .2s ease; } }
+
+/* Phones: someone else's day in one line, under their name */
+.mini { margin: -4px 0 0; font-size: 14px; line-height: 1.35; color: var(--text-2); }
+button.mini { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 44px; margin: -12px 0 -10px;
+  padding: 0; border: 0; background: none; text-align: left; cursor: pointer; font: inherit; font-size: 14px; color: var(--text-2); }
+.mini-edit { flex: none; font-size: 13px; font-weight: 600; color: var(--accent-text); }
