@@ -42,8 +42,6 @@ const SYM = {
 };
 const ICON = { COMPLETE: SYM.check, PARTIAL: SYM.half, MISSING: SYM.x, WAITING: "", UNLOGGED: "?", EXCUSED: "E" };
 const LABEL = { COMPLETE: "Complete", PARTIAL: "Partial", MISSING: "Missing", WAITING: "Waiting", UNLOGGED: "Not logged", EXCUSED: "Excused" };
-const STATUS_ORDER = ["COMPLETE", "PARTIAL", "MISSING", "WAITING", "UNLOGGED", "EXCUSED"];
-const STATUS_COLOR = { COMPLETE: "var(--good)", PARTIAL: "var(--warn)", MISSING: "var(--crit)", WAITING: "var(--line)", UNLOGGED: "var(--line)", EXCUSED: "var(--muted)" };
 // Outline icons (no emoji): decorative next to text, so hidden from screen readers.
 const ICON_PATHS = {
   book: '<path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19"/><path d="M9 7.5h6"/>',
@@ -1506,13 +1504,19 @@ const pendingCount = () => people.filter(p => p.status === "pending").length + (
 
 function tabsList() { return isAdmin ? ["day", "week", "board", "admin", "me"] : ["day", "week", "board", "me"]; }
 
+// "17h 07m left", or "42m left" in the last hour. With html, only the digits are in the mono face.
+function leftText(mins, html = false) {
+  const n = v => html ? `<span class="num">${v}</span>` : String(v);
+  const h = Math.floor(mins / 60), m = mins % 60;
+  return h ? `${n(h)}h ${n(String(m).padStart(2, "0"))}m left` : `${n(m)}m left`;
+}
 // Phones: once the summary card has scrolled away, the top bar shows the time left and how many are still open
 // in place of the group name, so the cutoff never leaves the screen.
 function topClockHtml() {
   if (tab !== "day" || selected !== today || isFinal(today)) return "";
   const list = activeMembers(), mins = Math.max(0, Math.round((closesAt(today) - Date.now()) / 60000));
   const open = list.filter(m => !["COMPLETE", "EXCUSED"].includes(statusOf(today, m.key))).length;
-  const time = `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, "0")}m left`;
+  const time = leftText(mins);
   return `<span class="topclock ${mins <= 60 ? "urgent" : ""}" aria-hidden="true">${time} · ${open ? `${open} open` : "all done"}</span>`;
 }
 let sumWatchOn = false;
@@ -1808,7 +1812,7 @@ function renderDay() {
   const close = closesAt(k);
   let time, mins = null;
   if (isFinal(k)) time = dayHasAny(k) ? "Closed" : "Not logged";
-  else { mins = Math.max(0, Math.round((close - now) / 60000)); time = `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, "0")}m left`; }
+  else { mins = Math.max(0, Math.round((close - now) / 60000)); time = leftText(mins, true); }
   const urgent = mins !== null && mins <= 60;   // last hour: the timer turns red
   const mine = myKey() && list.some(m => m.key === myKey()) ? statusOf(k, myKey()) : null;
   const banner = urgent && mine && mine !== "COMPLETE" && mine !== "EXCUSED"
@@ -1820,7 +1824,6 @@ function renderDay() {
 
   const counts: Record<string, number> = {};
   list.forEach(m => { const s = statusOf(k, m.key); counts[s] = (counts[s] || 0) + 1; });
-  const stack = STATUS_ORDER.filter(s => counts[s]).map(s => `<i style="flex:${counts[s]};background:${STATUS_COLOR[s]}" title="${LABEL[s]}: ${counts[s]}"></i>`).join("");
 
   // Phones: big buttons for your own homework at the top (today only).
   const me = myKey(), quickOn = !isWide() && k === today && me && list.some(m => m.key === me) && canEdit(k, me);
@@ -1872,20 +1875,26 @@ function renderDay() {
 
   // One block that answers "how long is left, and who still has to do it".
   const due = list.length - (counts.EXCUSED || 0), doneN = counts.COMPLETE || 0;
-  const cutoff = `${fmtDay(nextTrading(k), { day: undefined, month: undefined })} ${hh(CUTOFF_HOUR)} ${esc(tzCity(TZ))}`;
+  // The weekday is only needed when the cutoff isn't today or tomorrow (a Friday closes on Monday).
+  const closeDay = nextTrading(k), nearby = closeDay === today || closeDay === addDays(today, 1);
+  const at = `<span class="num">${hh(CUTOFF_HOUR)}</span> ${esc(tzCity(TZ))}`;
+  const cutoff = nearby ? at : `${fmtDay(closeDay, { day: undefined, month: undefined })} ${at}`;
   const openPeople = ordered.filter(m => !["COMPLETE", "EXCUSED"].includes(statusOf(k, m.key)));
   const openNames = openPeople.map(m => (m.key === myKey() ? "You" : esc(m.name)) + (statusOf(k, m.key) === "PARTIAL" ? " (partly)" : ""));
   const shown = openNames.length > 6 ? openNames.slice(0, 5).join(", ") + ` and ${openNames.length - 5} more` : openNames.join(", ");
   const openLine = !list.length ? "" : openPeople.length
     ? `<p class="open-line"><b>${isFinal(k) ? "Not done" : "Still open"}</b> ${shown}</p>`
     : `<p class="open-line all">${due ? "Everyone is done." : "Everyone is excused."}</p>`;
-  const stackLabel = STATUS_ORDER.filter(s => counts[s]).map(s => `${counts[s]} ${LABEL[s].toLowerCase()}`).join(", ");
+  // Read top to bottom: how long, until when, how many are done. One bar: the share that is done.
+  const pct = due ? Math.round(doneN / due * 100) : 0;
+  const progress = due ? `<div class="sum-done">
+      <p><span class="num">${doneN}</span> of <span class="num">${due}</span> done</p>
+      <div class="donebar" role="progressbar" aria-label="Members done" aria-valuemin="0" aria-valuemax="${due}" aria-valuenow="${doneN}"><i style="width:${pct}%"></i></div>
+    </div>` : "";
   const summary = `<div class="card daysum">
-    <div class="meta">
-      <div class="count"><span class="num">${doneN}</span> of <span class="num">${due}</span> done</div>
-      <div class="when"><div class="time ${urgent ? "urgent" : ""}">${time}</div><small>${isFinal(k) ? "Cutoff was" : "Cutoff"} ${cutoff}</small></div>
-    </div>
-    <div class="stack" role="img" aria-label="${stackLabel}">${stack}</div>
+    <p class="sum-time ${urgent ? "urgent" : ""}">${time}</p>
+    <p class="sum-until">${isFinal(k) ? "Cutoff was" : "until"} ${cutoff}</p>
+    ${progress}
     ${openLine}
     ${banner}${nudge}
   </div>`;

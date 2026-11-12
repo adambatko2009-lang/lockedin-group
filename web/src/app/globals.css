@@ -1522,20 +1522,22 @@
 
 /* ================================================================ Today: one summary that says how long is left and who is still open.
    Mono only for the numbers; the words around them are in the interface font. */
-.daysum .meta { margin-top: 0; align-items: flex-end; }
-.daysum .count { font: 600 17px/1.2 var(--font-ui); color: var(--text-2); letter-spacing: 0; }
-.daysum .count .num { font: 600 17px var(--font-data); color: var(--text); }
-.daysum .count .num:first-child { font-size: 32px; letter-spacing: -0.03em; }
-.daysum .when { text-align: right; min-width: 0; }
-.daysum .time { font: 600 20px/1.2 var(--font-data); color: var(--text); }
-.daysum .time.urgent { color: var(--crit-text); }
-.daysum .when small { display: block; margin-top: 2px; font-size: 13px; color: var(--muted); }
-.daysum .stack { height: 8px; margin-top: 14px; }
-.daysum .stack i { border-radius: 4px; }
+.sum-time, .sum-until, .sum-done p { margin: 0; }
+.daysum .num { font-family: var(--font-data); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.sum-time { font: 650 32px/1.1 var(--font-ui); color: var(--text); letter-spacing: -0.02em; }
+.sum-time .num { letter-spacing: -0.04em; }
+.sum-time.urgent { color: var(--crit-text); }
+.sum-until { margin-top: 4px; font-size: 15px; color: var(--muted); }
+.sum-done { margin-top: 16px; }
+.sum-done p { font-size: 15px; font-weight: 600; color: var(--text-2); }
+.sum-done p .num { color: var(--text); }
+.donebar { height: 6px; margin-top: 8px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.sum-done + .open-line { margin-top: 14px; }
+.donebar i { display: block; height: 100%; border-radius: 3px; background: var(--good); }
 .open-line { margin: 12px 0 0; font-size: 15px; line-height: 1.45; color: var(--text-2); text-wrap: pretty; }
 .open-line b { font-weight: 600; color: var(--text); margin-right: 4px; }
 .open-line.all { color: var(--text); font-weight: 600; }
-@media (min-width: 960px) { .daysum .count .num:first-child { font-size: 36px; } .daysum .time { font-size: 22px; } }
+@media (min-width: 960px) { .sum-time { font-size: 36px; } }
 
 /* Phones: once the summary card has scrolled away, the time left takes the group name's place in the top bar (same height, so nothing jumps) */
 .topbar .mid { position: relative; }
