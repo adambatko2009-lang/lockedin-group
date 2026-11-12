@@ -818,6 +818,12 @@
   .lobby-line { font-size: 14px; color: var(--text-2); margin: 10px 0 0; text-align: left; }
   .lobby-line .ic { margin-right: 6px; color: var(--muted); }
   .panel .joinbox label { display: none; }
+  .setpage h3 { font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin: 18px 0 8px; }
+  .setpage .sub-hint { font-size: 14px; color: var(--muted); margin: 0 0 12px; }
+  .setpage .glist { margin-top: 4px; }
+  .backrow { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 0 12px 0 4px; margin: 0 0 -4px; border: 0; background: none;
+    color: var(--accent-text); font: 600 15px var(--font-ui); cursor: pointer; }
+  .page-intro { margin: 2px 2px 0; font-size: 14px; color: var(--muted); }
   .joinbox .sub-hint, .reqbox .sub-hint { font-size: 13px; color: var(--muted); text-align: left; }
   .joinbox .sub-hint:empty { display: none; }
   .joinbox label, .flabel { display: block; font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin: 16px 0 6px; }
@@ -1667,6 +1673,7 @@ const ICON_PATHS = {
   more: '<circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.9.8c0 1.7-2.5 2.1-2.5 3.8"/><path d="M12 17.1v.2"/>',
   mail: '<rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4 7 8 6 8-6"/>',
+  "chevron-left": '<path d="m14.5 6-6 6 6 6"/>',
   search: '<circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/>',
   link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
 };
@@ -2427,34 +2434,29 @@ function renderHelp() {
     : contact + faq + start + legal;
 }
 
-function openSettings() {
-  editing = null; settingsOpen = true;
-  panelMode = "drawer"; dockPanel(); setPanelRole();
+// Settings and Groups are normal pages (no side window).
+function openSettings() { if (editing) closePanel(); setTab("settings"); loadPush(); }
+function renderSettings() {
   const opt = (v, label) => `<button data-theme-set="${v}" aria-pressed="${settings.theme === v}">${label}</button>`;
-  document.getElementById("panel").innerHTML = `<div class="grab" aria-hidden="true"></div>
-    <header><div><b id="panel-title">Settings</b><span>Only for you · saved to your account</span></div>
-      <button class="round" id="panel-close" aria-label="Close">${SYM.x}</button></header>
-    <button class="helprow" data-nav="help">${ic("help", 20)}<span><b>Help &amp; support</b><small>Questions, contact, the app on your phone</small></span><span class="chev" aria-hidden="true">›</span></button>
-    <h3>Appearance</h3>
+  const look = `<section class="card setpage"><div class="cardhead"><h2>Appearance</h2></div>
     <div class="segset" role="group" aria-label="Appearance">${opt("system", "System")}${opt("light", "Light")}${opt("dark", "Dark")}</div>
     <p class="sub-hint" style="margin-top:8px">Dark is the default. System follows your phone or computer.</p>
-    <div id="remind-box">${remindHtml()}</div>
-    <h3>My rule breaks</h3>
-    <div id="settings-breaks">${customBreaksListHtml()}</div>
     <h3>Celebrations</h3>
     <label class="switchrow"><span><b>Confetti</b><small>When you complete your day.</small></span>
-      <input type="checkbox" id="set-confetti" role="switch" ${settings.confetti !== false ? "checked" : ""}></label>
-    <h3>Your data</h3>
+      <input type="checkbox" id="set-confetti" role="switch" ${settings.confetti !== false ? "checked" : ""}></label></section>`;
+  const remind = VAPID ? `<section class="card setpage"><div class="cardhead"><h2>Reminders</h2></div><div id="remind-box">${remindHtml()}</div></section>` : "";
+  const breaks = `<section class="card setpage"><div class="cardhead"><h2>My rule breaks</h2></div><div id="settings-breaks">${customBreaksListHtml()}</div></section>`;
+  const data = `<section class="card setpage"><div class="cardhead"><h2>Your data</h2></div>
     <p class="sub-hint">Download a copy of everything LockedIn stores about you, or delete your account.</p>
     <div class="datarow"><button class="btn plain small" id="export-data">Download my data</button>
       <button class="btn plain small danger" id="delete-account">Delete my account</button></div>
     <p class="sub-hint" id="data-msg" role="status" aria-live="polite"></p>
-    <p class="sub-hint legal-links"><a href="?p=privacy" data-land="privacy">Privacy policy</a> · <a href="?p=terms" data-land="terms">Terms</a></p>
-    <button class="btn primary done" id="panel-done">Done</button>`;
-  document.getElementById("scrim").hidden = false;
-  document.getElementById("panel").hidden = false; panelOpened();
-  document.body.style.overflow = "hidden";
-  loadPush();
+    <p class="sub-hint legal-links"><a href="?p=privacy" data-land="privacy">Privacy policy</a> · <a href="?p=terms" data-land="terms">Terms</a></p></section>`;
+  const help = `<button class="helprow" data-nav="help">${ic("help", 20)}<span><b>Help &amp; support</b><small>Questions, contact, the app on your phone</small></span><span class="chev" aria-hidden="true">›</span></button>`;
+  const intro = `<p class="page-intro">Only for you. Changes save to your account right away.</p>`;
+  return isWide()
+    ? intro + `<div class="desk"><div class="maincol">${look}${remind}${breaks}</div><div class="side">${data}${help}</div></div>`
+    : intro + look + remind + breaks + data + help;
 }
 
 // ---------------------------------------------------------------- weekly reflection
@@ -2761,6 +2763,7 @@ async function removeShot(day, key, path) {
 // ---------------------------------------------------------------- edit panel (note + pictures for one row)
 function openPanel(day, key) {
   if (!canEdit(day, key)) return;
+  if (!inlineOK(day)) { tab = "day"; profileKey = null; selected = day; weekStart = mondayOf(day); window.scrollTo(0, 0); }
   editing = { day, key };
   const m = members.find(x => x.key === key), rec = tickOf(day, key) || {};
   const panel = document.getElementById("panel");
@@ -3113,7 +3116,7 @@ function morphNode(a, b) {
   if (a.tagName === "SELECT" && !typing) a.value = b.value;
 }
 
-const PAGE_TITLE = { day: "Today", week: "Week", board: "Ranking", journal: "Journal", me: "Me", admin: "Admin", help: "Help & support" };
+const PAGE_TITLE = { day: "Today", week: "Week", board: "Ranking", journal: "Journal", me: "Me", admin: "Admin", help: "Help & support", settings: "Settings", groups: "Groups" };
 function renderTop() {
   renderNoteStatus();
   const top = document.getElementById("topbar");
@@ -3207,8 +3210,8 @@ function renderRail() {
     ${isGroupOwner() ? item("admin", "group", SVG.gear, "Group settings") : ""}
     ${isAppOwner ? item("admin", "all", ic("layers", 19), "All groups", badge(reqs)) : ""}` : ""}
     <span class="rail-sep"></span>
-    <button data-rail="groups">${ic("users", 19)}<span>Groups</span></button>
-    <button data-rail="settings">${ic("sliders", 19)}<span>Settings</span></button>
+    ${item("groups", "", ic("users", 19), "Groups")}
+    ${item("settings", "", ic("sliders", 19), "Settings")}
     ${item("help", "", ic("help", 19), "Help")}`);
   const ind = rail.querySelector(".rail-ind"), cur2 = rail.querySelector('[aria-current="page"]');
   if (ind) { ind.style.opacity = cur2 ? "1" : "0"; if (cur2) ind.style.transform = `translateY(${cur2.offsetTop + cur2.offsetHeight / 2 - 10}px)`; }
@@ -3218,7 +3221,7 @@ function renderTabbar() {
   bar.hidden = screen !== "app";
   if (screen !== "app") return;
   const list = tabsList(), labels = { day: "Day", week: "Week", board: "Ranking", admin: "Admin", me: "Me" };
-  const cur = tab === "journal" ? "me" : tab, i = Math.max(0, list.indexOf(cur));
+  const cur = /^(journal|settings|groups|help)$/.test(tab) ? "me" : tab, i = Math.max(0, list.indexOf(cur));
   morph(bar, `<div class="pill" style="width:calc((100% - 10px) / ${list.length});transform:translateX(${i * 100}%);opacity:${list.includes(cur) ? 1 : 0}" aria-hidden="true"></div>` +
     list.map(t => `<button data-tab="${t}"${t === cur ? ' aria-current="page"' : ""} aria-label="${labels[t]}">${t === "admin" ? SVG.gear : t === "me" ? meIcon() : SVG[t]}<span>${labels[t]}</span>
       ${t === "admin" && pendingCount() ? `<i class="badge">${pendingCount()}</i>` : ""}</button>`).join(""));
@@ -3829,9 +3832,8 @@ function ownerDashboardHtml() {
 }
 
 // The Groups sheet: switch group, join another, ask for your own, leave.
-function openGroupsPanel() {
-  editing = null; settingsOpen = true;
-  panelMode = "drawer"; dockPanel(); setPanelRole();
+function openGroupsPanel() { if (editing) closePanel(); setTab("groups"); }
+function renderGroups() {
   const list = groups.filter(canOpen);
   const row = x => `<button class="gitem" data-switch-group="${x.id}" aria-current="${x.id === gid}">${groupLogo(x, 36)}
       <span><b>${esc(x.name)}</b><small>${esc(roleOf(x))}${x.status === "paused" ? " · paused" : ""}</small></span>${x.id === gid ? ic("check", 18) : ""}</button>`;
@@ -3839,18 +3841,17 @@ function openGroupsPanel() {
   const others = list.filter(x => !mine.includes(x));
   const m = myMembership(), g = group();
   const canLeave = m && g && g.owner_id !== session.user.id;
-  document.getElementById("panel").innerHTML = `<div class="grab" aria-hidden="true"></div>
-    <header><div><b id="panel-title">Groups</b><span>Switch, join or start one</span></div>
-      <button class="round" id="panel-close" aria-label="Close">${SYM.x}</button></header>
+  const yours = `<section class="card setpage"><div class="cardhead"><h2>Your groups</h2></div>
+    <p class="sub-hint">Tap a group to switch to it.</p>
     <div class="glist">${mine.map(row).join("") || `<p class="empty">You're not in a group yet.</p>`}</div>
-    ${others.length ? `<h3>Other groups (app owner)</h3><div class="glist">${others.map(row).join("")}</div>` : ""}
-    <h3>Join another group</h3>
-    ${joinHtml()}
-    ${canLeave ? `<h3>${esc(g.name)}</h3><button class="btn danger small" id="leave-group">Leave this group</button>` : ""}
-    <button class="btn primary done" id="panel-done">Done</button>`;
-  document.getElementById("scrim").hidden = false;
-  document.getElementById("panel").hidden = false; panelOpened();
-  document.body.style.overflow = "hidden";
+    ${others.length ? `<h3>Other groups (app owner)</h3><div class="glist">${others.map(row).join("")}</div>` : ""}</section>`;
+  const join = `<section class="card setpage"><div class="cardhead"><h2>Join another group</h2></div>
+    <p class="sub-hint">Ask the owner for their join code, then type it here.</p>${joinHtml()}</section>`;
+  const leave = canLeave ? `<section class="card setpage"><div class="cardhead"><h2>Leave ${esc(g.name)}</h2></div>
+    <p class="sub-hint">You can only come back if the owner approves you again.</p><button class="btn danger small" id="leave-group">Leave this group</button></section>` : "";
+  return isWide()
+    ? `<div class="desk"><div class="maincol">${yours}</div><div class="side">${join}${leave}</div></div>`
+    : yours + join + leave;
 }
 
 // After signing in, with no group yet: two clear choices, join with a code or start a group.
@@ -4549,7 +4550,10 @@ function render() {
   else if (tab === "week") html = renderWeek() + renderReflections();
   else if (tab === "board") html = renderBoard();
   else if (tab === "help") html = renderHelp();
+  else if (tab === "settings") html = renderSettings();
+  else if (tab === "groups") html = renderGroups();
   else { const d = renderDay(); html = d.summary + d.list; }
+  if (/^(settings|groups|help)$/.test(tab) && !profileKey && !isWide()) html = `<button class="backrow" data-nav="me">${ic("chevron-left", 18)}<span>Me</span></button>` + html;
   const pageName = profileKey ? ((members.find(x => x.key === profileKey) || {}).name || "Profile") : PAGE_TITLE[tab] || "Today";
   morph(app, `<h1 class="sr-only">${esc(pageName)}, ${esc((group() || {}).name || "LockedIn")}</h1>` + offlineBar() + html);
   mountInline();
@@ -4626,7 +4630,7 @@ document.addEventListener("click", async e => {
   }
   if (d.tab) return setTab(d.tab);
   if (d.lobby) { lobbyMode = d.lobby; joinMsg = ""; render(); const f = document.getElementById(d.lobby === "create" ? "req-name" : "joincode"); if (f) f.focus(); return; }
-  if (d.nav) { const [t2, v] = d.nav.split(":"); if (v) { adminView = v; error = ""; } if (settingsOpen || editing) closePanel(); return setTab(t2); }   // the sidebar
+  if (d.nav) { const [t2, v] = d.nav.split(":"); if (v) { adminView = v; error = ""; } if (settingsOpen || editing) closePanel(); setTab(t2); if (t2 === "settings") loadPush(); return; }   // the sidebar
   if (d.part) { profilePart = d.part; render(); requestAnimationFrame(pageEnter); return; }
   if (d.profile) { profileKey = d.profile; profilePart = "profile"; if (tab === "admin") tab = "day"; render(); requestAnimationFrame(pageEnter); return window.scrollTo(0, 0); }
   if (t.id === "goto-reflect") {
@@ -5320,7 +5324,7 @@ async function turnRemindersOff() {
 }
 function remindHtml() {
   if (!VAPID) return "";
-  const head = `<h3>Reminders</h3>`;
+  const head = "";   // the Settings page gives this section its own heading
   if (!pushSupported()) return head + `<p class="sub-hint">${isIOS() && !isInstalled()
     ? "On iPhone, reminders work in the app: add LockedIn to your Home Screen first (see <b>App on your phone</b>), then open it from there and turn reminders on."
     : "This browser can't show reminders. Try Chrome, Edge, Firefox or Safari."}</p>`;
