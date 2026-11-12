@@ -3,7 +3,7 @@
 // 2. Shows the reminder notifications sent by supabase/functions/send-reminders.
 // Change VERSION when you change this file's list of files, so phones throw the old copy away.
 // (The Next.js version: config.js and the supabase file are now built into the app's own files in _next/static.)
-const VERSION = "lockedin-7";
+const VERSION = "lockedin-8";
 const FILES = ["./", "index.html", "manifest.webmanifest",
   "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png", "icons/favicon-64.png", "icons/favicon-128.png",
   "vendor/fonts.css",

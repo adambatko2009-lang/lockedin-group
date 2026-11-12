@@ -1792,6 +1792,8 @@ function togglesStyle() {
 // ---------------------------------------------------------------- views
 // Phones: other people's rows are one short line ("Missing Journal, HTF"). An owner taps it to get the boxes.
 let openRow = null;
+// a ticked bonus box shows a plus (extra points), a ticked required box a check
+const PLUS_SVG = `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`;
 function miniStatus(k, key, rec) {
   const st = statusOf(k, key);
   if (st === "EXCUSED") return "Excused";
@@ -1826,8 +1828,8 @@ function renderDay() {
   if (quickOn) {
     const rec = tickOf(k, me) || {};
     quick = `<div class="card quick"><div class="cardhead"><h2>Your homework</h2></div><div class="qgrid">${RULES.map(([r, label, kind]) =>
-      `<button class="q ${kind}" data-tick="${me}:${r}" aria-pressed="${!!rec[r]}"><span class="qc">${rec[r] ? ic("check", 18).replace('<circle cx="12" cy="12" r="9"/>', "") : ""}</span>
-        <span><b>${label}</b><small>${kind === "bonus" ? "Bonus" : "Required"}</small></span></button>`).join("")}</div>
+      `<button class="q ${kind}" data-tick="${me}:${r}" aria-pressed="${!!rec[r]}"><span class="qc">${!rec[r] ? "" : kind === "bonus" ? PLUS_SVG : ic("check", 18).replace('<circle cx="12" cy="12" r="9"/>', "")}</span>
+        <span><b>${label}</b><small>${kind === "bonus" ? (rec[r] ? "Bonus, +" + POINTS.bonus : "Bonus") : "Required"}</small></span></button>`).join("")}</div>
       <button class="qnote" data-edit="${me}" aria-expanded="${inlineHere(me, k)}">${SVG.note.replace("<svg ", '<svg width="18" height="18" ')}${inlineHere(me, k) ? "Close note & pictures" : rec.note || (rec.images || []).length ? "Edit note & pictures" : "Add note & pictures"}</button>
       ${inlineHere(me, k) ? `<div id="inline-slot" data-persist></div>` : ""}</div>`;
   }

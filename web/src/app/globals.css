@@ -169,6 +169,11 @@
   .t[aria-pressed="true"]::before { content: ""; display: inline-block; width: 0.85em; height: 0.85em; margin-right: 4px; vertical-align: -0.08em; background: var(--accent-text);
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.2 8.4 6.4 11.4 12.8 4.8' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
             mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.2 8.4 6.4 11.4 12.8 4.8' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+  /* a ticked bonus box is extra, not part of the day: no fill, a dashed outline in the group colour and a plus instead of a check */
+  .t.bonus[aria-pressed="true"] { background: transparent; border-style: dashed; border-color: var(--accent-text); color: var(--text-2); }
+  .t.bonus[aria-pressed="true"]::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 3.2v9.6M3.2 8h9.6' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E");
+            mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 3.2v9.6M3.2 8h9.6' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E"); }
   .t:not(:disabled):active { transform: scale(0.96); filter: brightness(0.92); }
   .t:disabled { cursor: default; }
   .t .lbl-short { display: none; }
@@ -575,6 +580,8 @@
   .q small { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
   .q[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 14%, var(--surface-2)); border-color: color-mix(in srgb, var(--accent-text) 55%, transparent); }
   .q[aria-pressed="true"] .qc { background: var(--accent); box-shadow: none; color: var(--on-accent); }
+  .q.bonus[aria-pressed="true"] { background: transparent; border-color: var(--accent-text); }
+  .q.bonus[aria-pressed="true"] .qc { background: transparent; box-shadow: inset 0 0 0 2px var(--accent-text); color: var(--accent-text); }
   .q:active { transform: scale(0.97); }
   .quick .qnote { width: 100%; margin-top: 8px; min-height: 44px; border-radius: 12px; border: 0; background: transparent; color: var(--accent-text);
                   font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
