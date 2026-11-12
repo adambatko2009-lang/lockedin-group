@@ -250,7 +250,7 @@
   .panel header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
   .panel header b { display: block; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
   .panel header span { font-size: 14px; color: var(--muted); }
-  .panel h3 { font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin: 18px 0 8px; }
+  .panel h3 { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -0.005em; margin: 20px 0 8px; }
   .panel textarea { width: 100%; min-height: 140px; resize: vertical; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px;
                     color: var(--text); font: 16px/1.4 var(--font-ui); padding: 10px 12px; }
   .panel textarea::placeholder { color: var(--muted); }
@@ -345,7 +345,7 @@
   .help-contact .help-note { margin: 14px 0 0; }
   .help-start .btn .ic, .help-contact .btn .ic { margin-right: 2px; }
   .help-start .btn { display: inline-flex; align-items: center; gap: 6px; }
-  .help-install h3 { margin: 16px 0 6px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .help-install h3 { margin: 18px 0 6px; font-size: 15px; font-weight: 600; color: var(--text); }
   .help-install .sub-hint { font-size: 14px; color: var(--text-2); margin: 0 0 8px; }
   .help-copy { margin-top: 12px; font-family: var(--font-data); font-size: 12px; }
   .help-legal { display: flex; gap: 16px; margin: 10px 0 0; }
@@ -546,7 +546,7 @@
   .reflect form + .rentry, .rentry:first-of-type { border-top: 0; }
   .rentry .who { display: flex; align-items: center; gap: 8px; font-weight: 600; margin-bottom: 6px; }
   .rentry .who small { font-weight: 400; color: var(--muted); }
-  .rentry h4, .rentry .rh { margin: 6px 0 2px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .rentry h4, .rentry .rh { margin: 6px 0 2px; font-size: 13px; font-weight: 600; color: var(--text-2); }
   .rentry p { margin: 0; font-size: 15px; overflow-wrap: anywhere; white-space: pre-wrap; }
 
   /* ---------- rule breaks, settings, confetti ---------- */
@@ -587,7 +587,7 @@
   .q.bonus { border-style: dashed; background: transparent; }
   .q .qc { flex: none; width: 26px; height: 26px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--muted); display: grid; place-items: center; }
   .q b { display: block; font-size: 15px; font-weight: 600; line-height: 1.15; }
-  .q small { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .q small { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
   .q[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
   .q[aria-pressed="true"] small { color: #fff; }
   .q[aria-pressed="true"] .qc { background: #fff; box-shadow: none; color: var(--accent); }
@@ -643,7 +643,7 @@
     position: relative; overflow: clip; color: var(--lp-text); background: #000; }
   .lp :focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
   .lp .serif { font-family: "Instrument Serif", Georgia, "Times New Roman", serif; font-style: italic; font-weight: 400; letter-spacing: -0.01em; }
-  .lp .mono { font: 500 13px/1.4 var(--font-data); letter-spacing: 0.12em; text-transform: uppercase; color: var(--lp-2); margin: 0; }   /* small labels: readable size, gentler spacing */
+  .lp .mono { font: 500 14px/1.4 var(--font-ui); color: var(--lp-2); margin: 0; }   /* small labels: plain text, not tracked capitals */
   .lp-nav { position: fixed; z-index: 20; top: max(12px, env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
     width: min(1120px, calc(100% - 24px)); display: flex; align-items: center; justify-content: space-between; padding: 6px 6px 6px 16px;
     border-radius: 16px; background: rgba(18, 18, 22, 0.55); border: 1px solid rgba(255, 255, 255, 0.08);
@@ -818,7 +818,7 @@
   .lobby-line { font-size: 14px; color: var(--text-2); margin: 10px 0 0; text-align: left; }
   .lobby-line .ic { margin-right: 6px; color: var(--muted); }
   .panel .joinbox label { display: none; }
-  .setpage h3 { font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin: 18px 0 8px; }
+  .setpage h3 { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -0.005em; margin: 20px 0 8px; }
   .setpage .sub-hint { font-size: 14px; color: var(--muted); margin: 0 0 12px; }
   .setpage .glist { margin-top: 4px; }
   .backrow { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 0 12px 0 4px; margin: 0 0 -4px; border: 0; background: none;
@@ -831,7 +831,7 @@
   .page-intro { margin: 2px 2px 0; font-size: 14px; color: var(--muted); }
   .joinbox .sub-hint, .reqbox .sub-hint { font-size: 13px; color: var(--muted); text-align: left; }
   .joinbox .sub-hint:empty { display: none; }
-  .joinbox label, .flabel { display: block; font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; margin: 16px 0 6px; }
+  .joinbox label, .flabel { display: block; font-size: 14px; font-weight: 600; color: var(--text-2); margin: 16px 0 6px; }
   .joinbox label { margin-top: 0; }
   .field.code { font: 600 17px var(--font-data); letter-spacing: 0.08em; text-transform: uppercase; }
   .reqbox { text-align: left; }
@@ -904,7 +904,7 @@
 
   /* ---------- admin ---------- */
   .cardhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -6px -6px 10px 0; }
-  .cardhead h2 { margin: 0; font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.14em; text-transform: uppercase; }
+  .cardhead h2 { margin: 0; font-size: 18px; font-weight: 650; color: var(--text); letter-spacing: -0.015em; line-height: 1.25; }
   .cardhead .nav { display: flex; align-items: center; gap: 2px; font-size: 14px; font-weight: 600; color: var(--text-2); }
   .cardhead .round { width: 36px; height: 36px; font-size: 18px; }
   .person { display: grid; grid-template-columns: 36px 1fr; gap: 4px 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
@@ -1130,7 +1130,7 @@
     .rail[hidden] { display: none !important; }
     .rail .rail-brand { display: flex; align-items: center; gap: 10px; padding: 2px 8px 12px; font-size: 16px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
     .rail .rail-logo { width: 30px; height: 30px; border-radius: 28%; display: block; flex: none; }
-    .rail .rail-h { margin: 14px 10px 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .rail .rail-h { margin: 16px 10px 4px; font-size: 13px; font-weight: 600; color: var(--muted); }
     .rail button { position: relative; width: 100%; min-height: 40px; flex: none; border: 0; border-radius: 12px; background: transparent; color: var(--rail-icon);
       display: flex; align-items: center; gap: 11px; padding: 0 10px; font: inherit; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer; transition: background-color .2s, color .2s, transform .15s; }
     .rail button > svg, .rail button > .meav { flex: none; }
@@ -1204,6 +1204,7 @@
   .band-white { background: #fff; color: #000; padding: 26px 0 30px 18%; margin-top: 10px; }
   .band-small { margin: 0; font: 700 clamp(18px, 2.4vw, 30px) var(--font-ui); letter-spacing: -0.02em; text-transform: uppercase; }
   .band-big { margin: 0; font: 700 clamp(34px, 9.5vw, 150px)/0.86 var(--font-ui); letter-spacing: -0.055em; text-transform: uppercase; white-space: nowrap; }
+  .band-big.band-wrap { white-space: normal; font-size: clamp(34px, 7vw, 110px); text-wrap: balance; }
   @media (max-width: 520px) { .band-meta { gap: 6px 12px; padding: 0 calc(14.3% + 12px) 0 calc(16% + 16px); font-size: 10px; letter-spacing: 0.1em; } .band-word { font-size: 20.5vw; } }
   /* text sections */
   .lp-sec.split { display: grid; gap: 28px; align-items: end; }
@@ -1351,13 +1352,13 @@
   .ma-left { font: 13px var(--font-data); }
   .ma-stack { display: flex; gap: 3px; height: 6px; margin-top: 12px; }
   .ma-stack i { border-radius: 3px; }
-  .ma-h { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #9ca3af; margin: 0 0 12px; }
+  .ma-h { font-size: 14px; font-weight: 650; color: #f3f4f6; margin: 0 0 12px; }
   .ma-boxes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .ma-box { border-radius: 16px; padding: 14px 12px; display: flex; gap: 10px; align-items: center; border: 1.5px solid #34353c; color: #d1d5db; transition: background-color .35s, border-color .35s, color .35s, transform .35s var(--ex); }
   .ma-box .c { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #4b4d55; display: grid; place-items: center; flex: none; transition: background-color .3s, border-color .3s; }
   .ma-box .c svg { width: 14px; height: 14px; opacity: 0; transform: scale(0.4); transition: opacity .25s, transform .4s var(--ex); color: #2563eb; }
   .ma-box b { display: block; font-size: 14px; line-height: 1.15; }
-  .ma-box small { display: block; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.75; margin-top: 2px; }
+  .ma-box small { display: block; font-size: 10px; opacity: 0.75; margin-top: 2px; }
   .ma-box.on { background: #2563eb; border-color: #2563eb; color: #fff; }
   .ma-box.on .c { background: #fff; border-color: #fff; } .ma-box.on .c svg { opacity: 1; transform: none; }
   .ma-box.pop { transform: scale(1.04); }
@@ -4161,9 +4162,8 @@ function renderLanding() {
     </section>
     <section class="band" aria-label="Built for trading groups">
       <div class="band-tilt">
-        <p class="band-meta" aria-hidden="true"><span>[ Charts ]</span><span>[ Journals ]</span><span>[ HTF ]</span><span>[ Streaks ]</span></p>
         <div class="band-word" aria-hidden="true">LockedIn</div>
-        <div class="band-white"><p class="band-small">Built for</p><p class="band-big">Trading groups</p></div>
+        <div class="band-white"><p class="band-big band-wrap">Built for trading groups</p></div>
       </div>
     </section>
     <section class="lp-sec split">
