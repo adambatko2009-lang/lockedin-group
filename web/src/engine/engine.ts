@@ -2574,15 +2574,6 @@ function renderLanding() {
       <p class="foot-copy">© 2026 Adam Batko</p></footer>
   </div>`;
 }
-// The front page's glass bars glow where the pointer is.
-document.addEventListener("pointermove", e => {
-  if (!document.body.classList.contains("landing")) return;
-  document.querySelectorAll(".lp-nav, .lp-tabs").forEach(bar => {
-    if (!bar.contains(e.target as Node) || matchMedia("(prefers-reduced-motion: reduce)").matches) { bar.style.setProperty("--glow-x", "-300px"); return; }
-    const r = bar.getBoundingClientRect();
-    bar.style.setProperty("--glow-x", Math.round(e.clientX - r.left) + "px"); bar.style.setProperty("--glow-y", Math.round(e.clientY - r.top) + "px");
-  });
-});
 // The 3D phone on the front page turns a little toward the mouse.
 document.addEventListener("pointermove", e => {
   const st = e.target.closest && e.target.closest(".stage3d");

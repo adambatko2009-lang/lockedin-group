@@ -1467,8 +1467,7 @@
   .lp-tabs { border-radius: 16px; }
   .lp-tabs a { border-radius: 11px; }
   .lp-nav::before, .lp-tabs::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
-    background: radial-gradient(40% 140% at 20% 0%, rgba(255, 255, 255, 0.11), transparent 60%),
-                radial-gradient(150px 90px at var(--glow-x, -300px) var(--glow-y, 50%), rgba(255, 255, 255, 0.16), transparent 70%); }
+    background: radial-gradient(40% 140% at 20% 0%, rgba(255, 255, 255, 0.11), transparent 60%); }
   .lp-nav::after, .lp-tabs::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
     background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.05) 50%, transparent 70%); }
   @supports (corner-shape: squircle) { .lp-nav { corner-shape: squircle; border-radius: 21px; } .lp-tabs { corner-shape: squircle; border-radius: 23px; } .lp-tabs a { corner-shape: squircle; border-radius: 16px; } }
