@@ -1537,40 +1537,6 @@
 
   /* front page bar: a short centred bar, 300px wide */
   .lp-nav { width: min(300px, calc(100% - var(--lp-pad) * 2)); }
-  /* ---------- plain app: sections instead of boxes, solid bars, one flat background ---------- */
-  body:not(.landing)::after { background: none; }
-  body:not(.landing) .card { background: none; border: 0; border-top: 1px solid var(--line); border-radius: 0; box-shadow: none;
-    -webkit-backdrop-filter: none; backdrop-filter: none; padding: 18px 0 6px; transform: none; }
-  body:not(.landing) #app > .card:first-of-type, body:not(.landing) .desk .maincol > .card:first-child,
-  body:not(.landing) .desk .side > .card:first-child { border-top: 0; padding-top: 6px; }
-  body:not(.landing) .card:hover { box-shadow: none; }
-  body:not(.landing) .tile { background: var(--surface-2); border: 0; border-radius: 10px; box-shadow: none; }
-  body:not(.landing) .tile:hover, body:not(.landing) .q:hover, body:not(.landing) .gitem:hover { transform: none; box-shadow: none; }
-  body:not(.landing) .lb li:hover { transform: none; }
-  /* top bar: solid, stuck to the top edge, a line underneath */
-  body:not(.landing) .topbar.glass { top: 0; margin-top: calc(-10px - env(safe-area-inset-top, 0px)); padding-top: calc(4px + env(safe-area-inset-top, 0px));
-    background: var(--base); border: 0; border-bottom: 1px solid var(--line); border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
-  body:not(.landing) .topbar.glass::before, body:not(.landing) .topbar.glass::after,
-  body:not(.landing) .tabbar.glass::before, body:not(.landing) .tabbar.glass::after { display: none; }
-  /* phone tab bar: a solid bar along the bottom edge */
-  body:not(.landing) .tabbar.glass { left: 0; right: 0; bottom: 0; transform: none; width: auto; border-radius: 0;
-    padding: 4px max(8px, env(safe-area-inset-left, 0px)) calc(4px + env(safe-area-inset-bottom, 0px));
-    background: var(--base); border: 0; border-top: 1px solid var(--line); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
-  body:not(.landing) .tabbar .pill { top: 4px; bottom: calc(4px + env(safe-area-inset-bottom, 0px)); border-radius: 12px; }
-  body:not(.landing) .tabbar button { border-radius: 12px; }
-  body:not(.landing) { padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
-  @media (min-width: 960px) {
-    body:not(.landing) { padding-bottom: 32px; }
-    body.has-rail:not(.landing) { padding-left: calc(264px + env(safe-area-inset-left, 0px)); }
-    /* computers: the left bar is a plain column with a line on its right */
-    body:not(.landing) .rail { left: 0; top: 0; bottom: 0; width: 232px; border-radius: 0; padding: 18px 12px; background: var(--base);
-      border: 0; border-right: 1px solid var(--line); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
-    body:not(.landing) .rail::before, body:not(.landing) .rail::after { display: none; }
-    body:not(.landing) .rail button { border-radius: 8px; }
-    body:not(.landing) .rail button[aria-current="page"] { color: var(--text); background: color-mix(in srgb, var(--accent) 18%, transparent); box-shadow: none; }
-    body:not(.landing) .rail button[aria-current="page"] svg { color: var(--accent-text); }
-    body:not(.landing) .topbar.glass { margin-top: -10px; padding-top: 6px; }
-  }
 </style>
 <script src="config.js"></script>
 <script src="vendor/supabase-2.57.4.js"></script>
