@@ -1549,6 +1549,23 @@
 
   /* front page bar: a short centred bar, 300px wide */
   .lp-nav { width: min(300px, calc(100% - var(--lp-pad) * 2)); }
+  /* ---------- type roles ----------
+     Front page: display (hero, section titles, band) stays big, tight and in capitals.
+     Explainers (steps, features, the two columns) are sentence case one clear step below,
+     with roomy body text so each point reads as an explanation, not another headline. */
+  h1, h2, h3, .lp-final h2 { text-wrap: balance; }
+  p, li { text-wrap: pretty; }
+  .lp .bigsteps b, .lp .frow b { font: 650 clamp(20px, 2.1vw, 24px)/1.2 var(--font-ui); letter-spacing: -0.02em; text-transform: none; color: #fff; margin: 0 0 8px; }
+  .lp .bigsteps p, .lp .frow p { font-size: 17px; line-height: 1.55; color: rgba(245, 245, 247, 0.74); max-width: 52ch; }
+  .lp .bigsteps > div { padding: 26px 0 28px; }
+  .lp .frow { padding: 26px 0 28px; gap: 0; }
+  .lp .vcol h2 { font: 650 26px/1.2 var(--font-ui) !important; letter-spacing: -0.02em; text-transform: none; margin: 10px 0 20px; }
+  .lp .vcol li { font-size: 16.5px; line-height: 1.5; }
+  .lp .sub, .lp .lead { font-size: 18px; line-height: 1.55; }
+  @media (min-width: 900px) {
+    .lp .flist { display: grid; grid-template-columns: 1fr 1fr; column-gap: 56px; }
+    .lp .flist .frow:nth-last-child(-n + 2) { border-bottom: 0; }
+  }
 </style>
 <script src="config.js"></script>
 <script src="vendor/supabase-2.57.4.js"></script>
