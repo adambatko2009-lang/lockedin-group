@@ -80,7 +80,9 @@
   :root[data-accent="gold"],   .acc-gold   { --acc: #a16207; --acc-lt: #a16207; --acc-dk: #facc15; }
   .acc-blue { --acc: #2563eb; --acc-lt: #1d4ed8; --acc-dk: #60a5fa; }
   * { box-sizing: border-box; }
-  html { min-height: 100%; }
+  /* scrollbar-gutter: pages with and without a scrollbar keep the same width, so nothing jumps when you switch page */
+  html { min-height: 100%; scrollbar-gutter: stable; }
+  html:not(:has(body.landing)) { background: var(--base); }
   body {
     margin: 0; min-height: 100%; color: var(--text); font: 16px/1.4 var(--font-ui); -webkit-font-smoothing: antialiased;
     background: var(--bg);
@@ -91,7 +93,8 @@
   }
   /* Calm backdrop so the glass bars have something to blur: two soft blue glows + a faint dot grid. Stays still while you scroll. */
   body::after {
-    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    /* the background glow reaches every edge of the screen, also under the iPhone's home bar in the installed app */
+    content: ""; position: fixed; top: 0; left: 0; right: 0; bottom: calc(-1 * env(safe-area-inset-bottom, 0px)); min-height: 100lvh; z-index: -1; pointer-events: none;
     background:
       radial-gradient(42% 36% at 12% 8%, var(--glow-1), transparent 70%),
       radial-gradient(38% 32% at 92% 88%, var(--glow-2), transparent 70%),
@@ -123,6 +126,7 @@
   }
   .topbar .mid { text-align: center; min-width: 0; line-height: 1.15; }
   .topbar .mid b { display: block; font-size: 17px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topbar .mid > b { line-height: 28px; }   /* same height as the date picker on Today, so the bar is the same on every page */
   .topbar .mid button { border: 0; background: none; color: var(--accent-text); font-size: 13px; font-weight: 600; padding: 2px 8px; min-height: 22px; cursor: pointer; }
   .topbar .mid small { display: block; font-size: 12px; color: var(--muted); }
   .topbar small.err, .topbar .err { color: var(--crit-text); }
