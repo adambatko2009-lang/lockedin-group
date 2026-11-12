@@ -1557,25 +1557,6 @@ function renderTop() {
   morph(top, prev + `<div class="mid">${groupButton(16)}${mid}</div>` + next);
 }
 
-// The glass bar's soft glow follows the mouse up and down (not for people who prefer less motion).
-// It follows the pointer in every direction, lights up as the pointer comes near (not only on the bar),
-// and fades out gently with distance instead of switching off when the pointer leaves.
-const GLOW_REACH = 220;   // px from the bar's edge where the glow has faded out
-addEventListener("pointermove", e => {
-  if (e.pointerType !== "mouse" || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  ["rail", "topbar"].forEach(id => {
-    const bar = document.getElementById(id);
-    if (!bar || bar.hidden) return;
-    const r = bar.getBoundingClientRect();
-    const dx = Math.max(r.left - e.clientX, 0, e.clientX - r.right), dy = Math.max(r.top - e.clientY, 0, e.clientY - r.bottom);
-    const a = Math.max(0, 1 - Math.hypot(dx, dy) / GLOW_REACH);
-    bar.style.setProperty("--glow-x", Math.round(e.clientX - r.left) + "px");
-    bar.style.setProperty("--glow-y", Math.round(e.clientY - r.top) + "px");
-    bar.style.setProperty("--glow-a", (a * a * (3 - 2 * a)).toFixed(3));
-  });
-}, { passive: true });
-// when the pointer leaves the window, fade out
-document.documentElement.addEventListener("pointerleave", () => ["rail", "topbar"].forEach(id => { const b = document.getElementById(id); if (b) b.style.setProperty("--glow-a", "0"); }));
 // Computers: the sidebar on the left. One page per thing, grouped: your group, you, and (for admins) running the group.
 function adminViews() {
   return [["people", "People"], isGroupOwner() && ["group", "Group settings"], isAppOwner && ["all", "All groups"]].filter(Boolean);
@@ -2593,7 +2574,7 @@ function renderLanding() {
       <p class="foot-copy">© 2026 Adam Batko</p></footer>
   </div>`;
 }
-// The front page's glass bars glow where the pointer is, like the tracker's bars.
+// The front page's glass bars glow where the pointer is.
 document.addEventListener("pointermove", e => {
   if (!document.body.classList.contains("landing")) return;
   document.querySelectorAll(".lp-nav, .lp-tabs").forEach(bar => {
