@@ -823,6 +823,11 @@
   .setpage .glist { margin-top: 4px; }
   .backrow { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 0 12px 0 4px; margin: 0 0 -4px; border: 0; background: none;
     color: var(--accent-text); font: 600 15px var(--font-ui); cursor: pointer; }
+  .page-hint { margin: -2px 0 14px; font-size: 14px; line-height: 1.45; color: var(--muted); max-width: 62ch; }
+  .legend { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 14px 0 2px; padding: 0; font-size: 13px; color: var(--text-2); }
+  .legend li { display: inline-flex; align-items: center; gap: 7px; }
+  .legend .cell { width: 22px; height: 22px; border-radius: 6px; font-size: 11px; cursor: default; }
+  .legend .cell svg { width: 13px; height: 13px; }
   .page-intro { margin: 2px 2px 0; font-size: 14px; color: var(--muted); }
   .joinbox .sub-hint, .reqbox .sub-hint { font-size: 13px; color: var(--muted); text-align: left; }
   .joinbox .sub-hint:empty { display: none; }
@@ -3358,7 +3363,7 @@ function renderDay() {
     const images = rec.images || [];
     allShots.push(...images);
     const open = inlineHere(m.key, k) && !(quickOn && m.key === me);
-    const editBtn = editable ? `<button class="icon ${rec.note || images.length ? "has" : ""} ${open ? "on" : ""}" data-edit="${m.key}" aria-expanded="${open}" aria-label="Note and pictures for ${esc(m.name)}">${SVG.note}</button>` : `<span class="nb-space"></span>`;
+    const editBtn = editable ? `<button class="icon ${rec.note || images.length ? "has" : ""} ${open ? "on" : ""}" data-edit="${m.key}" aria-expanded="${open}" aria-label="Note and pictures for ${esc(m.name)}" title="Note &amp; pictures">${SVG.note}</button>` : `<span class="nb-space"></span>`;
     const shots = images.map((p, i) => `<button class="shot" data-view-shot="${m.key}|${esc(p)}" aria-label="Screenshot ${i + 1} from ${esc(m.name)}"
         style="${shotUrls[p] ? `background-image:url('${shotUrls[p]}')` : ""}"></button>`).join("")
       + Array.from({ length: uploading[m.key] || 0 }, () => `<span class="shot busy">Uploading…</span>`).join("");
@@ -3385,7 +3390,7 @@ function renderDay() {
     ${banner}${nudge}
   </div>`;
   const err = error && !isWide() && error.length > 48 ? `<div class="card"><p class="msg err">${esc(error)}</p></div>` : "";
-  return { summary: guideNudgeHtml() + summary + quick, list: err + `<div class="card">${rows || `<p class="empty">No members yet.</p>`}</div>` };
+  return { summary: guideNudgeHtml() + summary + quick, list: err + `<div class="card"><div class="cardhead"><h2>${esc((group() || {}).name || "Your group")} ${k === today ? "today" : "on " + fmtDay(k, { weekday: "short" })}</h2></div>${rows || `<p class="empty">No members yet.</p>`}</div>` };
 }
 
 function renderWeek() {
@@ -3396,7 +3401,11 @@ function renderWeek() {
     const st = statusOf(k, m.key), tip = `${m.name}, ${fmtDay(k)}: ${LABEL[st]}`;
     return `<td><button class="cell ${st} ${k === today ? "today" : ""}" data-day="${k}" title="${esc(tip)}" aria-label="${esc(tip)}">${ICON[st]}</button></td>`;
   }).join("")}</tr>`).join("");
-  return `<div class="card"><div class="grid-wrap"><table class="grid"><thead><tr><th class="who"><span class="sr-only">Member</span></th>${head}</tr></thead><tbody>${body}</tbody></table></div></div>`;
+  const key = ["COMPLETE", "PARTIAL", "MISSING", "WAITING", "UNLOGGED", "EXCUSED"].map(st => `<li><span class="cell ${st}" aria-hidden="true">${ICON[st]}</span>${st === "WAITING" ? "Today, not done yet" : LABEL[st]}</li>`).join("");
+  return `<div class="card"><div class="cardhead"><h2>This week</h2></div>
+    <p class="page-hint">Each square is one person's homework for one day. Tap a square to open that day, or a name to see their profile.</p>
+    <div class="grid-wrap"><table class="grid"><thead><tr><th class="who"><span class="sr-only">Member</span></th>${head}</tr></thead><tbody>${body}</tbody></table></div>
+    <ul class="legend" aria-label="What the squares mean">${key}</ul></div>`;
 }
 
 // Everyone's points, streaks and badges. Remembered until the next change (the ranking asks for every member).
@@ -3617,12 +3626,13 @@ function renderBoard() {
   const items = rows.map((r, i) => {
     if (!prev || r.points !== prev.points || r.run !== prev.run) rank = i + 1;
     prev = r;
-    const detail = [r.run ? `${r.run}-day streak` : null, r.rate === null ? null : `${r.rate}%`].filter(Boolean).join(" · ") || "–";
+    const detail = [r.run ? `${r.run}-day streak` : null, r.rate === null ? null : `${r.rate}% of days done`].filter(Boolean).join(" · ") || "–";
     return `<li class="${rank === 1 && r.points ? "top" : ""}"><span class="rk">${rank}</span>${avatarHtml(r.m, 32)}
       <div class="who2"><b><button class="namebtn" data-profile="${r.key}">${esc(r.name)}</button>${(b => b ? `<span class="mini-badge tier-${b.tier}" title="${esc(b.title)}">${ic(b.icon, 13)}</span>` : "")(topStreakBadge(r))}${r.key === myKey() ? `<span class="you">YOU</span>` : ""}</b><span>${detail}</span></div>
       <span class="pts" aria-label="${r.points} points">${r.points}</span></li>`;
   }).join("");
-  return `<div class="card">
+  return `<div class="card"><div class="cardhead"><h2>Points</h2></div>
+    <p class="page-hint">Points for finished homework, highest first. Open <b>Scoring</b> at the bottom to see how points work.</p>
     <ol class="lb">${items}</ol>
     <details>
       <summary>Scoring</summary>
