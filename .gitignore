@@ -9,3 +9,10 @@ secrets/
 
 # Impeccable product description (kept on this Mac only)
 PRODUCT.md
+
+# Next.js version of the website (web/): its package files are needed, its build output isn't
+!web/package.json
+!web/package-lock.json
+web/.next/
+web/out/
+web/*.tsbuildinfo
