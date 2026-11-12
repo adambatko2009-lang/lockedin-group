@@ -1,7 +1,7 @@
   /* Layout: content cards scroll under floating glass bars (date bar on top, tab bar at the bottom on phones).
      Glass is only on those bars, never on content. Monitors get a two-column dashboard and no tab bar.
      Style: "graphite" (charcoal, cool grays, chrome numbers), blue for actions, traffic-light status colors.
-     A faint dot grid + soft blue glows sit behind everything so the frosted glass bars read clearly.
+     The page behind is one flat colour: no glows or dot grid. Cards are solid, with one thin border.
      Dark is the default look; light is its mirror. Every text color meets 4.5:1 on its background in both themes. */
   :root {
     --bg: #f5f5f7; --surface: #ffffff; --surface-2: #ececf1; --line: rgba(10, 10, 11, 0.08); --line-strong: rgba(10, 10, 11, 0.16);
@@ -15,7 +15,6 @@
     --discord: #5865f2;
     --glass: rgba(255, 255, 255, 0.6); --glass-edge: rgba(10, 10, 11, 0.10); --glass-shade: rgba(0, 0, 0, 0.08);
     --glass-pill: rgba(10, 10, 11, 0.07); --glass-hi: rgba(255, 255, 255, 0.8);
-    --glow-1: color-mix(in srgb, var(--acc) 10%, transparent); --glow-2: color-mix(in srgb, var(--acc-dk) 8%, transparent); --dots: rgba(10, 10, 11, 0.06);
     --font-ui: "Schibsted Grotesk", -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, sans-serif;
     --font-data: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   }
@@ -23,7 +22,7 @@
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #17181c; --surface: #222329; --surface-2: #2b2c33; --line: rgba(255, 255, 255, 0.08); --line-strong: rgba(255, 255, 255, 0.16);
-      --card: linear-gradient(180deg, #25262c 0%, #1e1f24 100%); --card-hi: rgba(255, 255, 255, 0.06);
+      --card: #222329; --card-hi: rgba(255, 255, 255, 0.06);
       --chrome: linear-gradient(180deg, #ffffff 0%, #ececf1 34%, #9d9da8 58%, #e6e6ec 82%, #c4c4cc 100%);
       --text: #f5f5f7; --text-2: #c9c9d1; --muted: #9a9aa6;
       --accent: var(--acc); --accent-text: var(--acc-dk); --on-accent: #ffffff;
@@ -31,13 +30,12 @@
       --crit-text: #ff7a73;
       --glass: rgba(255, 255, 255, 0.08); --glass-edge: rgba(255, 255, 255, 0.18); --glass-shade: rgba(0, 0, 0, 0.35);
       --glass-pill: rgba(255, 255, 255, 0.14); --glass-hi: rgba(255, 255, 255, 0.14);
-      --glow-1: color-mix(in srgb, var(--acc) 22%, transparent); --glow-2: color-mix(in srgb, var(--acc-dk) 12%, transparent); --dots: rgba(255, 255, 255, 0.05);
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
       --bg: #17181c; --surface: #222329; --surface-2: #2b2c33; --line: rgba(255, 255, 255, 0.08); --line-strong: rgba(255, 255, 255, 0.16);
-      --card: linear-gradient(180deg, #25262c 0%, #1e1f24 100%); --card-hi: rgba(255, 255, 255, 0.06);
+      --card: #222329; --card-hi: rgba(255, 255, 255, 0.06);
       --chrome: linear-gradient(180deg, #ffffff 0%, #ececf1 34%, #9d9da8 58%, #e6e6ec 82%, #c4c4cc 100%);
       --text: #f5f5f7; --text-2: #c9c9d1; --muted: #9a9aa6;
       --accent: var(--acc); --accent-text: var(--acc-dk); --on-accent: #ffffff;
@@ -45,7 +43,6 @@
       --crit-text: #ff7a73;
       --glass: rgba(255, 255, 255, 0.08); --glass-edge: rgba(255, 255, 255, 0.18); --glass-shade: rgba(0, 0, 0, 0.35);
       --glass-pill: rgba(255, 255, 255, 0.14); --glass-hi: rgba(255, 255, 255, 0.14);
-      --glow-1: color-mix(in srgb, var(--acc) 22%, transparent); --glow-2: color-mix(in srgb, var(--acc-dk) 12%, transparent); --dots: rgba(255, 255, 255, 0.05);
       color-scheme: dark;
   }
   /* Group colors. Each passes 4.5:1: white on the button color, and the text color on light and dark backgrounds. */
@@ -68,15 +65,6 @@
     padding-right: max(16px, env(safe-area-inset-right, 0px));
     padding-top: calc(10px + env(safe-area-inset-top, 0px));
     padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px));
-  }
-  /* Calm backdrop so the glass bars have something to blur: two soft blue glows + a faint dot grid. Stays still while you scroll. */
-  body::after {
-    /* the background glow reaches every edge of the screen, also under the iPhone's home bar in the installed app */
-    content: ""; position: fixed; top: 0; left: 0; right: 0; bottom: calc(-1 * env(safe-area-inset-bottom, 0px)); min-height: 100lvh; z-index: -1; pointer-events: none;
-    background:
-      radial-gradient(42% 36% at 12% 8%, var(--glow-1), transparent 70%),
-      radial-gradient(38% 32% at 92% 88%, var(--glow-2), transparent 70%),
-      radial-gradient(var(--dots) 1px, transparent 1.4px) 0 0 / 22px 22px;
   }
   main { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
   /* Same 12px gap between every card on a page (16px on monitors). */
@@ -141,9 +129,6 @@
   .msg { font-size: 14px; color: var(--text-2); margin: 0; }
   .msg.err { color: var(--crit-text); }
 
-  .track { position: relative; height: 6px; border-radius: 3px; background: var(--surface-2); }
-  .track .fill { position: absolute; inset: 0 auto 0 0; border-radius: 3px; background: var(--muted); opacity: 0.6; }
-  .track .now { position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: var(--text); box-shadow: 0 0 0 3px var(--surface); }
   .meta { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; gap: 10px; }
   .meta .count { font: 600 30px var(--font-data); letter-spacing: -0.03em; }
   .meta .count, .pts, .tile b { color: var(--text); }   /* solid, not chrome gradient text */
@@ -178,16 +163,15 @@
   .t { min-height: 48px; border-radius: 10px; border: 1px solid var(--line-strong); background: transparent; color: var(--text-2);
        font-size: 13px; font-weight: 600; line-height: 1.15; padding: 6px 4px; cursor: pointer; text-align: center; }
   .t.bonus { border-style: dashed; }
-  .t[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-  .t[aria-pressed="true"]::before { content: ""; display: inline-block; width: 0.85em; height: 0.85em; margin-right: 4px; vertical-align: -0.08em; background: currentColor;
+  /* a ticked box is quiet (light tint and a check); the open ones are what the eye should find */
+  .t[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 14%, transparent); border-color: color-mix(in srgb, var(--accent-text) 55%, transparent); color: var(--text); }
+  .t[aria-pressed="true"]::before { content: ""; display: inline-block; width: 0.85em; height: 0.85em; margin-right: 4px; vertical-align: -0.08em; background: var(--accent-text);
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.2 8.4 6.4 11.4 12.8 4.8' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
             mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.2 8.4 6.4 11.4 12.8 4.8' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
   .t:not(:disabled):active { transform: scale(0.96); filter: brightness(0.92); }
   .t:disabled { cursor: default; }
   .t .lbl-short { display: none; }
   @media (max-width: 600px) { .t .lbl-full { display: none; } .t .lbl-short { display: inline; } }
-  /* small captions that say what the two bars on Today mean */
-  .bar-cap { display: flex; justify-content: space-between; gap: 12px; margin-top: 6px; font: 500 12px var(--font-data); color: var(--muted); }
   /* someone else's box (owners and admins): a quieter look, and it needs a second tap */
   .t.guard:not(.armed) { opacity: 0.72; }
   .t.armed { border-color: var(--warn); color: var(--text); background: color-mix(in srgb, var(--warn) 14%, transparent); }
@@ -586,9 +570,8 @@
   .q .qc { flex: none; width: 26px; height: 26px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--muted); display: grid; place-items: center; }
   .q b { display: block; font-size: 15px; font-weight: 600; line-height: 1.15; }
   .q small { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .q[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-  .q[aria-pressed="true"] small { color: #fff; }
-  .q[aria-pressed="true"] .qc { background: #fff; box-shadow: none; color: var(--accent); }
+  .q[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 14%, var(--surface-2)); border-color: color-mix(in srgb, var(--accent-text) 55%, transparent); }
+  .q[aria-pressed="true"] .qc { background: var(--accent); box-shadow: none; color: var(--on-accent); }
   .q:active { transform: scale(0.97); }
   .quick .qnote { width: 100%; margin-top: 8px; min-height: 44px; border-radius: 12px; border: 0; background: transparent; color: var(--accent-text);
                   font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
@@ -1027,29 +1010,23 @@
   }
 
   /* ================================================================ glass look (soft color wash, frosted cards, gentle motion) */
-  :root { --wash-a: color-mix(in srgb, var(--acc) 22%, transparent); --wash-b: color-mix(in srgb, #14b8a6 18%, transparent);
-          --wash-c: color-mix(in srgb, var(--acc-dk) 14%, transparent); --base: #eef2f6;
-          --card-glass: rgba(255, 255, 255, 0.72); --card-edge: rgba(255, 255, 255, 0.85); --card-line: rgba(10, 10, 11, 0.07);
-          --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -16px rgba(15, 23, 42, 0.18);
-          --card-shadow-hi: 0 2px 4px rgba(15, 23, 42, 0.05), 0 22px 44px -18px rgba(15, 23, 42, 0.28);
+  :root { --base: #eef2f6;
+          --card-line: rgba(10, 10, 11, 0.07);
+          --card-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
           --lg-fill: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.34));
           --lg-rim: rgba(255, 255, 255, 0.9); --lg-edge: rgba(15, 23, 42, 0.10); --lg-glow: rgba(255, 255, 255, 0.75);
           --lg-shadow: 0 24px 50px -22px rgba(15, 23, 42, 0.35); --rail-icon: #3a3a42; --rail-hover: rgba(15, 23, 42, 0.06); --rail-ind: #0a0a0b; }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-          --wash-a: color-mix(in srgb, var(--acc) 26%, transparent); --wash-b: color-mix(in srgb, #14b8a6 14%, transparent);
-          --wash-c: color-mix(in srgb, var(--acc-dk) 12%, transparent); --base: #121317;
-          --card-glass: rgba(34, 35, 41, 0.72); --card-edge: rgba(255, 255, 255, 0.07); --card-line: rgba(255, 255, 255, 0.06);
-          --card-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 16px 40px -20px rgba(0, 0, 0, 0.7);
-          --card-shadow-hi: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 26px 50px -20px rgba(0, 0, 0, 0.85);
+          --base: #121317;
+          --card-line: rgba(255, 255, 255, 0.06);
+          --card-shadow: none;
           --lg-fill: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.04));
           --lg-rim: rgba(255, 255, 255, 0.22); --lg-edge: rgba(255, 255, 255, 0.10); --lg-glow: rgba(255, 255, 255, 0.16);
           --lg-shadow: 0 24px 50px -20px rgba(0, 0, 0, 0.75); --rail-icon: #c9c9d1; --rail-hover: rgba(255, 255, 255, 0.08); --rail-ind: #ffffff; } }
   :root[data-theme="dark"] {
-          --wash-a: color-mix(in srgb, var(--acc) 26%, transparent); --wash-b: color-mix(in srgb, #14b8a6 14%, transparent);
-          --wash-c: color-mix(in srgb, var(--acc-dk) 12%, transparent); --base: #121317;
-          --card-glass: rgba(34, 35, 41, 0.72); --card-edge: rgba(255, 255, 255, 0.07); --card-line: rgba(255, 255, 255, 0.06);
-          --card-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 16px 40px -20px rgba(0, 0, 0, 0.7);
-          --card-shadow-hi: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 26px 50px -20px rgba(0, 0, 0, 0.85);
+          --base: #121317;
+          --card-line: rgba(255, 255, 255, 0.06);
+          --card-shadow: none;
           --lg-fill: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.04));
           --lg-rim: rgba(255, 255, 255, 0.22); --lg-edge: rgba(255, 255, 255, 0.10); --lg-glow: rgba(255, 255, 255, 0.16);
           --lg-shadow: 0 24px 50px -20px rgba(0, 0, 0, 0.75); --rail-icon: #c9c9d1; --rail-hover: rgba(255, 255, 255, 0.08); --rail-ind: #ffffff; }
@@ -1057,26 +1034,13 @@
     /* iPhone home-screen app: when a page is shorter than the screen, iOS measures the screen without the status bar
        and the bottom bar floats up. A page at least screen-tall (plus the status bar) keeps the bar at the bottom on every page. */
     min-height: calc(100vh + env(safe-area-inset-top, 0px)); }
-  body:not(.landing)::after {
-    background:
-      radial-gradient(55% 45% at 8% 4%, var(--wash-a), transparent 70%),
-      radial-gradient(50% 45% at 96% 30%, var(--wash-b), transparent 70%);
-    /* no glow at the bottom: on the iPhone app the strip under the home bar is plain page colour, so the bottom must match it */
-  }
-  .card { background: var(--card-glass); border: 1px solid var(--card-line); box-shadow: inset 0 1px 0 var(--card-edge), var(--card-shadow); border-radius: 18px;
-    -webkit-backdrop-filter: blur(18px) saturate(140%); backdrop-filter: blur(18px) saturate(140%); }
-  @media (prefers-reduced-transparency: reduce) { .card { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+  /* content cards are solid: glass stays on the navigation bars only */
+  .card { background: var(--surface); border: 1px solid var(--card-line); box-shadow: var(--card-shadow); border-radius: 18px; }
   @media (prefers-contrast: more) { .card { background: var(--surface); border-color: var(--text-2); } }
-  .tile { background: color-mix(in srgb, var(--surface-2) 70%, transparent); border: 1px solid var(--card-line); border-radius: 14px; }
-  /* gentle motion: things you can click rise a little when you point at them (computers only) */
+  .tile { background: var(--surface-2); border: 1px solid var(--card-line); border-radius: 14px; }
+  /* pointing at something clickable only changes its colour; nothing lifts or slides */
   @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-    .card { transition: box-shadow .25s ease, transform .25s ease; }
-    .card:hover { box-shadow: inset 0 1px 0 var(--card-edge), var(--card-shadow-hi); }
-    .tile, .q, .merow, .lb li, .gitem, .shot { transition: transform .2s ease, background-color .2s ease, box-shadow .2s ease; }
-    .tile:hover, .q:hover, .gitem:hover { transform: translateY(-3px); box-shadow: var(--card-shadow-hi); }
-    .shot:hover { transform: translateY(-2px) scale(1.02); }
-    .lb li:hover { transform: translateX(3px); }
-    .t:hover:not(:disabled) { transform: translateY(-1px); }
+    .tile, .q, .merow, .lb li, .gitem { transition: background-color .2s ease; }
   }
   @media (prefers-reduced-motion: no-preference) {
     .t, .q, .btn, .round, .icon { transition: transform .15s ease, background-color .15s, border-color .15s, color .15s; }
@@ -1087,8 +1051,7 @@
   /* opening screen: the logo on a dark background, then the app opens up from the middle in a growing circle */
   @property --hole { syntax: "<length>"; inherits: false; initial-value: 0px; }
   #splash { position: fixed; inset: 0; z-index: 100; display: grid; place-content: center; justify-items: center; gap: 14px;
-    background: radial-gradient(55% 45% at 50% 46%, color-mix(in srgb, var(--acc) 30%, transparent), transparent 70%),
-      radial-gradient(55% 45% at 8% 4%, var(--wash-a), transparent 70%), radial-gradient(50% 45% at 96% 30%, var(--wash-b), transparent 70%), var(--base);
+    background: var(--base);
     color: var(--text); font: 600 15px var(--font-ui); letter-spacing: 0.04em; }
   #splash img { width: 68px; height: 68px; border-radius: 28%; box-shadow: 0 0 0 1px var(--card-line), 0 24px 60px rgba(0, 0, 0, 0.55); animation: splash-in .6s cubic-bezier(.2, .8, .2, 1) both; }
   #splash span { opacity: 0.85; animation: splash-in .6s .12s cubic-bezier(.2, .8, .2, 1) both; }
@@ -1135,10 +1098,8 @@
     .rail button > svg, .rail button > .meav { flex: none; }
     .rail button svg { width: 19px; height: 19px; }
     .rail button:hover { background: var(--rail-hover); color: var(--text); }
-    /* the selected page: a lens of tinted glass in the group's color */
-    .rail button[aria-current="page"] { color: var(--on-accent);
-      background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 80%, white), var(--accent));
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -1px 0 rgba(0, 0, 0, 0.12), 0 6px 16px -6px rgba(0, 0, 0, 0.45); }
+    /* the selected page: solid group colour */
+    .rail button[aria-current="page"] { color: var(--on-accent); background: var(--accent); }
     .rail .meav { width: 22px; height: 22px; box-shadow: 0 0 0 2px var(--lg-edge); }
     .rail .rail-sep { flex: 1; min-height: 14px; }
     .rail .count { margin-left: auto; min-width: 19px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--crit); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
@@ -1568,3 +1529,20 @@
   /* The old index.html removed the opening screen with a script when you prefer less motion; React needs the
      element to stay in place until it has started, so it is hidden here instead (same result on screen). */
   @media (prefers-reduced-motion: reduce) { #splash { display: none; } }
+
+/* ================================================================ Today: one summary that says how long is left and who is still open.
+   Mono only for the numbers; the words around them are in the interface font. */
+.daysum .meta { margin-top: 0; align-items: flex-end; }
+.daysum .count { font: 600 17px/1.2 var(--font-ui); color: var(--text-2); letter-spacing: 0; }
+.daysum .count .num { font: 600 17px var(--font-data); color: var(--text); }
+.daysum .count .num:first-child { font-size: 32px; letter-spacing: -0.03em; }
+.daysum .when { text-align: right; min-width: 0; }
+.daysum .time { font: 600 20px/1.2 var(--font-data); color: var(--text); }
+.daysum .time.urgent { color: var(--crit-text); }
+.daysum .when small { display: block; margin-top: 2px; font-size: 13px; color: var(--muted); }
+.daysum .stack { height: 8px; margin-top: 14px; }
+.daysum .stack i { border-radius: 4px; }
+.open-line { margin: 12px 0 0; font-size: 15px; line-height: 1.45; color: var(--text-2); text-wrap: pretty; }
+.open-line b { font-weight: 600; color: var(--text); margin-right: 4px; }
+.open-line.all { color: var(--text); font-weight: 600; }
+@media (min-width: 960px) { .daysum .count .num:first-child { font-size: 36px; } .daysum .time { font-size: 22px; } }

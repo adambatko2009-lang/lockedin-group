@@ -643,10 +643,8 @@ function editTick(k, key, mutate, quiet?) {
   const row = Object.assign({ day: k, member_key: key, chart: false, journal: false, review: false, social: false, box5: false, box6: false, note: "", images: [], no_trade: false, result: null, pnl: null, rr: null, rule_breaks: [] }, tickOf(k, key));
   row.images = [...(row.images || [])];
   row.rule_breaks = [...(row.rule_breaks || [])];
-  const before = statusOf(k, key);
   mutate(row);
   ticks[id] = row; pending[id] = true; noteState[id] = "saving"; ticksChanged();
-  if (key === myKey() && before !== "COMPLETE" && statusOf(k, key) === "COMPLETE") celebrate();
   if (quiet) renderTop(); else render();
   clearTimeout(timers[id]);
   timers[id] = setTimeout(() => saveTick(id), quiet ? 1200 : 450);   // quiet = typing a note
@@ -745,36 +743,9 @@ function addCustomBreak() {
   renderTagPick();
 }
 
-// ---------------------------------------------------------------- confetti
-function celebrate() {
-  if (settings.confetti === false || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const c = document.createElement("canvas"), dpr = window.devicePixelRatio || 1;
-  c.id = "confetti"; c.width = innerWidth * dpr; c.height = innerHeight * dpr;
-  document.body.appendChild(c);
-  const g = c.getContext("2d"), css = getComputedStyle(document.documentElement);
-  const colors = ["--good", "--warn", "--accent-text", "--crit"].map(v => css.getPropertyValue(v).trim()).concat("#ffffff");
-  const bits = Array.from({ length: 150 }, () => ({
-    x: innerWidth / 2 + (Math.random() - 0.5) * 120, y: innerHeight * 0.32,
-    vx: (Math.random() - 0.5) * 13, vy: -Math.random() * 13 - 4, r: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.4,
-    w: 6 + Math.random() * 6, h: 3 + Math.random() * 4, color: colors[Math.floor(Math.random() * colors.length)],
-  }));
-  const start = performance.now();
-  (function frame(now) {
-    const t = now - start;
-    g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    g.clearRect(0, 0, innerWidth, innerHeight);
-    g.globalAlpha = Math.max(0, 1 - Math.max(0, t - 1400) / 800);
-    for (const b of bits) {
-      b.vy += 0.38; b.vx *= 0.99; b.x += b.vx; b.y += b.vy; b.r += b.vr;
-      g.save(); g.translate(b.x, b.y); g.rotate(b.r); g.fillStyle = b.color; g.fillRect(-b.w / 2, -b.h / 2, b.w, b.h); g.restore();
-    }
-    if (t < 2200) requestAnimationFrame(frame); else c.remove();
-  })(start);
-}
-
 // ---------------------------------------------------------------- personal settings
 // Saved to your account (user_settings table) and cached in this browser so the right colors show instantly.
-const DEFAULT_SETTINGS: Record<string, any> = { theme: "dark", confetti: true, customBreaks: [], hiddenBreaks: [], tutorialDone: false };
+const DEFAULT_SETTINGS: Record<string, any> = { theme: "dark", customBreaks: [], hiddenBreaks: [], tutorialDone: false };
 const MAX_CUSTOM_BREAKS = 12;
 let settings = { ...DEFAULT_SETTINGS }, settingsOpen = false;
 try { settings = { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem("mnq-settings") || "{}") }; } catch (e) {}
@@ -933,9 +904,7 @@ function renderSettings() {
   const look = `<section class="card setpage"><div class="cardhead"><h2>Appearance</h2></div>
     <div class="segset" role="group" aria-label="Appearance">${opt("system", "System")}${opt("light", "Light")}${opt("dark", "Dark")}</div>
     <p class="sub-hint" style="margin-top:8px">Dark is the default. System follows your phone or computer.</p>
-    <h3>Celebrations</h3>
-    <label class="switchrow"><span><b>Confetti</b><small>When you complete your day.</small></span>
-      <input type="checkbox" id="set-confetti" role="switch" ${settings.confetti !== false ? "checked" : ""}></label></section>`;
+</section>`;
   const remind = VAPID ? `<section class="card setpage"><div class="cardhead"><h2>Reminders</h2></div><div id="remind-box">${remindHtml()}</div></section>` : "";
   const breaks = `<section class="card setpage"><div class="cardhead"><h2>My rule breaks</h2></div><div id="settings-breaks">${customBreaksListHtml()}</div></section>`;
   const data = `<section class="card setpage"><div class="cardhead"><h2>Your data</h2></div>
@@ -1797,8 +1766,7 @@ function togglesStyle() {
 // ---------------------------------------------------------------- views
 function renderDay() {
   const k = selected, now = Date.now(), list = activeMembers();
-  const open = opensAt(k), close = closesAt(k);
-  const frac = Math.min(1, Math.max(0, (now - open) / (close - open)));
+  const close = closesAt(k);
   let time, mins = null;
   if (isFinal(k)) time = dayHasAny(k) ? "Closed" : "Not logged";
   else { mins = Math.max(0, Math.round((close - now) / 60000)); time = `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, "0")}m left`; }
@@ -1826,8 +1794,12 @@ function renderDay() {
       <button class="qnote" data-edit="${me}" aria-expanded="${inlineHere(me, k)}">${SVG.note.replace("<svg ", '<svg width="18" height="18" ')}${inlineHere(me, k) ? "Close note & pictures" : rec.note || (rec.images || []).length ? "Edit note & pictures" : "Add note & pictures"}</button>
       ${inlineHere(me, k) ? `<div id="inline-slot" data-persist></div>` : ""}</div>`;
   }
-  // Your own row first, so you don't have to look for it.
-  const ordered = myKey() ? [...list.filter(m => m.key === myKey()), ...list.filter(m => m.key !== myKey())] : list;
+  // Your own row first, so you don't have to look for it. Then the people who still have homework open,
+  // then the ones who are done, then excused. The question on this page is who isn't done yet.
+  const RANK = { WAITING: 0, UNLOGGED: 0, MISSING: 0, PARTIAL: 1, COMPLETE: 2, EXCUSED: 3 };
+  const others = list.filter(m => m.key !== myKey()).map((m, i) => ({ m, i, r: RANK[statusOf(k, m.key)] ?? 0 }))
+    .sort((a, b) => a.r - b.r || a.i - b.i).map(x => x.m);
+  const ordered = [...list.filter(m => m.key === myKey()), ...others];
   const allShots = [];
   const rows = ordered.map(m => {
     const st = statusOf(k, m.key), rec = tickOf(k, m.key) || {}, editable = canEdit(k, m.key);
@@ -1855,13 +1827,23 @@ function renderDay() {
   }).join("");
   ensureShotUrls(allShots);
 
-  const summary = `<div class="card">
-    <div class="track" title="The trading day, from when it opened to the cutoff"><div class="fill" style="width:${frac * 100}%"></div>${isFinal(k) ? "" : `<div class="now" style="left:${frac * 100}%"></div>`}</div>
-    <div class="bar-cap"><span>Day opened</span><span>Cutoff ${hh(CUTOFF_HOUR)} ${esc(TZ.split("/").pop().replace(/_/g, " "))}</span></div>
-    <div class="meta"><div class="count">${counts.COMPLETE || 0}<span>/${list.length - (counts.EXCUSED || 0)} done</span></div><div class="time ${urgent ? "urgent" : ""}">${time}</div></div>
-    <div class="stack" aria-hidden="true">${stack}</div>
-    <div class="bar-cap">${[[counts.COMPLETE, "done"], [counts.PARTIAL, "partly"], [(counts.MISSING || 0) + (counts.WAITING || 0) + (counts.UNLOGGED || 0), "not yet"], [counts.EXCUSED, "excused"]]
-      .filter(([n]) => n).map(([n, l]) => `${n} ${l}`).join(" · ") || "Nobody has started yet"}</div>
+  // One block that answers "how long is left, and who still has to do it".
+  const due = list.length - (counts.EXCUSED || 0), doneN = counts.COMPLETE || 0;
+  const cutoff = `${fmtDay(nextTrading(k), { day: undefined, month: undefined })} ${hh(CUTOFF_HOUR)} ${esc(tzCity(TZ))}`;
+  const openPeople = ordered.filter(m => !["COMPLETE", "EXCUSED"].includes(statusOf(k, m.key)));
+  const openNames = openPeople.map(m => (m.key === myKey() ? "You" : esc(m.name)) + (statusOf(k, m.key) === "PARTIAL" ? " (partly)" : ""));
+  const shown = openNames.length > 6 ? openNames.slice(0, 5).join(", ") + ` and ${openNames.length - 5} more` : openNames.join(", ");
+  const openLine = !list.length ? "" : openPeople.length
+    ? `<p class="open-line"><b>${isFinal(k) ? "Not done" : "Still open"}</b> ${shown}</p>`
+    : `<p class="open-line all">${due ? "Everyone is done." : "Everyone is excused."}</p>`;
+  const stackLabel = STATUS_ORDER.filter(s => counts[s]).map(s => `${counts[s]} ${LABEL[s].toLowerCase()}`).join(", ");
+  const summary = `<div class="card daysum">
+    <div class="meta">
+      <div class="count"><span class="num">${doneN}</span> of <span class="num">${due}</span> done</div>
+      <div class="when"><div class="time ${urgent ? "urgent" : ""}">${time}</div><small>${isFinal(k) ? "Cutoff was" : "Cutoff"} ${cutoff}</small></div>
+    </div>
+    <div class="stack" role="img" aria-label="${stackLabel}">${stack}</div>
+    ${openLine}
     ${banner}${nudge}
   </div>`;
   const err = error && !isWide() && error.length > 48 ? `<div class="card"><p class="msg err">${esc(error)}</p></div>` : "";
@@ -2691,7 +2673,7 @@ document.addEventListener("pointermove", e => {
 
 // ---------------------------------------------------------------- front page: try it yourself (nothing is saved)
 const TRY_BOXES = [["chart", "Chart with execution", "Required"], ["journal", "Journal", "Required"], ["review", "HTF", "Required"], ["social", "Social", "Bonus"]];
-const tryState = { chart: false, journal: false, review: false, social: false, celebrated: false };
+const tryState = { chart: false, journal: false, review: false, social: false };
 function tryStatus() {
   const req = TRY_BOXES.filter(b => b[2] === "Required"), done = req.filter(b => tryState[b[0]]).length;
   return done === req.length ? "COMPLETE" : done ? "PARTIAL" : "MISSING";
@@ -2734,8 +2716,6 @@ document.addEventListener("click", e => {
   tryState[b.dataset.try] = !tryState[b.dataset.try];
   const after = tryStatus();
   tryRender(before !== after);
-  if (after === "COMPLETE" && !tryState.celebrated) { tryState.celebrated = true; celebrate(); }
-  if (after !== "COMPLETE") tryState.celebrated = false;
 });
 // keep the timer live (only while the card is on screen)
 setInterval(() => {
@@ -3050,7 +3030,7 @@ function pageEnter() {
     if (w && w !== "0%") el.animate([{ width: "0%" }, { width: w }], { duration: 750, delay: 180 + Math.min(i, 20) * 15, easing: "cubic-bezier(.2,.8,.2,1)", fill: "backwards" });
   });
   // numbers count up
-  app.querySelectorAll(".tile b, .meta .count, .pts").forEach(el => {
+  app.querySelectorAll(".tile b, .meta .count .num:first-child, .pts").forEach(el => {
     const node = [...el.childNodes].find(n => n.nodeType === 3 && /\d/.test(n.nodeValue));
     const m = node && /^(\s*)(\d+)(%?)(\s*)$/.exec(node.nodeValue);
     if (!m || +m[2] === 0) return;
@@ -3381,7 +3361,6 @@ document.addEventListener("input", e => {
   if (e.target.id === "faq-search") { faqQuery = e.target.value.slice(0, 80); return render(); }
   if (tab === "admin" && e.target.closest && e.target.closest("#app")) adminDirty = true;
   if (e.target.id === "terms-ok") { document.getElementById("accept-terms").disabled = !e.target.checked; return; }
-  if (e.target.id === "set-confetti") { settings.confetti = e.target.checked; return saveSettings(); }
   if (e.target.id === "set-remind") return e.target.checked ? turnRemindersOn() : turnRemindersOff();
   if ((e.target.id === "panel-pnl" || e.target.id === "panel-rr") && editing) {
     const isPnl = e.target.id === "panel-pnl", v = parseNum(e.target.value, isPnl ? 10000000 : 100), hint = document.getElementById("num-hint");
@@ -3561,8 +3540,8 @@ function tourSteps() {
         + ` You can tick until ${hh(CUTOFF_HOUR)} ${esc(tzCity(TZ))} time on the next trading day.` },
     mine && { el: wide ? q(`[data-edit="${me}"]`) : q(".quick .qnote"), title: "Note & pictures",
       text: "Write your note, add chart screenshots" + (wide ? " (you can paste them with ⌘V / Ctrl+V)" : "") + ", tag rule breaks, mark the day as a win, loss, no trade or gamble, and on Fridays write your weekly reflection. Everything saves by itself." },
-    { el: () => { const t = document.querySelector("#app .track"); return t && t.closest(".card"); }, title: "Time left today",
-      text: "How many of you are done and how much time is left. In the last hour the timer turns red, and you get a reminder if you're not done yet." },
+    { el: () => { return document.querySelector("#app .daysum"); }, title: "Time left today",
+      text: "How many of you are done, who still has homework open, and how much time is left. In the last hour the timer turns red, and you get a reminder if you're not done yet." },
     { el: () => { const m = [...document.querySelectorAll("#app .member")].find(x => !x.querySelector(`[data-edit="${me}"]`)); return m; }, title: "Everyone's day",
       text: "The circle shows each person's status: green complete, yellow partial, red missing. Tap a name for their profile and badges, tap a picture to see it full screen." },
     { el: q(".topbar .datepick"), title: "Change the day",
@@ -3574,7 +3553,7 @@ function tourSteps() {
       text: `Points: Complete ${POINTS.COMPLETE}, Partial ${POINTS.PARTIAL}${bonus.length ? `, +${POINTS.bonus} for each bonus box` : ""}. Your streak is Complete days in a row. Earn badges for streaks, notes, pictures and more.` },
     { el: wide ? q("#toggleme") : tabEl("me"), title: "Me",
       text: (wide ? "Your profile and badges. Journal has your notes, pictures, rule breaks and reflections. " : "Your profile and badges, and your Journal: notes, pictures, rule breaks and reflections. ")
-        + "Settings has light or dark mode, confetti, your own rule-break tags and the app icon for your phone. Sign out and this tutorial are at the bottom of " + (wide ? "Profile." : "Me.") },
+        + "Settings has light or dark mode, your own rule-break tags and the app icon for your phone. Sign out and this tutorial are at the bottom of " + (wide ? "Profile." : "Me.") },
     isAdmin && { el: wide ? q("#toggleadmin") : tabEl("admin"), title: "Admin",
       text: `You help run ${esc(g ? g.name : "this group")}: share the join code, approve people, excuse days${isGroupOwner() ? ", and change the group's settings (boxes, points, time, color, logo)" : ""}.` },
     { title: "You're all set", text: (wide ? "" : "Tip: pull down at the top of the page to refresh. ") + "Good luck today, and stay locked in." },
