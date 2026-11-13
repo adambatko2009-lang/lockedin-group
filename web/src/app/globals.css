@@ -874,7 +874,13 @@
   .gitem small { font-size: 13px; color: var(--muted); }
   .gitem .ic { color: var(--accent-text); }
   .adminseg { grid-template-columns: 1fr 1fr; }
+  .adminseg button { padding: 0 2px; font-size: 14px; white-space: nowrap; }   /* "Group settings" stays on one line with three choices */
   .adminseg .count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--crit); color: var(--on-crit); font-size: 11px; font-weight: 700; margin-left: 4px; }
+
+  /* ---------- Group settings: a list of short pages ---------- */
+  .gsmenu { display: flex; flex-direction: column; }
+  .gsmenu .merow { min-height: 56px; }
+  .gsmenu .merow > .ic { flex: none; color: var(--muted); }
 
   /* ---------- Me tab ---------- */
   .melist { display: flex; flex-direction: column; }
@@ -885,6 +891,11 @@
   .merow small { display: block; font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .merow .chev { flex: none; color: var(--muted); }
   .merow:active { opacity: 0.7; }
+  .mequick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .mequick button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 64px; padding: 8px 4px;
+    border: 1px solid var(--line); border-radius: 14px; background: var(--card); color: var(--text); font: 600 14px var(--font-ui); cursor: pointer; }
+  .mequick .ic { color: var(--accent-text); }
+  .mequick button:active { opacity: 0.7; }
   .meicon { flex: none; width: 34px; height: 34px; border-radius: 28%; display: grid; place-items: center; background: var(--surface-2); color: var(--accent-text); }
 
   /* ---------- pull to refresh ---------- */
@@ -1016,6 +1027,14 @@
     .meta .count { font-size: 34px; }
     .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
     .admin-grid > div { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    /* Group settings on computers: the list on the left, the open page on the right */
+    .gs-split { display: grid; grid-template-columns: minmax(250px, 320px) minmax(0, 1fr); gap: 16px; align-items: start; }
+    .gs-split .gs-page { min-width: 0; }
+    .gs-split .gsmenu { padding: 8px; gap: 2px; }
+    .gs-split .gsmenu .merow, .gs-split .gsmenu .merow:first-child { border-top: 0; padding: 8px 10px; }
+    .gs-split .gsmenu .merow:hover { background: var(--surface-2); }
+    .gs-split .gsmenu .merow[aria-current="page"] { background: var(--surface-2); }
+    .gs-split .gsmenu .merow[aria-current="page"] .meicon { background: var(--card); }
   }
 
   /* ================================================================ glass look (soft color wash, frosted cards, gentle motion) */
@@ -1104,6 +1123,8 @@
     .rail .meav { width: 22px; height: 22px; box-shadow: 0 0 0 2px var(--lg-edge); }
     .rail .rail-sep { flex: 1; min-height: 14px; }
     .rail .count { margin-left: auto; min-width: 19px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--crit); color: var(--on-crit); font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+    .rail .rail-key { margin-left: auto; min-width: 18px; font-family: var(--font-data); padding: 1px 0; border: 1px solid var(--line-strong); border-radius: 5px; font-size: 11px; line-height: 14px; text-align: center; color: var(--muted); }
+    .rail button[aria-current="page"] .rail-key { border-color: currentColor; color: inherit; opacity: 0.75; }
     .rail button:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
     /* people who ask for less transparency or more contrast get a solid bar */
     @media (prefers-reduced-transparency: reduce) { .rail { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; } .rail::before, .rail::after { display: none; } }

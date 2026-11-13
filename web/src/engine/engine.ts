@@ -880,7 +880,7 @@ function renderSettings() {
       <button class="btn plain small danger" id="delete-account">Delete my account</button></div>
     <p class="sub-hint" id="data-msg" role="status" aria-live="polite"></p>
     <p class="sub-hint legal-links"><a href="?p=privacy" data-land="privacy">Privacy policy</a> · <a href="?p=terms" data-land="terms">Terms</a></p></section>`;
-  const help = `<button class="helprow" data-nav="help">${ic("help", 20)}<span><b>Help &amp; support</b><small>Questions, contact, the app on your phone</small></span><span class="chev" aria-hidden="true">${ic("chevron-right", 18)}</span></button>`;
+  const help = `<button class="helprow" data-nav="help">${ic("help", 20)}<span><b>Help &amp; support</b><small>Questions, contact, the tutorial, the app on your phone</small></span><span class="chev" aria-hidden="true">${ic("chevron-right", 18)}</span></button>`;
   const intro = `<p class="page-intro">Only for you. Changes save to your account right away.</p>`;
   return isWide()
     ? intro + `<div class="desk"><div class="maincol">${look}${breaks}</div><div class="side">${data}${help}</div></div>`
@@ -1000,7 +1000,10 @@ function openViewer(day, key, path) {
   viewing = { day, key, list, i: list.indexOf(path) };
   showViewerImage();
   const dlg = document.getElementById("viewer");
-  if (!dlg.open) dlg.showModal();
+  if (!dlg.open) {
+    dlg.showModal();
+    try { history.pushState({ ...navNow(), viewer: 1 }, ""); } catch (e) {}   // so Back closes the picture, not the page
+  }
 }
 function showViewerImage() {
   if (!viewing) return;
@@ -1097,7 +1100,7 @@ function zoomAt(newS, cx, cy) {
   stage.addEventListener("pointerup", end);
   stage.addEventListener("pointercancel", end);
   stage.addEventListener("wheel", e => { e.preventDefault(); zoomAt(V.s * (e.deltaY < 0 ? 1.15 : 1 / 1.15), e.clientX, e.clientY); }, { passive: false });
-  document.getElementById("viewer").addEventListener("close", () => { viewing = null; setZoom(1, 0, 0); });
+  document.getElementById("viewer").addEventListener("close", () => { viewing = null; setZoom(1, 0, 0); if (history.state && history.state.viewer) history.back(); });
   document.addEventListener("keydown", e => {
     if (!document.getElementById("viewer").open) return;
     if (e.key === "ArrowRight") stepViewer(1);
@@ -1416,21 +1419,24 @@ async function sendGroupRequest() {
   if (screen === "app" && settingsOpen) openGroupsPanel(); else render();
 }
 
+// Saves the open Group settings page. Only the fields on that page are sent, so saving the name can never touch the boxes.
 async function saveGroupSettings() {
-  const msg = document.getElementById("save-group-msg"), val = id => document.getElementById(id).value;
-  const boxes = {};
-  for (const k of SLOTS) {
-    const label = val("box-label-" + k).replace(/[<>]/g, "").trim().slice(0, 30) || DEFAULT_BOXES[k].label;
-    boxes[k] = { label, kind: val("box-kind-" + k) };
+  const msg = document.getElementById("save-group-msg"), has = id => !!document.getElementById(id), val = id => document.getElementById(id).value;
+  const patch: Record<string, any> = {};
+  if (has("g-name")) patch.name = val("g-name").replace(/[<>]/g, "").trim().slice(0, 40) || group().name;
+  if (has("box-label-" + SLOTS[0])) {
+    const boxes = {};
+    for (const k of SLOTS) {
+      const label = val("box-label-" + k).replace(/[<>]/g, "").trim().slice(0, 30) || DEFAULT_BOXES[k].label;
+      boxes[k] = { label, kind: val("box-kind-" + k) };
+    }
+    if (!SLOTS.some(k => boxes[k].kind === "req")) { msg.textContent = "At least one box has to be Required."; return; }
+    const num = id => Math.max(0, Math.min(10, Math.round(+val(id) || 0)));
+    patch.boxes = boxes;
+    patch.points = { complete: num("pt-complete"), partial: num("pt-partial"), bonus: num("pt-bonus") };
   }
-  if (!SLOTS.some(k => boxes[k].kind === "req")) { msg.textContent = "At least one box has to be Required."; return; }
-  const num = id => Math.max(0, Math.min(10, Math.round(+val(id) || 0)));
-  const patch = {
-    name: val("g-name").replace(/[<>]/g, "").trim().slice(0, 40) || group().name,
-    color: (document.querySelector('[data-color][aria-checked="true"]') || {} as any).dataset?.color || group().color,
-    boxes, points: { complete: num("pt-complete"), partial: num("pt-partial"), bonus: num("pt-bonus") },
-    cutoff_hour: +val("g-cutoff"), timezone: val("g-tz"),
-  };
+  if (has("g-cutoff")) { patch.cutoff_hour = +val("g-cutoff"); patch.timezone = val("g-tz"); }
+  if (!Object.keys(patch).length) return;
   msg.textContent = "Saving…";
   const saved = await adminDo(sb.from("groups").update(patch).eq("id", gid), "Group settings saved.");
   if (!saved.error) render();
@@ -1487,6 +1493,7 @@ async function openServer(id: number, msg = "") {
     if (screen === "loading") screen = "lobby"; else if (screen !== "server") error = e.message;
     return render();
   }
+  if (screen !== "server") { try { history.pushState({ ...navNow(), server: 1 }, ""); } catch (e2) {} }   // so Back returns to where you were
   serverView = data; serverMsg = msg; screen = "server"; serverDiscordMsg = "";
   await loadServerDiscord(id);
   render(); window.scrollTo(0, 0);
@@ -1741,7 +1748,7 @@ function morphNode(a, b) {
   if (a.tagName === "SELECT" && !typing) a.value = b.value;
 }
 
-const PAGE_TITLE = { day: "Today", week: "Week", board: "Ranking", journal: "Journal", me: "Me", admin: "Admin", help: "Help & support", settings: "Settings", groups: "Groups" };
+const PAGE_TITLE = { day: "Today", week: "Week", board: "Ranking", journal: "Journal", me: "Profile", admin: "Admin", help: "Help & support", settings: "Settings", groups: "Groups" };
 function renderTop() {
   renderNoteStatus();
   const top = document.getElementById("topbar");
@@ -1801,14 +1808,15 @@ function renderRail() {
   const here = (t, v) => !profileKey && tab === t && (!v || adminView === v);
   const item = (t, v, icon, label, extra = "", id = "") => `<button ${id ? `id="${id}" ` : ""}data-nav="${t}${v ? ":" + v : ""}"${here(t, v) ? ' aria-current="page"' : ""}>${icon}<span>${label}</span>${extra}</button>`;
   const badge = n => n ? `<span class="count" aria-label="${n} waiting">${n}</span>` : "";
+  const key = n => `<kbd class="rail-key num" title="Press ${n} on your keyboard">${n}</kbd>`;   // the shortcut, see the "keyboard shortcuts" listener
   const reqs = isAppOwner ? requests.filter(r => r.status === "pending").length : 0;
   const g = group();
   morph(rail, `<span class="rail-ind" aria-hidden="true"></span>
     <div class="rail-brand"><img class="rail-logo" src="icons/icon-192.png" alt="">LockedIn</div>
     <p class="rail-h">${esc(g ? g.name : "Group")}</p>
-    ${item("day", "", SVG.day, "Today")}
-    ${item("week", "", SVG.week, "Week")}
-    ${item("board", "", SVG.board, "Ranking")}
+    ${item("day", "", SVG.day, "Today", key(1))}
+    ${item("week", "", SVG.week, "Week", key(2))}
+    ${item("board", "", SVG.board, "Ranking", key(3))}
     <p class="rail-h">You</p>
     ${item("me", "", meIcon(), "Profile", "", "toggleme")}
     ${item("journal", "", ic("book", 19), "Journal")}
@@ -1827,7 +1835,7 @@ function renderTabbar() {
   const bar = document.getElementById("tabbar");
   bar.hidden = screen !== "app";
   if (screen !== "app") return;
-  const list = tabsList(), labels = { day: "Day", week: "Week", board: "Ranking", admin: "Admin", me: "Me" };
+  const list = tabsList(), labels = { day: "Today", week: "Week", board: "Ranking", admin: "Admin", me: "Profile" };
   const cur = /^(journal|settings|groups|help)$/.test(tab) ? "me" : tab, i = Math.max(0, list.indexOf(cur));
   morph(bar, `<div class="pill" style="width:calc((100% - 10px) / ${list.length});transform:translateX(${i * 100}%);opacity:${list.includes(cur) ? 1 : 0}" aria-hidden="true"></div>` +
     list.map(t => `<button data-tab="${t}"${t === cur ? ' aria-current="page"' : ""} aria-label="${labels[t]}">${t === "admin" ? SVG.gear : t === "me" ? meIcon() : SVG[t]}<span>${labels[t]}</span>
@@ -2147,7 +2155,7 @@ function roleForKey(key) {
   return p.user_id === g.owner_id ? "Owner" : p.role === "admin" ? "Admin" : "Member";
 }
 let profilePart = "profile";   // someone else's profile: "profile" or "journal"
-// Profile and Journal of one person. withTabs adds the small switch between the two (someone else's page, or Me on phones).
+// Profile and Journal of one person. withTabs adds the small switch between the two (someone else's page, or your own Profile on phones).
 function renderProfile(key, part = "profile", withTabs = false) {
   const m = members.find(x => x.key === key);
   if (!m) return `<div class="card"><p class="msg">Member not found.</p></div>`;
@@ -2338,7 +2346,7 @@ function renderAdmin() {
   const views = adminViews(), reqN = requests.filter(r => r.status === "pending").length;
   // Phones: a switch at the top. Computers use the sidebar.
   const segs = !isWide() && views.length > 1 ? `<div class="segset adminseg" style="grid-template-columns:repeat(${views.length},1fr)" role="group" aria-label="Admin view">
-      ${views.map(([v, l]) => `<button data-admin-view="${v}" aria-pressed="${adminView === v}">${l === "Group settings" ? "Settings" : l}${v === "people" && pendingCount() ? ` <span class="count">${pendingCount()}</span>` : v === "all" && reqN ? ` <span class="count">${reqN}</span>` : ""}</button>`).join("")}</div>` : "";
+      ${views.map(([v, l]) => `<button data-admin-view="${v}" aria-pressed="${adminView === v}">${l}${v === "people" && pendingCount() ? ` <span class="count">${pendingCount()}</span>` : v === "all" && reqN ? ` <span class="count">${reqN}</span>` : ""}</button>`).join("")}</div>` : "";
   if (adminView === "all") return segs + note + reportsCardHtml(reports, true) + owner;
   if (adminView === "group") return segs + note + paused + groupSettingsHtml(g);
   const repCard = isOwnerHere ? reportsCardHtml(reports.filter(r => r.group_id === gid), false) : "";
@@ -2346,19 +2354,40 @@ function renderAdmin() {
 }
 let adminView = "people";
 
-// Group owner: everything about how the group works. Saved together with one button.
-function groupSettingsHtml(g) {
+// Group owner: everything about how the group works, as six short pages instead of one long form.
+// Phones show the list first and open one page at a time; computers show the list next to the open page.
+// Each page saves only its own fields.
+let gsPart: string | null = null;   // the open page; null = the list (phones only)
+const GS_PARTS: [string, string, string][] = [["look", "Name and look", "pen"], ["boxes", "Homework boxes", "check"], ["cutoff", "Cutoff", "clock"],
+  ["discord", "Discord recaps", "chat"], ["mentor", "Mentor server", "link"], ["owner", "Move to a new owner", "repeat"]];
+const gsNow = (): string | null => GS_PARTS.some(p => p[0] === gsPart) ? gsPart : isWide() ? "look" : null;
+// The small line under each row: what is set right now, so most visits need no page opened at all.
+function gsSummary(part: string, g): string {
+  const b = Object.assign({}, DEFAULT_BOXES, g.boxes || {});
+  if (part === "look") return `${g.name} · ${(COLORS.find(c => c[0] === g.color) || ["", "Blue"])[1]}${logoUrl(g) ? " · logo" : ""}`;
+  if (part === "boxes") {
+    const req = SLOTS.filter(k => b[k].kind === "req").length, bonus = SLOTS.filter(k => b[k].kind === "bonus").length;
+    return `${req} required${bonus ? `, ${bonus} bonus` : ""}`;
+  }
+  if (part === "cutoff") return `${hh(g.cutoff_hour)} ${tzCity(g.timezone)} time`;
+  if (part === "discord") {
+    if (!discordCfg) return "Not connected";
+    const on = [discordCfg.daily && "daily", discordCfg.weekly && "weekly", discordCfg.monthly && "monthly"].filter(Boolean);
+    return on.length ? "Connected · " + on.join(", ") : "Connected · nothing switched on";
+  }
+  if (part === "mentor") return groupServer ? `Linked to ${groupServer.name}` : "Not linked";
+  return "Hand the group to someone else";
+}
+function gsPageHtml(part: string, g): string {
   const b = Object.assign({}, DEFAULT_BOXES, g.boxes || {}), p = g.points || {};
-  const zones = (Intl.supportedValuesOf ? Intl.supportedValuesOf("timeZone") : COMMON_TZ);
-  const zoneList = [...new Set([g.timezone, ...COMMON_TZ, ...zones])];
-  const boxRows = SLOTS.map((k, i) => `<div class="boxrow">
-      <input class="field" id="box-label-${k}" value="${esc(b[k].label)}" maxlength="30" aria-label="Box ${i + 1} name">
-      <select id="box-kind-${k}" aria-label="Box ${i + 1}">${[["req", "Required"], ["bonus", "Bonus"], ["off", "Off"]].map(([v, l]) =>
-        `<option value="${v}" ${b[k].kind === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("");
-  const logo = logoUrl(g);
-  return `<div class="card gsettings"><div class="cardhead"><h2>Group settings</h2></div>
+  const save = `<button class="btn primary small" id="save-group" style="margin-top:14px">Save</button>
+    <p class="sub-hint" id="save-group-msg" role="status" aria-live="polite" style="margin:8px 0 0"></p>`;
+  if (part === "look") {
+    const logo = logoUrl(g);
+    return `<div class="card gsettings"><div class="cardhead"><h2>Name and look</h2></div>
     <label class="flabel" for="g-name">Name</label>
     <input class="field wide" id="g-name" value="${esc(g.name)}" maxlength="40">
+    ${save.replace(">Save<", ">Save name<")}
     <span class="flabel">Color <small class="sub-hint" id="color-msg" role="status" aria-live="polite"></small></span>
     <div class="swatches" role="radiogroup" aria-label="Color">${COLORS.map(([c, l]) =>
       `<button class="swatch acc-${c}" role="radio" data-color="${c}" aria-checked="${g.color === c}" aria-label="${l}" title="${l}"></button>`).join("")}</div>
@@ -2366,7 +2395,15 @@ function groupSettingsHtml(g) {
     <div class="logorow">${groupLogo(g, 52)}
       <button class="btn plain small" id="logo-pick">${logo ? "Change" : "Upload"}</button>
       ${logo ? `<button class="btn danger small" id="logo-remove">Remove</button>` : ""}</div>
-    <span class="flabel">Homework boxes</span>
+    <p class="empty" style="margin-top:10px">The color and the logo save as soon as you pick them.</p>
+  </div>`;
+  }
+  if (part === "boxes") {
+    const boxRows = SLOTS.map((k, i) => `<div class="boxrow">
+      <input class="field" id="box-label-${k}" value="${esc(b[k].label)}" maxlength="30" aria-label="Box ${i + 1} name">
+      <select id="box-kind-${k}" aria-label="Box ${i + 1}">${[["req", "Required"], ["bonus", "Bonus"], ["off", "Off"]].map(([v, l]) =>
+        `<option value="${v}" ${b[k].kind === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("");
+    return `<div class="card gsettings"><div class="cardhead"><h2>Homework boxes</h2></div>
     <p class="empty" style="margin:-2px 0 8px">Complete = all required boxes ticked. Bonus boxes give extra points.</p>
     ${boxRows}
     <span class="flabel">Points</span>
@@ -2374,14 +2411,31 @@ function groupSettingsHtml(g) {
       <label>Complete<input class="field" type="number" id="pt-complete" min="0" max="10" value="${p.complete ?? 2}"></label>
       <label>Partial<input class="field" type="number" id="pt-partial" min="0" max="10" value="${p.partial ?? 1}"></label>
       <label>Each bonus<input class="field" type="number" id="pt-bonus" min="0" max="10" value="${p.bonus ?? 1}"></label></div>
-    <span class="flabel">The trading day ends at</span>
+    ${save}
+  </div>`;
+  }
+  if (part === "cutoff") {
+    const zones = (Intl.supportedValuesOf ? Intl.supportedValuesOf("timeZone") : COMMON_TZ);
+    const zoneList = [...new Set([g.timezone, ...COMMON_TZ, ...zones])];
+    return `<div class="card gsettings"><div class="cardhead"><h2>Cutoff</h2></div>
+    <span class="flabel" style="margin-top:0">The trading day ends at</span>
     <div class="pointsrow tzrow">
       <select id="g-cutoff" aria-label="Hour">${Array.from({ length: 24 }, (_, h) => `<option value="${h}" ${g.cutoff_hour === h ? "selected" : ""}>${hh(h)}</option>`).join("")}</select>
       <select id="g-tz" aria-label="Time zone">${zoneList.map(z => `<option value="${esc(z)}" ${g.timezone === z ? "selected" : ""}>${esc(z.replace(/_/g, " "))}</option>`).join("")}</select></div>
     <p class="empty" style="margin-top:6px">Members can tick their boxes until this time on the next trading day.</p>
-    <button class="btn primary small" id="save-group" style="margin-top:14px">Save settings</button>
-    <p class="sub-hint" id="save-group-msg" style="margin:8px 0 0"></p>
-  </div>${discordCardHtml()}${serverCardHtml()}${transferCardHtml(g)}`;
+    ${save}
+  </div>`;
+  }
+  if (part === "discord") return discordCardHtml();
+  if (part === "mentor") return serverCardHtml();
+  return transferCardHtml(g);
+}
+function groupSettingsHtml(g) {
+  const part = gsNow(), wide = isWide();
+  const menu = `<nav class="card gsmenu" aria-label="Group settings">${GS_PARTS.map(([k, label, icon]) =>
+    `<button class="merow" data-gs="${k}"${part === k ? ' aria-current="page"' : ""}><span class="meicon">${ic(icon, 18)}</span><span><b>${label}</b><small>${esc(gsSummary(k, g))}</small></span>${ic("chevron-right", 16)}</button>`).join("")}</nav>`;
+  if (wide) return `<div class="gs-split">${menu}<div class="gs-page">${gsPageHtml(part, g)}</div></div>`;
+  return part ? `<button class="backrow" data-gs="">${ic("chevron-left", 18)}<span>Group settings</span></button>` + gsPageHtml(part, g) : menu;
 }
 
 // Group owner: a short recap posted in the group's Discord, through a webhook link from Discord itself.
@@ -2610,7 +2664,36 @@ function goLandPage(p) {
   render();
   window.scrollTo(0, 0);
 }
-window.addEventListener("popstate", () => { render(); window.scrollTo(0, 0); });
+// ---------------------------------------------------------------- back button
+// Every page you open inside the app gets an entry in the browser's history, so Back (the button, or the swipe on phones)
+// returns to the page before instead of leaving LockedIn. A picture or a mentor server that is open closes first.
+let navKey: string | null = null;   // the page the newest history entry stands for
+const navNow = () => ({ app: 1, tab, adminView, gsPart, profileKey });
+function navSync() {
+  const st = navNow(), key = JSON.stringify(st), has = !!(history.state && history.state.app);
+  if (key === navKey && has) return;
+  const fresh = navKey === null || !has || key === navKey;   // nothing to go back to yet: label this entry instead of adding one
+  navKey = key;
+  try { if (fresh) history.replaceState(st, ""); else history.pushState(st, ""); } catch (e) { /* some embedded browsers refuse; Back then simply leaves */ }
+}
+window.addEventListener("popstate", e => {
+  const s = e.state || {}, v = document.getElementById("viewer") as HTMLDialogElement;
+  if (v && v.open && !s.viewer) v.close();
+  // Forward onto the entry of a picture or server that has since been closed: there is nothing to show, so step back off it.
+  if ((s.viewer && !(v && v.open)) || (s.server && screen !== "server")) return history.back();
+  let moved = !s.app;   // the front page and legal pages: always start at the top, as before
+  if (screen === "server" && !s.server) { serverView = null; serverMsg = ""; screen = loaded ? "app" : "lobby"; moved = true; }
+  if (s.app) {
+    const before = JSON.stringify(navNow());
+    tab = s.tab === "admin" && !isAdmin ? "day" : PAGE_TITLE[s.tab] ? s.tab : "day";
+    adminView = s.adminView || "people"; gsPart = s.gsPart || null;
+    profileKey = s.profileKey && members.some(m => m.key === s.profileKey) ? s.profileKey : null;
+    navKey = JSON.stringify(navNow());
+    if (navKey !== before) { moved = true; adminDirty = false; flash = ""; try { localStorage.setItem("tab", tab); } catch (err) {} }
+  }
+  if (moved && (editing || settingsOpen)) closePanel(); else render();
+  if (moved) window.scrollTo(0, 0);
+});
 // Real words from beta testers, used only with their permission. Empty means the section doesn't show.
 // Each entry: { quote: "What they said", name: "How they want to be named", role: "e.g. NQ trader, LockedIn Beta" }
 const BETA_QUOTES: { quote: string; name: string; role?: string }[] = [];
@@ -2787,7 +2870,7 @@ function renderLanding() {
               <div class="ma-toast" id="ma-toast"><span class="md">${ic("flame", 20)}</span><div><b>Achievement unlocked</b><span>20 day streak</span></div></div>
               <div class="s-scale" id="s-scale"><div class="s-feed" id="s-feed"></div></div>
               <div class="ma-tabbar" id="ma-tabbar"><i class="hl" id="ma-hl"></i>
-                <span class="on">${SVG.day}Day</span><span>${SVG.week}Week</span><span>${SVG.board}Ranking</span><span>${SVG.me}Me</span></div>
+                <span class="on">${SVG.day}Today</span><span>${SVG.week}Week</span><span>${SVG.board}Ranking</span><span>${SVG.me}Profile</span></div>
             </div></div>
           </div>
           <ol class="st-chapters" id="st-chapters"></ol>
@@ -3027,23 +3110,18 @@ function revealLanding() {
   els.forEach(el => io.observe(el));
 }
 
-// The Me tab: your own profile with badges, then your account (groups, settings, tutorial, sign out) at the bottom.
+// Your own Profile page. Phones get Groups, Settings and Help as three buttons at the top (computers have them in the sidebar);
+// who you are signed in as, and Sign out, are at the bottom.
 function renderMe(part = "profile") {
   const g = group(), m = members.find(x => x.key === myKey());
-  const chev = `<svg class="chev" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M4.5 2.5 8 6l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  const tile = name => `<span class="meicon">${ic(name, 18)}</span>`;
-  const row = (id, icon, title, sub) => `<button class="merow" id="${id}">${icon}<span><b>${title}</b><small>${sub}</small></span>${chev}</button>`;
   const who = profile ? profile.discord_name : "";
-  const account = `<div class="card"><div class="cardhead"><h2>Account</h2></div><div class="melist">
-      ${row("open-groups", groupLogo(g, 34), "Groups", `${esc(g ? g.name : "")}${roleOf() ? " · " + esc(roleOf()) : ""} · switch, join or start one`)}
-      ${row("open-settings", tile("gear"), "Settings", "Light / dark mode, rule-break tags, app icon")}
-      ${row("start-tour", tile("target"), "Tutorial", "A one-minute tour of the app")}
-    </div>
-    <div class="account"><span>Signed in as <b>${esc(who)}</b></span><button class="linkbtn" id="signout">Sign out</button></div></div>`;
-  if (!m) return `<div class="card"><p class="msg">You don't have a name in ${esc(g ? g.name : "this group")}, so there's no profile${part === "journal" ? " or journal" : ""} here.</p></div>` + (part === "profile" ? account : "");
+  const go = (attr, icon, label) => `<button ${attr}>${ic(icon, 20)}<span>${label}</span></button>`;
+  const quick = !isWide() && part === "profile" ? `<nav class="mequick" aria-label="Account">${go('data-rail="groups"', "users", "Groups")}${go('data-rail="settings"', "sliders", "Settings")}${go('data-nav="help"', "help", "Help")}</nav>` : "";
+  const account = `<div class="card"><div class="account" style="margin-top:0"><span>Signed in as <b>${esc(who)}</b></span><button class="linkbtn" id="signout">Sign out</button></div></div>`;
+  if (!m) return quick + `<div class="card"><p class="msg">You don't have a name in ${esc(g ? g.name : "this group")}, so there's no profile${part === "journal" ? " or journal" : ""} here.</p></div>` + (part === "profile" ? account : "");
   // On computers the sidebar switches between Profile and Journal; on phones a small switch at the top does.
   const prof = renderProfile(m.key, part, !isWide());
-  return part === "profile" ? prof + account : prof;
+  return part === "profile" ? quick + prof + account : prof;
 }
 
 function render() {
@@ -3071,8 +3149,9 @@ function render() {
   else if (tab === "settings") html = renderSettings();
   else if (tab === "groups") html = renderGroups();
   else { const d = renderDay(); html = d.summary + d.list; }
-  if (/^(settings|groups|help)$/.test(tab) && !profileKey && !isWide()) html = `<button class="backrow" data-nav="me">${ic("chevron-left", 18)}<span>Me</span></button>` + html;
+  if (/^(settings|groups|help)$/.test(tab) && !profileKey && !isWide()) html = `<button class="backrow" data-nav="me">${ic("chevron-left", 18)}<span>Profile</span></button>` + html;
   const pageName = profileKey ? ((members.find(x => x.key === profileKey) || {}).name || "Profile") : PAGE_TITLE[tab] || "Today";
+  navSync();
   morph(app, `<h1 class="sr-only">${esc(pageName)}, ${esc((group() || {}).name || "LockedIn")}</h1>` + offlineBar() + html);
   mountInline();
   renderPanelPics();
@@ -3284,7 +3363,8 @@ document.addEventListener("click", async e => {
   if (d.reconsider) return adminDo(memberQ({ status: "pending" }, d.reconsider), "");
   if (d.makeadmin) return adminDo(memberQ({ role: "admin" }, d.makeadmin), "They're a group admin now: they can approve people, add names and excuse days.");
   if (d.unadmin) return adminDo(memberQ({ role: "member" }, d.unadmin), "Admin removed.");
-  if (d.adminView) { adminView = d.adminView; flash = ""; error = ""; return render(); }
+  if (d.adminView) { adminView = d.adminView; gsPart = null; flash = ""; error = ""; return render(); }
+  if (d.gs !== undefined) { gsPart = d.gs || null; adminDirty = false; flash = ""; error = ""; render(); requestAnimationFrame(pageEnter); if (!isWide()) window.scrollTo(0, 0); return; }
   if (d.approveReq) return adminDo(sb.rpc("approve_group_request", { request_id: +d.approveReq }), "Group created. Its owner can open it now and share the join code.");
   if (d.rejectReq) return adminDo(sb.from("group_requests").update({ status: "rejected" }).eq("id", +d.rejectReq), "Request rejected.");
   if (d.openGroup) { adminView = "people"; return switchGroup(d.openGroup); }
@@ -3409,7 +3489,8 @@ document.addEventListener("click", async e => {
     case "logo-pick": { const inp = document.getElementById("logoinput"); inp.value = ""; return inp.click(); }
     case "logo-remove": return adminDo(sb.from("groups").update({ logo_path: null }).eq("id", gid), "Logo removed.");
     case "srv-refresh": return serverView ? openServer(serverView.id) : null;
-    case "srv-back": serverView = null; serverMsg = ""; screen = loaded ? "app" : "lobby"; render(); return window.scrollTo(0, 0);
+    case "srv-back": if (history.state && history.state.server) return history.back();   // the Back handler closes it
+      serverView = null; serverMsg = ""; screen = loaded ? "app" : "lobby"; render(); return window.scrollTo(0, 0);
     case "srv-copy": {
       try { await navigator.clipboard.writeText(serverView.code); t.textContent = "Copied"; } catch (err) { t.textContent = "Select and copy"; }
       return setTimeout(() => { t.textContent = "Copy"; }, 1500);
@@ -3549,6 +3630,15 @@ document.addEventListener("keydown", e => {
   if ((e.key as string) === "Enter" && e.target.id === "joincode") { e.preventDefault(); joinWithCode(); }
   if ((e.key as string) === "Enter" && e.target.id === "newbreak") { e.preventDefault(); addCustomBreak(); }
 });
+// Computers: 1, 2 and 3 open Today, Week and Ranking. Never while you are typing, and never with a window open on top.
+document.addEventListener("keydown", e => {
+  if (screen !== "app" || legalOpen() || e.metaKey || e.ctrlKey || e.altKey || e.repeat || tour || editing || settingsOpen) return;
+  const el = e.target as HTMLElement;
+  if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
+  if (document.querySelector("dialog[open]")) return;
+  const to = { "1": "day", "2": "week", "3": "board" }[e.key];
+  if (to) { e.preventDefault(); setTab(to); }
+});
 document.getElementById("scrim").addEventListener("click", closePanel);
 wideQuery.addEventListener("change", () => render());
 document.getElementById("shotinput").addEventListener("change", e => {
@@ -3628,7 +3718,7 @@ async function refreshNow() {
 
 // ---------------------------------------------------------------- tutorial
 // A short tour that points at the real buttons. Starts by itself the first time; "Skip tutorial" ends it for good.
-// Replay it from Me → Tutorial or Settings. Remembered in your settings, so it doesn't come back on another device.
+// Replay it from Help. Remembered in your settings, so it doesn't come back on another device.
 let tour = null;   // { i, steps }
 function listText(a) { return a.length > 1 ? a.slice(0, -1).join(", ") + " and " + a[a.length - 1] : a[0] || ""; }
 function tourSteps() {
@@ -3638,7 +3728,7 @@ function tourSteps() {
   const tabEl = t => wide ? null : q(`.tabbar [data-tab="${t}"]`);
   const myRow = () => { const b = document.querySelector(`.member [data-tick^="${me}:"]`) || document.querySelector(`[data-edit="${me}"]`); return b && b.closest(".member"); };
   const steps = [
-    { title: `Welcome to ${g ? g.name : "LockedIn"}`, text: "Here's a quick tour of everything: about a minute. Skip it with the close button in the corner, and replay it any time from " + (wide ? "Profile" : "the Me tab") + "." },
+    { title: `Welcome to ${g ? g.name : "LockedIn"}`, text: "Here's a quick tour of everything: about a minute. Skip it with the close button in the corner, and replay it any time from Help." },
     mine && { el: wide ? myRow : q(".quick .qgrid"), title: "Tick your homework",
       text: `Tap a box when it's done. Required: ${esc(listText(req))}. All required ticked = Complete (green circle).`
         + (bonus.length ? ` ${esc(listText(bonus))} ${bonus.length > 1 ? "are bonus boxes" : "is a bonus box"}: extra points.` : "")
@@ -3656,9 +3746,10 @@ function tourSteps() {
       text: "The whole week at a glance. Tap any square to open that day. Everyone's weekly reflections are there too." },
     { el: wide ? q('#rail [data-nav="board"]') : tabEl("board"), title: "Ranking",
       text: `Points: Complete ${POINTS.COMPLETE}, Partial ${POINTS.PARTIAL}${bonus.length ? `, +${POINTS.bonus} for each bonus box` : ""}. Your streak is Complete days in a row. Earn badges for streaks, notes, pictures and more.` },
-    { el: wide ? q("#toggleme") : tabEl("me"), title: "Me",
+    { el: wide ? q("#toggleme") : tabEl("me"), title: "Profile",
       text: (wide ? "Your profile and badges. Journal has your notes, pictures, rule breaks and reflections. " : "Your profile and badges, and your Journal: notes, pictures, rule breaks and reflections. ")
-        + "Settings has light or dark mode, your own rule-break tags and the app icon for your phone. Sign out and this tutorial are at the bottom of " + (wide ? "Profile." : "Me.") },
+        + "Settings has light or dark mode and your own rule-break tags. Help has the questions, this tutorial and the app icon for your phone. "
+        + (wide ? "Groups, Settings and Help are at the bottom of the sidebar." : "Groups, Settings and Help are the three buttons at the top of Profile.") + " Sign out is at the bottom of Profile." },
     isAdmin && { el: wide ? q("#toggleadmin") : tabEl("admin"), title: "Admin",
       text: `You help run ${esc(g ? g.name : "this group")}: share the join code, approve people, excuse days${isGroupOwner() ? ", and change the group's settings (boxes, points, time, color, logo)" : ""}.` },
     { title: "You're all set", text: (wide ? "" : "Tip: pull down at the top of the page to refresh. ") + "Good luck today, and stay locked in." },

@@ -152,7 +152,7 @@ live unless asked, and suggest a new chat when a task is finished.
   analytics, embeds or remote images beyond Supabase and Discord avatars. Fonts stay in `web/public/vendor`.
 - Dependencies are pinned to exact versions. Do not add or upgrade a package without asking. A new one also needs
   its license in `web/public/vendor/licenses` and a line in `THIRD-PARTY-NOTICES.md`.
-- If the `FILES` list in `web/public/sw.js` or a file in it changes, raise `VERSION` (`lockedin-11` now), or
+- If the `FILES` list in `web/public/sw.js` or a file in it changes, raise `VERSION` (`lockedin-12` now), or
   phones keep the old copy.
 - If the wording of the Privacy policy or Terms changes, ask Batko whether to change `TERMS_VERSION` in the
   engine. Changing it makes every member accept again.

@@ -149,7 +149,10 @@ Pictures need internet. Signing out removes the saved copy from that phone.
 - **Approve someone:** Admin → choose their name → Approve. One Discord account per name.
 - **Someone wants their own group:** they tap "Start your own group". You see it in Admin → All groups → Approve. They become its owner.
 - **Pause / delete a group, change its owner:** Admin → All groups (only you see this).
-- **Group settings** (owner): Admin → Group settings → Save settings.
+- **Getting around:** on phones, Groups, Settings and Help are the three buttons at the top of Profile. On computers they are
+  at the bottom of the sidebar, and the keys 1, 2 and 3 open Today, Week and Ranking. The back button goes to the page before.
+- **Group settings** (owner): Admin → Group settings. Six short pages: Name and look, Homework boxes, Cutoff, Discord recaps,
+  Mentor server, Move to a new owner. Each page has its own Save button and saves only what is on that page.
 - **A mentor wants to see all their groups:** they sign in with Discord once. You go to Admin → All groups → Mentor servers, type a
   server name, pick them and tap Create. They find the server under Groups, with a server code. Each group owner types that code in
   Admin → Group settings → Mentor server. The owner or the mentor can unlink a group again at any time.
