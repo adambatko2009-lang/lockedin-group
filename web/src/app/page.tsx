@@ -36,8 +36,8 @@ export default function Home() {
       <dialog id="viewer" aria-label="Picture">
         <div className="vtop"><div className="vcap" id="viewer-cap"></div><span className="vn" id="viewer-n"></span><button className="round" id="viewer-close" aria-label="Close">{X}</button></div>
         <div className="vstage" id="viewer-stage"><img id="viewer-img" alt="" draggable="false" /></div>
-        <button className="vnav prev" id="viewer-prev" aria-label="Previous picture">‹</button>
-        <button className="vnav next" id="viewer-next" aria-label="Next picture">›</button>
+        <button className="vnav prev" id="viewer-prev" aria-label="Previous picture"><svg className="ic" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m14.5 6-6 6 6 6" /></svg></button>
+        <button className="vnav next" id="viewer-next" aria-label="Next picture"><svg className="ic" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9.5 6 6 6-6 6" /></svg></button>
         <div className="vbar"><span className="vhint" id="viewer-hint"></span><button className="btn plain small vreport" id="viewer-report">Report</button><button className="btn danger small" id="viewer-delete">Delete</button></div>
       </dialog>
       <dialog id="reportdlg" aria-labelledby="report-title">

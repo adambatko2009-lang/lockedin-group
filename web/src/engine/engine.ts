@@ -69,6 +69,7 @@ const ICON_PATHS = {
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.9.8c0 1.7-2.5 2.1-2.5 3.8"/><path d="M12 17.1v.2"/>',
   mail: '<rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="m4 7 8 6 8-6"/>',
   "chevron-left": '<path d="m14.5 6-6 6 6 6"/>',
+  "chevron-right": '<path d="m9.5 6 6 6-6 6"/>',
   "chevron-down": '<path d="m6 9.5 6 6 6-6"/>',
   search: '<circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/>',
   link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
@@ -846,7 +847,7 @@ function renderHelp() {
   const install = installHtml();
   const start = `<div class="card help-start"><div class="cardhead"><h2>Getting started</h2></div>
     <button class="btn plain small" id="start-tour">${ic("target", 16)}Show the tutorial again</button>
-    ${install ? `<div class="help-install">${install}</div>` : `<p class="empty" style="margin-top:12px">You're using LockedIn as an app. Nice.</p>`}</div>`;
+    ${install ? `<div class="help-install">${install}</div>` : `<p class="empty" style="margin-top:12px">You're using LockedIn as an app.</p>`}</div>`;
   const legal = `<div class="card"><div class="cardhead"><h2>Your data and the rules</h2></div>
     <p class="empty">Download or delete your data in <button class="linkbtn" data-rail="settings">Settings</button>.</p>
     <p class="help-legal"><a href="?p=privacy" data-land="privacy">Privacy policy</a><a href="?p=terms" data-land="terms">Terms</a></p>
@@ -875,7 +876,7 @@ function renderSettings() {
       <button class="btn plain small danger" id="delete-account">Delete my account</button></div>
     <p class="sub-hint" id="data-msg" role="status" aria-live="polite"></p>
     <p class="sub-hint legal-links"><a href="?p=privacy" data-land="privacy">Privacy policy</a> · <a href="?p=terms" data-land="terms">Terms</a></p></section>`;
-  const help = `<button class="helprow" data-nav="help">${ic("help", 20)}<span><b>Help &amp; support</b><small>Questions, contact, the app on your phone</small></span><span class="chev" aria-hidden="true">›</span></button>`;
+  const help = `<button class="helprow" data-nav="help">${ic("help", 20)}<span><b>Help &amp; support</b><small>Questions, contact, the app on your phone</small></span><span class="chev" aria-hidden="true">${ic("chevron-right", 18)}</span></button>`;
   const intro = `<p class="page-intro">Only for you. Changes save to your account right away.</p>`;
   return isWide()
     ? intro + `<div class="desk"><div class="maincol">${look}${breaks}</div><div class="side">${data}${help}</div></div>`
@@ -917,7 +918,7 @@ function renderReflections() {
   const entries = activeMembers().map(m => {
     const r = reflections[week + "|" + m.key];
     if (!r || !(r.went_well || r.to_fix)) return "";
-    return `<div class="rentry"><div class="who">${avatarHtml(m, 24)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === me ? `<span class="you">YOU</span>` : ""}</div>
+    return `<div class="rentry"><div class="who">${avatarHtml(m, 24)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === me ? `<span class="you">You</span>` : ""}</div>
       ${r.went_well ? `<h3 class="rh">Went well</h3><p>${linkify(r.went_well)}</p>` : ""}${r.to_fix ? `<h3 class="rh">To fix</h3><p>${linkify(r.to_fix)}</p>` : ""}</div>`;
   }).join("");
   if (!form && !entries) return "";   // nothing to read yet, and it's not the day to write one
@@ -986,7 +987,7 @@ async function uploadShot(day, key, file) {
 }
 
 // ---------------------------------------------------------------- full-screen picture viewer
-// Shows every picture of that person's day. Swipe / arrow keys / ‹ › to move, pinch, double-tap or scroll to zoom.
+// Shows every picture of that person's day. Swipe / arrow keys / the arrow buttons to move, pinch, double-tap or scroll to zoom.
 const V = { s: 1, x: 0, y: 0 };          // zoom + pan of the current picture
 function openViewer(day, key, path) {
   const list = ((tickOf(day, key) || {}).images || []).slice();
@@ -1594,12 +1595,12 @@ function renderTop() {
     const status = error ? `<span class="err">${esc(error)}</span>` : saving || Object.keys(pending).length ? "Saving…" : "";
     morph(top, `${groupButton(24)}
       <div class="center">${tab === "day" ? `
-        <button class="round" id="prev" aria-label="Previous trading day">‹</button>
+        <button class="round" id="prev" aria-label="Previous trading day">${ic("chevron-left", 20)}</button>
         ${datePickHtml()}
-        <button class="round" id="next" aria-label="Next trading day" ${selected >= today ? "disabled" : ""}>›</button>` : tab === "week" ? `
-        <button class="round" id="pw" aria-label="Previous week">‹</button>
+        <button class="round" id="next" aria-label="Next trading day" ${selected >= today ? "disabled" : ""}>${ic("chevron-right", 20)}</button>` : tab === "week" ? `
+        <button class="round" id="pw" aria-label="Previous week">${ic("chevron-left", 20)}</button>
         <b>${fmtDay(weekStart, { weekday: undefined })} – ${fmtDay(addDays(weekStart, 4), { weekday: undefined })}</b>
-        <button class="round" id="nw" aria-label="Next week" ${weekStart >= mondayOf(today) ? "disabled" : ""}>›</button>`
+        <button class="round" id="nw" aria-label="Next week" ${weekStart >= mondayOf(today) ? "disabled" : ""}>${ic("chevron-right", 20)}</button>`
         : `<b>${tab === "admin" ? (adminViews().find(v => v[0] === adminView) || ["", "Admin"])[1] : tab === "me" ? "Profile" : PAGE_TITLE[tab] || ""}</b>`}
       </div>
       <div class="end"><span>${status}</span>${tab === "day" && selected !== today ? `<button id="gotoday">Today</button>` : tab === "week" && weekStart !== mondayOf(today) ? `<button id="thisweek">This week</button>` : ""}
@@ -1608,12 +1609,12 @@ function renderTop() {
   }
   let prev = `<span></span>`, next = `<span></span>`, mid;
   if (tab === "day") {
-    prev = `<button class="round" id="prev" aria-label="Previous trading day">‹</button>`;
-    next = `<button class="round" id="next" aria-label="Next trading day" ${selected >= today ? "disabled" : ""}>›</button>`;
+    prev = `<button class="round" id="prev" aria-label="Previous trading day">${ic("chevron-left", 20)}</button>`;
+    next = `<button class="round" id="next" aria-label="Next trading day" ${selected >= today ? "disabled" : ""}>${ic("chevron-right", 20)}</button>`;
     mid = `${datePickHtml()}${selected !== today ? `<button id="gotoday">Today</button>` : statusText()}`;
   } else if (tab === "week") {
-    prev = `<button class="round" id="pw" aria-label="Previous week">‹</button>`;
-    next = `<button class="round" id="nw" aria-label="Next week" ${weekStart >= mondayOf(today) ? "disabled" : ""}>›</button>`;
+    prev = `<button class="round" id="pw" aria-label="Previous week">${ic("chevron-left", 20)}</button>`;
+    next = `<button class="round" id="nw" aria-label="Next week" ${weekStart >= mondayOf(today) ? "disabled" : ""}>${ic("chevron-right", 20)}</button>`;
     mid = `<b>${fmtDay(weekStart, { weekday: undefined })} – ${fmtDay(addDays(weekStart, 4), { weekday: undefined })}</b>${statusText()}`;
   } else {
     mid = `<b>${PAGE_TITLE[tab] || ""}</b>${statusText()}`;
@@ -1826,7 +1827,7 @@ function renderDay() {
       ? `<button class="mini" data-expand="${m.key}" aria-expanded="false" aria-label="${esc(m.name)}: ${miniStatus(k, m.key, rec)}. Open their boxes">${miniStatus(k, m.key, rec)}<span class="mini-edit" aria-hidden="true">${ic("chevron-down", 18)}</span></button>`
       : `<p class="mini">${miniStatus(k, m.key, rec)}</p>`;
     return `<div class="member ${editable ? "" : "locked"}">
-      <div class="mrow"><span class="name">${avatarHtml(m, 26)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === myKey() ? `<span class="you">YOU</span>` : ""}${resultTag(rec)}</span>${compact ? `<span class="nb-space"></span>` : editBtn}${dot(st, m.name)}</div>
+      <div class="mrow"><span class="name">${avatarHtml(m, 26)}<button class="namebtn" data-profile="${m.key}">${esc(m.name)}</button>${m.key === myKey() ? `<span class="you">You</span>` : ""}${resultTag(rec)}</span>${compact ? `<span class="nb-space"></span>` : editBtn}${dot(st, m.name)}</div>
       ${showToggles ? `<div class="toggles" style="${togglesStyle()}">${toggles}</div>` : mini}
       ${(rec.rule_breaks || []).length || pnlChipHtml(rec) ? `<div class="breaks">${pnlChipHtml(rec)}${(rec.rule_breaks || []).map(b => `<span class="bchip">${ic("alert", 13)}${esc(BREAK_LABEL[b] || b)}</span>`).join("")}</div>` : ""}
       ${note ? `<div class="note">${note}${canReport(k, m.key) ? `<button class="reportlink" data-report-note="${k}|${m.key}">Report note</button>` : ""}</div>` : ""}
@@ -1991,7 +1992,7 @@ function renderProfile(key, part = "profile", withTabs = false) {
 
   const head = `<div class="card">
     <div class="phead">${avatarHtml(m, 64)}
-      <div><h1>${esc(m.name)}${key === myKey() ? `<span class="you">YOU</span>` : ""}${(r => r ? `<span class="rolechip role-${r.toLowerCase()}">${r}</span>` : "")(roleForKey(key))}</h1><p>Rank #${rankOf(key) || "–"} · since ${since}</p></div></div>
+      <div><h1>${esc(m.name)}${key === myKey() ? `<span class="you">You</span>` : ""}${(r => r ? `<span class="rolechip role-${r.toLowerCase()}">${r}</span>` : "")(roleForKey(key))}</h1><p>Rank #${rankOf(key) || "–"} · since ${since}</p></div></div>
     <h3 class="tg-h">Habit</h3>
     <div class="tiles">
       <div class="tile"><b>${s.run}</b><span>Streak</span><small>Best ${s.best}</small></div>
@@ -2097,7 +2098,7 @@ function renderBoard() {
     prev = r;
     const detail = [r.run ? `${r.run}-day streak` : null, r.rate === null ? null : `${r.rate}% of days done`].filter(Boolean).join(" · ") || "–";
     return `<li class="${rank === 1 && r.points ? "top" : ""}"><span class="rk">${rank}</span>${avatarHtml(r.m, 32)}
-      <div class="who2"><b><button class="namebtn" data-profile="${r.key}">${esc(r.name)}</button>${(b => b ? `<span class="mini-badge tier-${b.tier}" title="${esc(b.title)}">${ic(b.icon, 13)}</span>` : "")(topStreakBadge(r))}${r.key === myKey() ? `<span class="you">YOU</span>` : ""}</b><span>${detail}</span></div>
+      <div class="who2"><b><button class="namebtn" data-profile="${r.key}">${esc(r.name)}</button>${(b => b ? `<span class="mini-badge tier-${b.tier}" title="${esc(b.title)}">${ic(b.icon, 13)}</span>` : "")(topStreakBadge(r))}${r.key === myKey() ? `<span class="you">You</span>` : ""}</b><span>${detail}</span></div>
       <span class="pts" aria-label="${r.points} points">${r.points}</span></li>`;
   }).join("");
   return `<div class="card"><div class="cardhead"><h2>Points</h2></div>
@@ -3423,7 +3424,7 @@ function tourSteps() {
     { el: () => { const m = [...document.querySelectorAll("#app .member")].find(x => !x.querySelector(`[data-edit="${me}"]`)); return m; }, title: "Everyone's day",
       text: "The circle shows each person's status: green complete, yellow partial, red missing. Tap a name for their profile and badges, tap a picture to see it full screen." },
     { el: q(".topbar .datepick"), title: "Change the day",
-      text: "Tap the date to jump to any day." + (wide ? " Or use the ‹ › arrows." : " Or use ‹ ›, or swipe left and right on the page.") },
+      text: "Tap the date to jump to any day." + (wide ? " Or use the arrows next to it." : " Or use the arrows next to it, or swipe left and right on the page.") },
     { el: q("#open-groups"), title: "Your groups", text: "Tap the group name to switch groups, join another one with a code, or start your own group." },
     { el: wide ? q('#rail [data-nav="week"]') : tabEl("week"), title: "Week",
       text: "The whole week at a glance. Tap any square to open that day. Everyone's weekly reflections are there too." },
