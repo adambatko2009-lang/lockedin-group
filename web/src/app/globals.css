@@ -269,7 +269,7 @@
   .vbar .vreport { background: rgba(255, 255, 255, 0.14); color: #fff; }
   /* report form: a small sheet over everything, also over the picture viewer */
   dialog#reportdlg { border: 1px solid var(--line); border-radius: 20px; padding: 0; width: min(420px, calc(100vw - 32px));
-    background: var(--surface); color: var(--text); box-shadow: 0 20px 60px rgba(0, 0, 0, .5); }
+    background: var(--surface); color: var(--text); box-shadow: 0 20px 60px var(--glass-shade); }
   dialog#reportdlg::backdrop { background: rgba(0, 0, 0, 0.6); }
   .repform { padding: 20px; display: grid; gap: 4px; }
   .repform h2 { margin: 0; font-size: 19px; }
@@ -450,7 +450,7 @@
   .pmenu summary:hover, .pmenu[open] summary { background: var(--surface-2); color: var(--text); }
   .pmenu summary .ic { stroke-width: 2.6; }
   .pmenu-list { position: absolute; right: 0; top: 44px; z-index: 5; display: grid; gap: 6px; padding: 8px; min-width: 200px; border-radius: 14px;
-    background: var(--surface); border: 1px solid var(--line); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45); }
+    background: var(--surface); border: 1px solid var(--line-strong); box-shadow: 0 16px 40px var(--glass-shade); }
   .pmenu-list .btn { width: 100%; justify-content: flex-start; }
   .tg-h { margin: 18px 0 -6px; font-size: 13px; font-weight: 600; color: var(--muted); }
   .more-badges { margin-top: 12px; }
@@ -876,7 +876,7 @@
   .tour.center { background: rgba(0, 0, 0, 0.62); }
   .tour-hole { position: fixed; border-radius: 16px; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.62), 0 0 0 2px var(--accent-text); pointer-events: none; }
   @media (prefers-reduced-motion: no-preference) { .tour-hole { transition: left .3s, top .3s, width .3s, height .3s; } .tour-card { transition: top .3s, left .3s; } }
-  .tour-card { position: fixed; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 18px; padding: 16px 18px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45); }
+  .tour-card { position: fixed; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 18px; padding: 16px 18px; box-shadow: 0 20px 50px var(--glass-shade); }
   .tour-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
   .tour-n { font: 600 12px var(--font-data); color: var(--muted); }
   .tour-x { width: 32px; height: 32px; font-size: 14px; background: var(--glass-pill); color: inherit; }
