@@ -1467,6 +1467,9 @@ let myServers: ServerRow[] = [];                                  // servers you
 let groupServer: { id: number; name: string } | null = null;      // the server the open group is linked to
 let serverView: ServerView | null = null;                         // the server open on the mentor screen
 let serverMsg = "";
+type ServerDiscord = { webhook_url: string; weekly: boolean; monthly: boolean };
+let serverDiscord: ServerDiscord | null = null;                   // the Discord summary settings of the open server (the link is secret)
+let serverDiscordMsg = "";
 const serverOpen = new Set<string>();                             // groups whose member list is unfolded
 
 async function loadServers() {
@@ -1484,8 +1487,43 @@ async function openServer(id: number, msg = "") {
     if (screen === "loading") screen = "lobby"; else if (screen !== "server") error = e.message;
     return render();
   }
-  serverView = data; serverMsg = msg; screen = "server";
+  serverView = data; serverMsg = msg; screen = "server"; serverDiscordMsg = "";
+  await loadServerDiscord(id);
   render(); window.scrollTo(0, 0);
+}
+async function loadServerDiscord(id: number) {
+  const { data, error: e } = await sb.rpc("server_discord_get", { s: id });
+  serverDiscord = e || !data ? null : data;   // before database update 24 there is simply none
+}
+// Mentor: one summary of all linked groups, posted in a channel of the mentor's Discord. Same kind of link as a group's recaps.
+function serverDiscordCardHtml() {
+  const c = serverDiscord || { webhook_url: "", weekly: true, monthly: false };
+  return `<div class="card gsettings"><div class="cardhead"><h2>Discord summary</h2>${serverDiscord ? `<span class="okchip">${ic("check", 14)}Connected</span>` : ""}</div>
+    <p class="empty" style="margin:-2px 0 10px">LockedIn posts one message in a channel of your Discord: all your groups, ranked by how much of their homework got done. It shows group names, a percentage and how many members. Never a member's name. Nobody gets pinged.</p>
+    <details class="howto"${serverDiscord ? "" : " open"}><summary>How to get the link</summary>
+      <ol><li>In Discord, open <b>Server Settings</b>, then <b>Integrations</b>, then <b>Webhooks</b>.</li>
+        <li>Tap <b>New Webhook</b>, pick the channel it should post in, and tap <b>Copy Webhook URL</b>.</li>
+        <li>Paste it below. Keep it private: anyone with the link can post in that channel.</li></ol></details>
+    <label class="flabel" for="sd-url">Webhook link</label>
+    <input class="field wide" id="sd-url" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://discord.com/api/webhooks/…" value="${esc(c.webhook_url)}">
+    <label class="switchrow" style="margin-top:12px"><span><b>Weekly summary</b><small>After the week has closed for every group.</small></span>
+      <input type="checkbox" id="sd-weekly" role="switch" ${c.weekly ? "checked" : ""}></label>
+    <label class="switchrow" style="margin-top:12px"><span><b>Monthly summary</b><small>After the month has closed for every group.</small></span>
+      <input type="checkbox" id="sd-monthly" role="switch" ${c.monthly ? "checked" : ""}></label>
+    <div class="dcbtns"><button class="btn primary small" id="sd-save">Save</button>
+      ${serverDiscord ? `<button class="btn plain small" id="sd-test">Send test message</button><button class="btn danger small" id="sd-remove">Disconnect</button>` : ""}</div>
+    <p class="sub-hint" id="sd-msg" role="status" aria-live="polite" style="margin:8px 0 0">${esc(serverDiscordMsg)}</p>
+  </div>`;
+}
+async function saveServerDiscord() {
+  const url = document.getElementById("sd-url").value.trim(), id = serverView.id;
+  // (no redraw here: it would put the saved link back over the one being typed)
+  if (!DISCORD_HOOK.test(url)) { document.getElementById("sd-msg").textContent = "That isn't a Discord webhook link. It starts with https://discord.com/api/webhooks/"; return; }
+  const { error: e } = await sb.rpc("save_server_discord", { s: id, url,
+    post_weekly: document.getElementById("sd-weekly").checked, post_monthly: document.getElementById("sd-monthly").checked });
+  if (!e) await loadServerDiscord(id);
+  serverDiscordMsg = e ? e.message : "Discord summary saved. Send a test message to check the channel.";
+  render();
 }
 // Marks from the database: c complete, p partial, n nothing required ticked, x excused, - no row.
 // Counted the same way as the ranking: excused days are skipped, the open day can't break a streak,
@@ -1541,6 +1579,7 @@ function renderServer() {
       <button class="btn plain small" id="srv-refresh">Refresh</button></div>
     ${serverMsg ? `<div class="card"><p class="msg">${esc(serverMsg)}</p></div>` : ""}
     ${cards || none}
+    ${serverDiscordCardHtml()}
     <div class="card"><div class="cardhead"><h2>Server code</h2></div>
       <div class="codebox"><code>${esc(v.code)}</code>
         <button class="btn plain small" id="srv-copy">Copy</button>
@@ -2348,10 +2387,10 @@ function groupSettingsHtml(g) {
 // Group owner: a short recap posted in the group's Discord, through a webhook link from Discord itself.
 const DISCORD_HOOK = /^https:\/\/(ptb\.|canary\.)?(discord|discordapp)\.com\/api\/webhooks\/[0-9]{5,25}\/[A-Za-z0-9_-]{20,100}$/;
 function discordCardHtml() {
-  const c = discordCfg || { daily: true, weekly: true, lead_minutes: 60 };
+  const c = discordCfg || { daily: true, weekly: true, monthly: false, lead_minutes: 60 };
   const lead = [[30, "30 min"], [60, "1 hour"], [120, "2 hours"], [180, "3 hours"]];
   return `<div class="card gsettings"><div class="cardhead"><h2>Discord recaps</h2>${discordCfg ? `<span class="okchip">${ic("check", 14)}Connected</span>` : ""}</div>
-    <p class="empty" style="margin:-2px 0 10px">LockedIn posts in a channel of your Discord: who's done and who isn't before the cutoff, and a ranking after each week. Nobody gets pinged.</p>
+    <p class="empty" style="margin:-2px 0 10px">LockedIn posts in a channel of your Discord: who's done and who isn't before the cutoff, and a ranking after each week. A ranking after each month is there too if you switch it on. Nobody gets pinged.</p>
     <details class="howto"${discordCfg ? "" : " open"}><summary>How to get the link</summary>
       <ol><li>In Discord, open <b>Server Settings</b>, then <b>Integrations</b>, then <b>Webhooks</b>.</li>
         <li>Tap <b>New Webhook</b>, pick the channel it should post in, and tap <b>Copy Webhook URL</b>.</li>
@@ -2364,6 +2403,8 @@ function discordCardHtml() {
     <select id="dc-lead" class="field">${lead.map(([v, l]) => `<option value="${v}" ${c.lead_minutes === v ? "selected" : ""}>${l} before the cutoff</option>`).join("")}</select>
     <label class="switchrow" style="margin-top:12px"><span><b>Weekly ranking</b><small>After the last trading day of the week closes: days done, wins and losses.</small></span>
       <input type="checkbox" id="dc-weekly" role="switch" ${c.weekly ? "checked" : ""}></label>
+    <label class="switchrow" style="margin-top:12px"><span><b>Monthly ranking</b><small>After the last trading day of the month closes: days done, wins and losses for the whole month.</small></span>
+      <input type="checkbox" id="dc-monthly" role="switch" ${c.monthly ? "checked" : ""}></label>
     <div class="dcbtns"><button class="btn primary small" id="dc-save">Save</button>
       ${discordCfg ? `<button class="btn plain small" id="dc-test">Send test message</button><button class="btn danger small" id="dc-remove">Disconnect</button>` : ""}</div>
     <p class="sub-hint" id="dc-msg" role="status" aria-live="polite" style="margin:8px 0 0"></p>
@@ -2400,7 +2441,7 @@ async function saveDiscord() {
   const msg = document.getElementById("dc-msg"), url = document.getElementById("dc-url").value.trim();
   if (!DISCORD_HOOK.test(url)) { msg.textContent = "That isn't a Discord webhook link. It starts with https://discord.com/api/webhooks/"; return; }
   const row = { group_id: gid, webhook_url: url, daily: document.getElementById("dc-daily").checked,
-    weekly: document.getElementById("dc-weekly").checked, lead_minutes: +document.getElementById("dc-lead").value };
+    weekly: document.getElementById("dc-weekly").checked, monthly: document.getElementById("dc-monthly").checked, lead_minutes: +document.getElementById("dc-lead").value };
   const res = await adminDo(sb.from("group_discord").upsert(row, { onConflict: "group_id" }), "Discord recaps saved. Send a test message to check the channel.");
   return res;
 }
@@ -2678,8 +2719,8 @@ function renderLanding() {
         <li><b>Your group</b> sees your name, picture, ticks, notes, screenshots, P&amp;L and R, reflections, streaks, badges, the reactions you give and get, and the comments you write.</li>
         <li><b>Your group's owner and admins</b> can also approve or remove members, excuse days, correct ticks and delete comments.</li>
         <li><b>Reports</b> are seen only by the group's owner and the app owner. The person who was reported isn't told who reported them.</li>
-        <li><b>Your group's Discord server, if the group owner turns on Discord recaps:</b> LockedIn then posts each member's name, whether they finished the day's homework, and a weekly count of days done, wins and losses in a channel the owner picks. Everyone who can read that channel sees it. Your group owner decides this, so ask them if you'd rather not be included.</li>
-        <li><b>A mentor, if your group owner links the group to a mentor server:</b> the owner of that server then sees each member's name and picture, which days they finished their boxes, and their streak. They don't see notes, screenshots, P&amp;L and R, reflections or comments, and they can't change anything. The Groups page shows whether your group is linked, and to which server.</li>
+        <li><b>Your group's Discord server, if the group owner turns on Discord recaps:</b> LockedIn then posts each member's name, whether they finished the day's homework, and a weekly count of days done, wins and losses in a channel the owner picks. The owner can also switch on the same count for each month. Everyone who can read that channel sees it. Your group owner decides this, so ask them if you'd rather not be included.</li>
+        <li><b>A mentor, if your group owner links the group to a mentor server:</b> the owner of that server then sees each member's name and picture, which days they finished their boxes, and their streak. They don't see notes, screenshots, P&amp;L and R, reflections or comments, and they can't change anything. The mentor can have LockedIn post a summary in a channel of their own Discord: each linked group's name, the share of homework its members finished, and how many members it has. No member's name is in it. The Groups page shows whether your group is linked, and to which server.</li>
         <li><b>The app owner</b> (Adam Batko) can see every group, to run and support the service.</li>
         <li><b>Other groups</b> can't see anything of yours.</li>
       </ul>`)}
@@ -3377,6 +3418,21 @@ document.addEventListener("click", async e => {
       if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Old code stops working. Sure?"; return; }
       const { error: e2 } = await sb.rpc("new_server_code", { s: serverView.id });
       return openServer(serverView.id, e2 ? e2.message : "New server code made. Groups that were already linked stay linked.");
+    }
+    case "sd-save": return serverView ? saveServerDiscord() : null;
+    case "sd-test": {
+      const m = document.getElementById("sd-msg"); m.textContent = "Sending…";
+      const { error: e3 } = await sb.rpc("send_server_discord_test", { s: serverView.id });
+      serverDiscordMsg = e3 ? e3.message : "Sent. Check the channel in Discord. If nothing shows up, the link may be wrong or the webhook was deleted.";
+      m.textContent = serverDiscordMsg;
+      return;
+    }
+    case "sd-remove": {
+      if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Stop posting? Tap again"; return; }
+      const { error: e4 } = await sb.rpc("remove_server_discord", { s: serverView.id });
+      if (!e4) serverDiscord = null;
+      serverDiscordMsg = e4 ? e4.message : "Disconnected. LockedIn no longer posts in your Discord.";
+      return render();
     }
     case "srv-link": {
       const code = document.getElementById("srv-code").value.trim();

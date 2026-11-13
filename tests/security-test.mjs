@@ -961,5 +961,143 @@ ok(!(await rpc("ro", "delete_my_account", [])).error && (await one(`select count
   && (await one(`select count(*)::int n from public.server_groups`)).n === 0, "when a mentor deletes their account, the server and its links go too");
 ok((await one(`select count(*)::int n from public.groups where id=$1`, [G3])).n === 1 && (await one(`select count(*)::int n from public.ticks where member_key=$1`, [k3])).n >= 1, "the groups that were on it keep all their data");
 
+// ================================================================ update 24: monthly ranking and mentor summary
+const u24 = readFileSync(dir + "update-24-monthly-and-mentor-recaps.sql", "utf8");
+await db.exec(u24);
+console.log("\nloaded: update-24-monthly-and-mentor-recaps.sql");
+// Supabase's pg_net isn't in the test database. This stand-in keeps what would have been posted.
+await db.exec(`create schema if not exists net; create table net.sent (url text, body jsonb);
+  create function net.http_post(url text, body jsonb, headers jsonb, timeout_milliseconds int) returns bigint
+  language sql as $$ insert into net.sent values (url, body); select 1::bigint $$;`);
+// June 2025 is used because no other test has ticks there. Its last trading day is a Monday, so the month
+// ends without a week ending; the Friday before it ends a week without ending the month.
+const tdays = async (a, b) => (await db.query(`select x::date::text d from generate_series($1::date, $2::date, interval '1 day') x
+  where extract(isodow from x) <= 5 and not exists (select 1 from public.holidays h where h.day = x::date) order by 1`, [a, b])).rows.map(x => x.d);
+const june = await tdays("2025-06-01", "2025-06-30");
+const jEnd = june[june.length - 1], jFri = "2025-06-27", jThu = "2025-06-26";
+const closeAt = async (g, d) => (await one(`select public.day_closes_at($1, $2::date) c`, [g, d])).c;
+const due24 = async at => (await db.query(`select * from public.due_recaps($1)`, [at])).rows;
+const plus24 = (t, m) => new Date(t.getTime() + m * 60000);
+ok(jEnd === "2025-06-30" && june.includes(jFri) && june.includes(jThu), "test setup: the June 2025 days are trading days");
+await db.query(`insert into public.ticks (day, member_key, chart, journal, review, result) values ($1, $3, true, true, true, 'win'), ($2, $3, true, true, true, null)`, [jThu, jFri, k3]);
+
+section("monthly ranking (update 24)");
+const hook24 = "https://discord.com/api/webhooks/223456789012345678/abcdefghijklmnopqrstuvwxyz_ABCDEFG-124";
+await db.query(`delete from public.group_discord`);
+ok(!(await as(own3, `insert into public.group_discord (group_id, webhook_url, daily, weekly) values ($1, $2, false, false)`, [G3, hook24])).error, "the group owner connects Discord again");
+ok((await one(`select monthly from public.group_discord where group_id=$1`, [G3])).monthly === false, "the monthly ranking is off until the owner switches it on");
+const jClose3 = await closeAt(G3, jEnd);
+ok((await due24(plus24(jClose3, 10))).length === 0, "nothing is posted at the end of the month while it is off");
+ok((await as(mem3, `update public.group_discord set monthly = true`)).count === 0, "a member can't switch the monthly ranking on");
+ok((await as("o9", `update public.group_discord set monthly = true`)).count === 0, "another group's owner can't either");
+ok(!!(await as("anon", `update public.group_discord set monthly = true`)).error, "signed-out visitors can't either");
+r = await as(own3, `update public.group_discord set monthly = true, last_monthly = '2025-06-01' where group_id = $1`, [G3]);
+r = await one(`select monthly, last_monthly from public.group_discord where group_id=$1`, [G3]);
+ok(r.monthly === true && r.last_monthly === null, "the owner switches it on, and can't fake the 'already posted' date");
+ok((await due24(plus24(await closeAt(G3, jFri), 10))).filter(x => x.kind === "monthly").length === 0, "nothing monthly is posted in the middle of a month");
+await db.query(`update public.members set name = 'Sky_*x*' where key = $1`, [k4]);
+r = await due24(plus24(jClose3, 10));
+const monthly24 = r.find(x => x.kind === "monthly");
+ok(r.length === 1 && !!monthly24 && monthly24.url === hook24 && monthly24.group_id === G3, "after the month's last trading day closes, the monthly ranking is due");
+ok(!!monthly24 && monthly24.content.includes("June 2025") && monthly24.content.includes(`1. ${k3now} · 2/${june.length} days · 1W 0L`), "it ranks members by days done in that month, with wins and losses");
+ok(!!monthly24 && monthly24.content.includes("Sky\\_\\*x\\*"), "names are shown as plain text");
+ok((await due24(plus24(jClose3, 20))).length === 0, "the monthly ranking is posted once");
+await db.query(`update public.group_discord set last_monthly = null`);
+ok((await due24(plus24(jClose3, 25 * 60))).length === 0, "and never more than a day late");
+await db.query(`delete from public.group_discord`);
+
+section("mentor summary (update 24)");
+// mt and mt2 are two mentors. o10 owns a second group on mt's server.
+Object.assign(U, { mt: "00000000-0000-0000-0000-0000000000f1", mt2: "00000000-0000-0000-0000-0000000000f2", o10: "00000000-0000-0000-0000-0000000000f3" });
+for (const k of ["mt", "mt2", "o10"]) await db.query(`insert into auth.users (id, raw_user_meta_data) values ($1, $2)`, [U[k], meta(k)]);
+const G10 = (await one(`select public.make_group('Summary Crew', $1) g`, [U.o10])).g;
+const k10 = (await one(`select member_key k from public.memberships where group_id=$1 and user_id=$2`, [G10, U.o10])).k;
+const T1 = (await rpc("batko", "create_server", ["Mentor <1>".replace(/[<>]/g, "") + " *hub*", U.mt])).rows[0].v;
+const T2 = (await rpc("batko", "create_server", ["Other hub", U.mt2])).rows[0].v;
+const code24 = async s => (await one(`select code from public.servers where id=$1`, [s])).code;
+await rpc(own3, "link_server", [G3, await code24(T1)]);
+await rpc("o10", "link_server", [G10, await code24(T1)]);
+await db.query(`insert into public.ticks (day, member_key, chart, journal, review) values ($1, $2, true, true, true)`, [jFri, k10]);
+const g3now = (await one(`select name from public.groups where id=$1`, [G3])).name;
+const n3 = (await one(`select count(*)::int n from public.members where group_id=$1 and active`, [G3])).n;
+const n10 = (await one(`select count(*)::int n from public.members where group_id=$1 and active`, [G10])).n;
+const hookS = "https://discord.com/api/webhooks/323456789012345678/abcdefghijklmnopqrstuvwxyz_ABCDEFG-125";
+
+for (const [who, label] of [[mem3, "a member"], [own3, "a group owner"], ["mt2", "another mentor"], ["anon", "a signed-out visitor"]]) {
+  ok(!!(await rpc(who, "save_server_discord", [T1, hookS, true, true])).error, `${label} can't set the server's Discord link`);
+}
+ok(!!(await rpc("mt", "save_server_discord", [T1, "https://evil.example.com/api/webhooks/1/x", true, true])).error, "only real Discord webhook links are accepted");
+ok(!!(await rpc("mt", "send_server_discord_test", [T1])).error, "a test needs a saved link first");
+ok(!(await rpc("mt", "save_server_discord", [T1, hookS, true, false])).error, "the server owner saves a Discord webhook link");
+r = await rpc("mt", "server_discord_get", [T1]);
+ok(!r.error && r.rows[0].v.webhook_url === hookS && r.rows[0].v.weekly === true && r.rows[0].v.monthly === false, "and reads the settings back");
+ok(!(await rpc("batko", "server_discord_get", [T1])).error, "the app owner can read them too");
+for (const [who, label] of [[mem3, "a member"], [own3, "a group owner"], ["mt2", "another mentor"], ["anon", "a signed-out visitor"]]) {
+  ok(!!(await rpc(who, "server_discord_get", [T1])).error, `${label} can't see the server's Discord link`);
+  ok(!!(await as(who, `select * from public.server_discord`)).error, `${label} can't read the table directly`);
+  ok(!!(await rpc(who, "send_server_discord_test", [T1])).error, `${label} can't send a test message`);
+  ok(!!(await rpc(who, "remove_server_discord", [T1])).error, `${label} can't disconnect it`);
+}
+ok(!!(await as("mt", `select * from public.server_discord`)).error && !!(await as("mt", `update public.server_discord set last_weekly = null`)).error, "even the server owner can't touch the table directly");
+ok((await rpc("mt2", "server_discord_get", [T2])).rows[0].v === null, "another mentor's own server has no link");
+ok((await one(`select count(*)::int n from public.server_discord`)).n === 1, "after all that the link is still there");
+ok(!(await rpc("mt", "send_server_discord_test", [T1])).error && (await one(`select count(*)::int n from net.sent where url=$1 and body->>'content' like 'LockedIn is connected%'`, [hookS])).n === 1, "the server owner sends a test message to the channel");
+ok(!!(await rpc("mt", "send_server_discord_test", [T1])).error, "but only one a minute");
+for (const fn of ["due_recaps()", "group_score('x', current_date, current_date)", "server_summary_lines(1, current_date, current_date)", "last_closed_day('x', now())"]) {
+  ok(!!(await as("mt", `select * from public.${fn}`)).error, `the website can't call ${fn.split("(")[0]}`);
+}
+
+// The second group closes three hours after the first, so the summary has to wait for it.
+await db.query(`update public.groups set timezone = (select timezone from public.groups where id=$2), cutoff_hour = (select cutoff_hour from public.groups where id=$2) where id=$1`, [G10, G3]);
+await db.query(`update public.groups set cutoff_hour = cutoff_hour + case when cutoff_hour <= 20 then 3 else -3 end where id=$1`, [G10]);
+const cA = await closeAt(G3, jFri), cB = await closeAt(G10, jFri);
+const firstClose = cA < cB ? cA : cB, lastClose = cA < cB ? cB : cA;
+ok(lastClose.getTime() - firstClose.getTime() === 3 * 3600000, "test setup: the two groups close three hours apart");
+ok((await due24(plus24(firstClose, 10))).length === 0, "the summary waits until the week has closed for every group");
+r = await due24(plus24(lastClose, 10));
+const sw = r.find(x => x.kind === "server-weekly");
+ok(r.length === 1 && !!sw && sw.url === hookS && sw.group_id === null, "after the last group's week closes, the weekly summary is due");
+const pct3 = Math.round(100 * 2 / (2 * n3));
+ok(!!sw && sw.content.includes("Mentor 1 \\*hub\\*") && sw.content.includes("week of 23 Jun"), "it is headed with the server's name, as plain text, and the week");
+ok(!!sw && sw.content.includes(`1. Summary Crew · 100% · ${n10} ${n10 === 1 ? "member" : "members"}`) && sw.content.includes(`2. ${g3now} · ${pct3}% · ${n3} members`), "groups are ranked by how much of their homework got done");
+const names3 = (await db.query(`select name from public.members where group_id in ($1, $2)`, [G3, G10])).rows.map(x => x.name);
+ok(!!sw && names3.length >= 3 && !names3.some(nm => sw.content.includes(nm) || sw.content.includes(nm.replace(/([\\*_~`|])/g, "\\$1"))), "no member's name is in the summary");
+ok(!!sw && !sw.content.includes("Other Crew") && !/SECRETNOTE|win|loss/i.test(sw.content), "and no notes, results or groups from elsewhere");
+ok((await due24(plus24(lastClose, 20))).length === 0, "the weekly summary is posted once");
+ok((await due24(plus24(await closeAt(G10, jEnd), 10))).length === 0, "the monthly summary is off until the server owner switches it on");
+
+ok(!(await rpc("mt", "save_server_discord", [T1, hookS, true, true])).error && (await one(`select last_weekly is not null w from public.server_discord where server_id=$1`, [T1])).w, "saving again keeps the 'already posted' date");
+await as("batko", `update public.groups set status='paused' where id=$1`, [G10]);
+r = await due24(plus24(await closeAt(G3, jEnd), 10));
+const sm = r.find(x => x.kind === "server-monthly");
+ok(r.length === 1 && !!sm && sm.content.includes("June 2025") && sm.content.includes(`1. ${g3now} · ${pct3}%`), "after the month closes, the monthly summary is due");
+ok(!!sm && !sm.content.includes("Summary Crew"), "a paused group is left out");
+await as("batko", `update public.groups set status='active' where id=$1`, [G10]);
+await db.query(`delete from public.ticks where member_key = any($1) and day between '2025-06-01' and '2025-06-30'`, [[k3, k10]]);
+await db.query(`update public.server_discord set last_monthly = null`);
+r = await due24(plus24(await closeAt(G10, jEnd), 10));
+ok(r.length === 1 && r[0].kind === "server-monthly" && /Summary Crew · nothing logged/.test(r[0].content), "a group that logged nothing is listed as that, not as 0%");
+
+// Two groups whose days close more than a day apart (one far ahead of the other on the clock), and a group
+// name written to look like a link.
+await db.query(`update public.groups set timezone = 'Pacific/Kiritimati', cutoff_hour = 0, name = $2 where id = $1`, [G10, "[Top](https://bad.example)"]);
+await db.query(`insert into public.ticks (day, member_key, chart, journal, review) values ($1, $2, true, true, true)`, [jFri, k10]);
+await db.query(`update public.server_discord set last_weekly = null`);
+const fA = await closeAt(G3, jFri), fB = await closeAt(G10, jFri);
+ok(fA.getTime() - fB.getTime() >= 24 * 3600000, "test setup: one group closes more than a day after the other");
+ok((await due24(plus24(fB, 10))).filter(x => x.kind === "server-weekly").length === 0, "the summary still waits for the group that closes last");
+r = (await due24(plus24(fA, 10))).filter(x => x.kind === "server-weekly");
+ok(r.length === 1 && r[0].content.includes("week of 23 Jun"), "and is posted when that group's week closes, however far apart the groups are");
+ok(r.length === 1 && r[0].content.includes("\\[Top\\]\\(https: //bad.example\\)") && !r[0].content.includes("](http"), "a group name can't become a clickable link in the mentor's Discord");
+ok((await due24(plus24(fA, 20))).filter(x => x.kind === "server-weekly").length === 0, "and it is posted once");
+
+await db.exec(u24);
+r = await rpc("mt", "server_discord_get", [T1]);
+ok(!r.error && r.rows[0].v.webhook_url === hookS && r.rows[0].v.monthly === true, "running update 24 a second time keeps the server's Discord settings");
+ok(!!(await as("mt", `select * from public.server_discord`)).error && !!(await as("mt", `select * from public.due_recaps()`)).error, "and the rules still hold after the second run");
+ok(!!(await rpc("mt2", "remove_server_discord", [T1])).error && !(await rpc("mt", "remove_server_discord", [T1])).error && (await one(`select count(*)::int n from public.server_discord`)).n === 0, "the server owner disconnects, and the link is deleted");
+await rpc("mt", "save_server_discord", [T1, hookS, true, true]);
+ok(!(await rpc("batko", "delete_server", [T1])).error && (await one(`select count(*)::int n from public.server_discord`)).n === 0, "deleting a server deletes its Discord link");
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

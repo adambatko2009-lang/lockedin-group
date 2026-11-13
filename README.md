@@ -32,6 +32,7 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
 | `supabase/update-21-comments.sql` | Comments and replies on members' posts, and reporting a comment (run once, after update 20, before pushing) |
 | `supabase/update-22-remove-notifications.sql` | Notifications removed: deletes saved push addresses and stops owner alerts (run once, after update 21, before pushing) |
 | `supabase/update-23-mentor-servers.sql` | Mentor servers: a mentor sees the boxes and streaks of every group linked to their server, and can't change anything (run once, after update 22, before pushing) |
+| `supabase/update-24-monthly-and-mentor-recaps.sql` | A monthly ranking in a group's Discord, and a summary of all linked groups in a mentor's Discord (run once, after update 23, before pushing) |
 | `supabase/sign-out-everyone-except-owner.sql` | Signs everyone but you out; no data is removed (run when needed) |
 | `web/public/assets/app-day.jpg` | Screenshot of the app with a made-up demo group, shown in the phone on the front page |
 | `web/public/vendor/` | Fonts and their licenses, hosted on our own site (see `web/public/vendor/THIRD-PARTY-NOTICES.md`) |
@@ -58,6 +59,8 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
 - Mentor (owner of a server you created): sees, for each group linked to their server, the members' names and pictures, which days
   each member finished their boxes, and streaks. Never notes, pictures, results, comments or reflections. Can't tick, edit or approve
   anything. A group is only linked when its own group owner types the server code. Other mentors never see it.
+  Can paste a Discord webhook link so LockedIn posts a weekly or monthly summary of the linked groups in their Discord: group
+  names, a percentage and a member count, never a member's name. Only the mentor and you can see or change that link.
 - Groups can never see each other's names, ticks, notes, pictures or reflections.
 
 **Nobody but you can change the website or its rules.** The code is in your GitHub account and the database is in your Supabase account; members can't edit either, and neither can their Claude.
@@ -150,6 +153,9 @@ Pictures need internet. Signing out removes the saved copy from that phone.
 - **A mentor wants to see all their groups:** they sign in with Discord once. You go to Admin → All groups → Mentor servers, type a
   server name, pick them and tap Create. They find the server under Groups, with a server code. Each group owner types that code in
   Admin → Group settings → Mentor server. The owner or the mentor can unlink a group again at any time.
+- **Recaps in Discord:** a group owner pastes a webhook link in Admin → Group settings → Discord recaps and picks the daily recap,
+  the weekly ranking and the monthly ranking (monthly is off until they switch it on). A mentor does the same on their server
+  page under Discord summary, and gets all linked groups ranked once the week or month has closed for every group.
 - **Remove someone's access:** Admin → Approved → Remove access.
 - **Excuse a day** (sick, travelling): open that person's ✎ panel on that day → Admin → switch **Excused** on.
 - **Supabase free plan pauses after 7 days with no visits.** Daily use prevents it; if it ever happens, open supabase.com → your project → **Restore**.
