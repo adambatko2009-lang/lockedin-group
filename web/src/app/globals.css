@@ -845,6 +845,27 @@
   .ghead b { display: block; font-size: 16px; font-weight: 600; }
   .ghead .sub { font-size: 13px; color: var(--muted); }
   .grow .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0 48px; }
+  /* mentor server: a read-only list of linked groups */
+  .srv-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 20px 0 4px; }
+  .srv-head h1 { font-size: 26px; letter-spacing: -0.02em; margin: 0; }
+  .srv-head p { margin: 4px 0 0; font-size: 14px; color: var(--text-2); }
+  .srv-group .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .srv-list { margin-top: 14px; }
+  .srv-mem { display: grid; grid-template-columns: 36px 1fr auto; gap: 4px 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+  .srv-mem img, .srv-mem .ph { width: 36px; height: 36px; border-radius: 50%; background: var(--surface-2); grid-row: span 2; }
+  .srv-mem b { font-size: 16px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .srv-mem .sub { font-size: 13px; color: var(--muted); grid-column: 2 / -1; }
+  .srv-today { font-size: 13px; font-weight: 600; color: var(--muted); text-align: right; }
+  .srv-today.ok { color: var(--good-text); }
+  .srv-today.part { color: var(--text-2); }
+  .srv-strip { display: inline-flex; gap: 3px; grid-column: 2 / -1; justify-self: start; margin-top: 2px; }
+  .srv-strip i { width: 8px; height: 8px; border-radius: 2px; background: var(--line-strong); }
+  .srv-strip i.c { background: var(--good); }
+  .srv-strip i.p { background: var(--warn); }
+  .srv-strip i.x { background: none; box-shadow: inset 0 0 0 1px var(--line-strong); }
+  .srv-foot { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 32px; }
+  .srv-new { flex-wrap: wrap; }
+  .srv-new select { flex: 1; min-width: 140px; }
   .glist { display: flex; flex-direction: column; gap: 6px; }
   .gitem { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2); text-align: left; cursor: pointer; }
   .gitem[aria-current="true"] { border-color: var(--accent); }

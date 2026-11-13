@@ -57,7 +57,7 @@ Inside `mnq-homework/`:
 | `web/public/` | `sw.js`, icons, `manifest.webmanifest`, `CNAME`, self-hosted fonts and licenses in `vendor/` |
 | `web/scripts/csp-first.mjs` | Runs after the build: moves the security policy to the top of each page |
 | `web/out/`, `web/.next/` | Build output. Ignored by git. Never edit or commit |
-| `supabase/setup.sql`, `supabase/update-N-*.sql` | The database, as numbered updates Batko has already run (2 to 22) |
+| `supabase/setup.sql`, `supabase/update-N-*.sql` | The database, as numbered updates Batko has already run (2 to 23) |
 | `supabase/functions/send-reminders/index.ts` | The every-5-minutes job (see above) |
 | `tests/security-test.mjs` | Loads every SQL file into an in-memory Postgres and tries to break the rules |
 | `tests/push-test.mjs` | Tests the Edge Function |
@@ -68,7 +68,7 @@ Inside `mnq-homework/`:
 
 ## 4. Commands
 
-Run these from `mnq-homework/`. All four passed on 13 November 2026 (350 and 14 checks).
+Run these from `mnq-homework/`. All four passed on 13 November 2026 (423 and 14 checks).
 
 ```bash
 cd web && npx tsc --noEmit        # type check, about 1 second
@@ -152,7 +152,7 @@ live unless asked, and suggest a new chat when a task is finished.
   analytics, embeds or remote images beyond Supabase and Discord avatars. Fonts stay in `web/public/vendor`.
 - Dependencies are pinned to exact versions. Do not add or upgrade a package without asking. A new one also needs
   its license in `web/public/vendor/licenses` and a line in `THIRD-PARTY-NOTICES.md`.
-- If the `FILES` list in `web/public/sw.js` or a file in it changes, raise `VERSION` (`lockedin-10` now), or
+- If the `FILES` list in `web/public/sw.js` or a file in it changes, raise `VERSION` (`lockedin-11` now), or
   phones keep the old copy.
 - If the wording of the Privacy policy or Terms changes, ask Batko whether to change `TERMS_VERSION` in the
   engine. Changing it makes every member accept again.
@@ -162,7 +162,7 @@ live unless asked, and suggest a new chat when a task is finished.
 - **Use the recipe in `.claude/skills/sql-update/SKILL.md`** (in the parent folder) for every database change.
   In short: a new file `supabase/update-<N+1>-<short-name>.sql` that is safe to run twice, a new row in
   `README.md`, a new block in `tests/security-test.mjs`, all tests passing, then `pbcopy < file` so the SQL is on
-  Batko's clipboard. The next number is 23. Sort by number (`ls supabase | sort -V`), not by text.
+  Batko's clipboard. The next number is 24. Sort by number (`ls supabase | sort -V`), not by text.
 - **Never edit `setup.sql` or an existing `update-N` file.** They have already run on the real database, so an
   edit changes nothing there and makes the tests lie.
 - **Never run SQL against the real database**, and never put the `service_role` or secret key in any file.

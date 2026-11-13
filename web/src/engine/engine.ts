@@ -225,9 +225,12 @@ async function loadAll() {
   loadSettings();
   const invited = await useInvite();
   await loadGroups();
+  await loadServers();
   const usable = groups.filter(canOpen);
   let intent = "";
   try { intent = localStorage.getItem("lockedin.intent") || ""; localStorage.removeItem("lockedin.intent"); } catch (err) { /* private mode */ }
+  // A mentor with a server but no group of their own lands on the server.
+  if (!usable.length && myServers.length) { loaded = false; clearTimeout(loadTimer); return openServer(myServers[0].id); }
   if (!usable.length) { screen = "lobby"; lobbyMode = intent === "create" ? "create" : "join"; loaded = false; return render(); }
   if (!usable.some(g => g.id === gid)) gid = (usable.find(g => (myMembership(g.id) || {}).status === "approved") || usable[0]).id;
   await openGroup(gid);
@@ -315,6 +318,7 @@ async function openGroup(id) {
   ((rf.error && snap ? snap.reflections : rf.data) || []).forEach(r => { reflections[r.week_start + "|" + r.member_key] = r; });
   await loadReactions(id);
   await loadComments(id);
+  await loadGroupServer(id);
   loadStep = "admin list";
   people = [];
   if (isAdmin) await loadPeople();
@@ -1357,6 +1361,7 @@ async function refreshAfterAdmin() {
     isAdmin ? loadPeople() : null,
     sb.from("members").select("*").eq("group_id", gid),
     isAppOwner ? loadOwnerData() : null,
+    loadGroupServer(gid), loadServers(),
   ]);
   if (!m.error) members = m.data;
   today = currentTradingDay();
@@ -1449,6 +1454,125 @@ async function uploadLogo(file) {
     await adminDo(sb.from("groups").update({ logo_path: path }).eq("id", gid), "Logo updated.");
     if (old) sb.storage.from("logos").remove([old]);
   } catch (e) { error = "Logo not saved: " + (e.message || e); render(); }
+}
+
+// ---------------------------------------------------------------- mentor servers (update 23)
+// A mentor's server shows the boxes and streaks of every group linked to it. Looking only: nothing on this
+// screen can change a group, and the database never sends notes, pictures or results to it.
+type ServerMember = { name: string; avatar_url: string | null; marks: string };   // marks: one letter per trading day
+type ServerGroup = { id: string; name: string; color: string; logo_path: string | null; status: string; today: string; days: string[]; members: ServerMember[] };
+type ServerView = { id: number; name: string; code: string; groups: ServerGroup[] };
+type ServerRow = { id: number; name: string; code: string; mine: boolean; owner: string; groups: number };
+let myServers: ServerRow[] = [];                                  // servers you own (the app owner gets all of them)
+let groupServer: { id: number; name: string } | null = null;      // the server the open group is linked to
+let serverView: ServerView | null = null;                         // the server open on the mentor screen
+let serverMsg = "";
+const serverOpen = new Set<string>();                             // groups whose member list is unfolded
+
+async function loadServers() {
+  const { data, error: e } = await sb.rpc("my_servers");
+  myServers = e || !Array.isArray(data) ? [] : data;   // before database update 23 there are simply none
+}
+async function loadGroupServer(id: string) {
+  const { data, error: e } = await sb.rpc("group_server", { g: id });
+  groupServer = e || !data ? null : data;
+}
+async function openServer(id: number, msg = "") {
+  const { data, error: e } = await sb.rpc("server_overview", { s: id });
+  if (e) {
+    serverMsg = e.message;
+    if (screen === "loading") screen = "lobby"; else if (screen !== "server") error = e.message;
+    return render();
+  }
+  serverView = data; serverMsg = msg; screen = "server";
+  render(); window.scrollTo(0, 0);
+}
+// Marks from the database: c complete, p partial, n nothing required ticked, x excused, - no row.
+// Counted the same way as the ranking: excused days are skipped, the open day can't break a streak,
+// and a day when nobody in the group logged anything isn't held against anyone's percentage.
+function serverMemberStats(g: ServerGroup, m: ServerMember) {
+  const last = g.days.length - 1;
+  let run = 0, closed = 0, done = 0;
+  for (let i = 0; i <= last; i++) {
+    const mk = m.marks[i] || "-";
+    if (mk === "x") continue;
+    if (mk === "c") run++; else if (i < last) run = 0;
+  }
+  const from = Math.max(0, last - 10);
+  for (let i = from; i < last; i++) {
+    const mk = m.marks[i] || "-";
+    if (mk === "x" || !g.members.some(o => "cpn".includes(o.marks[i] || "-"))) continue;
+    closed++; if (mk === "c") done++;
+  }
+  return { run, today: m.marks[last] || "-", rate: closed ? Math.round(100 * done / closed) : null as number | null,
+           strip: m.marks.slice(from, last + 1) };
+}
+function renderServer() {
+  const v = serverView;
+  if (!v) return `<div class="gate card"><p class="msg">${esc(serverMsg || "Loading…")}</p></div>`;
+  const TODAY: Record<string, [string, string]> = { c: ["Done", "ok"], p: ["Partly", "part"], x: ["Excused", ""], n: ["Not yet", ""], "-": ["Not yet", ""] };
+  const DAY: Record<string, string> = { c: "done", p: "partly done", x: "excused", n: "not done", "-": "not done" };
+  let people = 0, doneAll = 0;
+  const cards = v.groups.map(g => {
+    const rows = g.members.map(m => ({ m, s: serverMemberStats(g, m) }));
+    const done = rows.filter(r => r.s.today === "c").length;
+    const rated = rows.filter(r => r.s.rate !== null);
+    const rate = rated.length ? Math.round(rated.reduce((a, r) => a + r.s.rate, 0) / rated.length) : null;
+    people += rows.length; doneAll += done;
+    const open = serverOpen.has(g.id);
+    const list = open ? rows.map(({ m, s }) => {
+      const [label, cls] = TODAY[s.today] || TODAY["-"];
+      const strip = [...s.strip].map(k => `<i class="${k === "c" ? "c" : k === "p" ? "p" : k === "x" ? "x" : ""}"></i>`).join("");
+      const said = [...s.strip].map(k => DAY[k] || DAY["-"]).join(", ");
+      return `<div class="srv-mem">${m.avatar_url ? `<img src="${esc(m.avatar_url)}" alt="">` : `<span class="ph"></span>`}
+        <b>${esc(m.name)}</b><span class="srv-today ${cls}">${label}</span>
+        <span class="sub">${s.run ? `<span class="num">${s.run}</span>-day streak` : "No streak"}${s.rate === null ? "" : ` · <span class="num">${s.rate}%</span> of the last 10 days`}</span>
+        <span class="srv-strip" role="img" aria-label="Last ${s.strip.length} trading days, oldest first: ${said}">${strip}</span></div>`;
+    }).join("") || `<p class="empty">Nobody is in this group yet.</p>` : "";
+    return `<div class="card srv-group"><div class="ghead">${groupLogo(g, 36)}<div><b>${esc(g.name)}${g.status === "paused" ? `<span class="rolechip">Paused</span>` : ""}</b>
+        <span class="sub"><span class="num">${done}</span> of <span class="num">${rows.length}</span> done today${rate === null ? "" : ` · <span class="num">${rate}%</span> of the last 10 days`}</span></div></div>
+      <div class="actions"><button class="btn plain small" data-srv-toggle="${esc(g.id)}" aria-expanded="${open}">${open ? "Hide members" : "Show members"}</button>
+        <button class="btn danger small" data-srv-unlink="${esc(g.id)}">Remove from server</button></div>
+      ${open ? `<div class="srv-list">${list}</div>` : ""}</div>`;
+  }).join("");
+  const none = `<div class="card"><p class="empty">No group is linked yet. Send the server code to the owners of your groups. They type it in Admin, Group settings, Mentor server.</p></div>`;
+  return `<div class="srv-head"><div><h1>${esc(v.name)}</h1>
+      <p>${v.groups.length ? `<span class="num">${v.groups.length}</span> ${v.groups.length === 1 ? "group" : "groups"} · <span class="num">${doneAll}</span> of <span class="num">${people}</span> members done today` : "Your mentor view"}</p></div>
+      <button class="btn plain small" id="srv-refresh">Refresh</button></div>
+    ${serverMsg ? `<div class="card"><p class="msg">${esc(serverMsg)}</p></div>` : ""}
+    ${cards || none}
+    <div class="card"><div class="cardhead"><h2>Server code</h2></div>
+      <div class="codebox"><code>${esc(v.code)}</code>
+        <button class="btn plain small" id="srv-copy">Copy</button>
+        <button class="btn danger small" id="srv-new-code">New code</button></div>
+      <p class="empty" style="margin-top:10px">A group owner types this code in Admin, Group settings, Mentor server. After that you see the group here: who finished their boxes each day, and their streaks. You can't see notes, pictures or results, and you can't change anything in a group.</p></div>
+    <div class="srv-foot"><button class="btn plain small" id="srv-back">${loaded ? "Back to your group" : "Join or start a group"}</button>
+      <button class="btn plain small" id="signout">Sign out</button></div>`;
+}
+// Group owner: link this group to a mentor's server, or take it off again.
+function serverCardHtml() {
+  return `<div class="card gsettings"><div class="cardhead"><h2>Mentor server</h2>${groupServer ? `<span class="okchip">${ic("check", 14)}Linked</span>` : ""}</div>` + (groupServer
+    ? `<p class="empty" style="margin:-2px 0 10px">This group is on <b>${esc(groupServer.name)}</b>. Its owner can see your members' names, which days they finished their boxes, and their streaks. They can't see notes, pictures, results, comments or reflections, and they can't change anything.</p>
+      <div class="dcbtns" style="margin-top:0"><button class="btn danger small" id="srv-unlink-own">Unlink this group</button></div>`
+    : `<p class="empty" style="margin:-2px 0 10px">If your group is part of a mentor's Discord server, the mentor can give you a server code. With it the mentor sees your members' names, which days they finished their boxes, and their streaks. Never notes, pictures, results, comments or reflections. Tell your members before you link.</p>
+      <label class="flabel" for="srv-code">Server code</label>
+      <div class="addrow" style="margin-top:0"><input class="field code" id="srv-code" placeholder="ABCD-1234" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <button class="btn primary small" id="srv-link">Link</button></div>`) + `</div>`;
+}
+// App owner: every server, and making one for a mentor who has signed in.
+function serversCardHtml() {
+  const rows = myServers.map(s => `<div class="grow"><div class="ghead"><div><b>${esc(s.name)}</b>
+      <span class="sub">Owner: ${esc(s.owner || "Unknown")} · ${s.groups} linked · code ${esc(s.code)}</span></div></div>
+    <div class="actions" style="margin-left:0"><button class="btn plain small" data-open-server="${s.id}">Open</button>
+      <button class="btn danger small" data-delete-server="${s.id}">Delete</button></div></div>`).join("") || `<p class="empty">No servers yet.</p>`;
+  const opts = [...allProfiles].sort((a, b) => String(a.discord_name).localeCompare(String(b.discord_name)))
+    .map(p => `<option value="${esc(p.user_id)}">${esc(p.discord_name)}</option>`).join("");
+  return `<div class="card"><div class="cardhead"><h2>Mentor servers · ${myServers.length}</h2></div>${rows}
+    <div class="addrow srv-new"><input class="field" id="new-server" placeholder="Server name" maxlength="40" aria-label="Server name">
+      <select id="new-server-owner" aria-label="Server owner"><option value="">Owner</option>${opts}</select>
+      <button class="btn primary small" id="create-server">Create</button></div>
+    <p class="empty" style="margin-top:10px">The mentor signs in with Discord once, then you pick them here. They get a server code for their group owners.
+      A mentor only sees boxes and streaks. Deleting a server doesn't touch its groups.</p></div>`;
 }
 
 // ---------------------------------------------------------------- rendering helpers
@@ -2217,7 +2341,7 @@ function groupSettingsHtml(g) {
     <p class="empty" style="margin-top:6px">Members can tick their boxes until this time on the next trading day.</p>
     <button class="btn primary small" id="save-group" style="margin-top:14px">Save settings</button>
     <p class="sub-hint" id="save-group-msg" style="margin:8px 0 0"></p>
-  </div>${discordCardHtml()}${transferCardHtml(g)}`;
+  </div>${discordCardHtml()}${serverCardHtml()}${transferCardHtml(g)}`;
 }
 
 // Group owner: a short recap posted in the group's Discord, through a webhook link from Discord itself.
@@ -2307,7 +2431,7 @@ function ownerDashboardHtml() {
       <div class="addrow"><input class="field" id="new-group" placeholder="New group name" maxlength="40" aria-label="New group name">
         <button class="btn primary small" id="create-group">Create</button></div>
       <p class="empty" style="margin-top:10px">Groups you create are owned by you. Hand one to someone with "Make owner" once they're in it.
-      Deleting a group removes all its names, ticks, notes and reflections for good.</p></div>`;
+      Deleting a group removes all its names, ticks, notes and reflections for good.</p></div>${serversCardHtml()}`;
 }
 
 // The Groups sheet: switch group, join another, ask for your own, leave.
@@ -2323,14 +2447,19 @@ function renderGroups() {
   const yours = `<section class="card setpage"><div class="cardhead"><h2>Your groups</h2></div>
     <p class="sub-hint">Tap a group to switch to it.</p>
     <div class="glist">${mine.map(row).join("") || `<p class="empty">You're not in a group yet.</p>`}</div>
+    ${groupServer && g ? `<p class="sub-hint" style="margin:12px 0 0">${esc(g.name)} is linked to the mentor server ${esc(groupServer.name)}. Its owner can see names, which days the boxes were finished, and streaks. Not notes, pictures or results.</p>` : ""}
     ${others.length ? `<h3>Other groups (app owner)</h3><div class="glist">${others.map(row).join("")}</div>` : ""}</section>`;
   const join = `<section class="card setpage"><div class="cardhead"><h2>Join another group</h2></div>
     <p class="sub-hint">Ask the owner for their join code, then type it here.</p>${joinHtml()}</section>`;
   const leave = canLeave ? `<section class="card setpage"><div class="cardhead"><h2>Leave ${esc(g.name)}</h2></div>
     <p class="sub-hint">You can only come back if the owner approves you again.</p><button class="btn danger small" id="leave-group">Leave this group</button></section>` : "";
+  const servers = myServers.length ? `<section class="card setpage"><div class="cardhead"><h2>${myServers.length > 1 ? "Mentor servers" : "Your mentor server"}</h2></div>
+    <p class="sub-hint">The boxes and streaks of every group linked to it.</p>
+    <div class="glist">${myServers.map(s => `<button class="gitem" data-open-server="${s.id}"><span><b>${esc(s.name)}</b>
+      <small>${s.groups} ${+s.groups === 1 ? "group" : "groups"}${s.mine ? "" : " · " + esc(s.owner)}</small></span>${ic("chevron-right", 18)}</button>`).join("")}</div></section>` : "";
   return isWide()
-    ? `<div class="desk"><div class="maincol">${yours}</div><div class="side">${join}${leave}</div></div>`
-    : yours + join + leave;
+    ? `<div class="desk"><div class="maincol">${yours}${servers}</div><div class="side">${join}${leave}</div></div>`
+    : yours + servers + join + leave;
 }
 
 // After signing in, with no group yet: two clear choices, join with a code or start a group.
@@ -2420,6 +2549,7 @@ function renderGate() {
       <button data-lobby="join" aria-pressed="${lobbyMode === "join"}">${ic("users", 16)}Join with a code</button>
       <button data-lobby="create" aria-pressed="${lobbyMode === "create"}">${ic("target", 16)}Start a group</button></div>
     <div class="card lobby-card" style="text-align:left">${lobbyMode === "create" ? createHtml() : joinCodeHtml()}${lobbyStatus()}</div>
+    ${myServers.length ? `<button class="btn plain" data-open-server="${myServers[0].id}" style="margin-top:18px">Open ${esc(myServers[0].name)}</button>` : ""}
     <button class="btn plain" id="signout" style="margin-top:18px">Sign out</button></div>`;
   return `<div class="card"><p class="msg">Loading…</p></div>`;
 }
@@ -2548,6 +2678,7 @@ function renderLanding() {
         <li><b>Your group's owner and admins</b> can also approve or remove members, excuse days, correct ticks and delete comments.</li>
         <li><b>Reports</b> are seen only by the group's owner and the app owner. The person who was reported isn't told who reported them.</li>
         <li><b>Your group's Discord server, if the group owner turns on Discord recaps:</b> LockedIn then posts each member's name, whether they finished the day's homework, and a weekly count of days done, wins and losses in a channel the owner picks. Everyone who can read that channel sees it. Your group owner decides this, so ask them if you'd rather not be included.</li>
+        <li><b>A mentor, if your group owner links the group to a mentor server:</b> the owner of that server then sees each member's name and picture, which days they finished their boxes, and their streak. They don't see notes, screenshots, P&amp;L and R, reflections or comments, and they can't change anything. The Groups page shows whether your group is linked, and to which server.</li>
         <li><b>The app owner</b> (Adam Batko) can see every group, to run and support the service.</li>
         <li><b>Other groups</b> can't see anything of yours.</li>
       </ul>`)}
@@ -2886,6 +3017,7 @@ function render() {
     else applyTheme();
   }
   if (legal) { document.getElementById("topbar").hidden = true; document.getElementById("tabbar").hidden = true; app.innerHTML = renderLanding(); revealLanding(); return; }
+  if (screen === "server") { app.innerHTML = renderServer(); return; }
   if (screen !== "app") { app.innerHTML = renderGate(); if (screen === "signin") revealLanding(); return; }
   let html;
   if (tab === "admin" && isAdmin) html = renderAdmin();
@@ -3148,6 +3280,18 @@ document.addEventListener("click", async e => {
     return;
   }
   if (d.switchGroup) return switchGroup(d.switchGroup);
+  // Mentor servers: open one, unfold a group, take a group off, delete a server (app owner).
+  if (d.openServer) return openServer(+d.openServer);
+  if (d.srvToggle) { if (!serverOpen.delete(d.srvToggle)) serverOpen.add(d.srvToggle); return render(); }
+  if (d.srvUnlink) {
+    if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Sure? Tap again"; return; }
+    const { error: e2 } = await sb.rpc("unlink_server", { g: d.srvUnlink });
+    return serverView ? openServer(serverView.id, e2 ? e2.message : "Group removed from the server.") : null;
+  }
+  if (d.deleteServer) {
+    if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Sure? Tap again"; return; }
+    return adminDo(sb.rpc("delete_server", { s: +d.deleteServer }), "Server deleted. Its groups are untouched.");
+  }
   if (d.rename) {
     const name = document.getElementById("mname-" + d.rename).value.trim();
     if (!name) return;
@@ -3222,6 +3366,31 @@ document.addEventListener("click", async e => {
     }
     case "logo-pick": { const inp = document.getElementById("logoinput"); inp.value = ""; return inp.click(); }
     case "logo-remove": return adminDo(sb.from("groups").update({ logo_path: null }).eq("id", gid), "Logo removed.");
+    case "srv-refresh": return serverView ? openServer(serverView.id) : null;
+    case "srv-back": serverView = null; serverMsg = ""; screen = loaded ? "app" : "lobby"; render(); return window.scrollTo(0, 0);
+    case "srv-copy": {
+      try { await navigator.clipboard.writeText(serverView.code); t.textContent = "Copied"; } catch (err) { t.textContent = "Select and copy"; }
+      return setTimeout(() => { t.textContent = "Copy"; }, 1500);
+    }
+    case "srv-new-code": {
+      if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Old code stops working. Sure?"; return; }
+      const { error: e2 } = await sb.rpc("new_server_code", { s: serverView.id });
+      return openServer(serverView.id, e2 ? e2.message : "New server code made. Groups that were already linked stay linked.");
+    }
+    case "srv-link": {
+      const code = document.getElementById("srv-code").value.trim();
+      if (!code) return;
+      return adminDo(sb.rpc("link_server", { g: gid, code }), "Group linked. Tell your members that the mentor can now see their boxes and streaks.");
+    }
+    case "srv-unlink-own": {
+      if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Sure? Tap again"; return; }
+      return adminDo(sb.rpc("unlink_server", { g: gid }), "Group unlinked. The mentor no longer sees it.");
+    }
+    case "create-server": {
+      const name = document.getElementById("new-server").value.trim(), owner = document.getElementById("new-server-owner").value;
+      if (!name || !owner) { error = "Type a server name and pick its owner."; flash = ""; return render(); }
+      return adminDo(sb.rpc("create_server", { server_name: name, owner }), `Created ${name}. Its owner finds it under Groups.`);
+    }
     case "create-group": {
       const el = document.getElementById("new-group"), name = el.value.trim();
       if (!name) return;

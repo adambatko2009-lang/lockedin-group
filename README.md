@@ -31,6 +31,7 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
 | `supabase/update-20-request-alerts.sql` | The app owner gets a notification for new group requests (run once, after update 19; no push needed) |
 | `supabase/update-21-comments.sql` | Comments and replies on members' posts, and reporting a comment (run once, after update 20, before pushing) |
 | `supabase/update-22-remove-notifications.sql` | Notifications removed: deletes saved push addresses and stops owner alerts (run once, after update 21, before pushing) |
+| `supabase/update-23-mentor-servers.sql` | Mentor servers: a mentor sees the boxes and streaks of every group linked to their server, and can't change anything (run once, after update 22, before pushing) |
 | `supabase/sign-out-everyone-except-owner.sql` | Signs everyone but you out; no data is removed (run when needed) |
 | `web/public/assets/app-day.jpg` | Screenshot of the app with a made-up demo group, shown in the phone on the front page |
 | `web/public/vendor/` | Fonts and their licenses, hosted on our own site (see `web/public/vendor/THIRD-PARTY-NOTICES.md`) |
@@ -53,6 +54,10 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
 - Group owner: all of the above, plus that group's settings (name, color, logo, homework boxes, points, cutoff time, time zone),
   its join code, and who its group admins are.
 - App owner (you): everything in every group. Approves group requests, creates, pauses and deletes groups, hands a group to a new owner.
+  Creates and deletes mentor servers.
+- Mentor (owner of a server you created): sees, for each group linked to their server, the members' names and pictures, which days
+  each member finished their boxes, and streaks. Never notes, pictures, results, comments or reflections. Can't tick, edit or approve
+  anything. A group is only linked when its own group owner types the server code. Other mentors never see it.
 - Groups can never see each other's names, ticks, notes, pictures or reflections.
 
 **Nobody but you can change the website or its rules.** The code is in your GitHub account and the database is in your Supabase account; members can't edit either, and neither can their Claude.
@@ -142,6 +147,9 @@ Pictures need internet. Signing out removes the saved copy from that phone.
 - **Someone wants their own group:** they tap "Start your own group". You see it in Admin → All groups → Approve. They become its owner.
 - **Pause / delete a group, change its owner:** Admin → All groups (only you see this).
 - **Group settings** (owner): Admin → Group settings → Save settings.
+- **A mentor wants to see all their groups:** they sign in with Discord once. You go to Admin → All groups → Mentor servers, type a
+  server name, pick them and tap Create. They find the server under Groups, with a server code. Each group owner types that code in
+  Admin → Group settings → Mentor server. The owner or the mentor can unlink a group again at any time.
 - **Remove someone's access:** Admin → Approved → Remove access.
 - **Excuse a day** (sick, travelling): open that person's ✎ panel on that day → Admin → switch **Excused** on.
 - **Supabase free plan pauses after 7 days with no visits.** Daily use prevents it; if it ever happens, open supabase.com → your project → **Restore**.

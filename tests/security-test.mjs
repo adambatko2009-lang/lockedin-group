@@ -835,5 +835,131 @@ ok(!r.error, "Download my data still works");
 r = await db.query(`select p from public.old_pictures(10) as p`);
 ok(Array.isArray(r.rows), "the old-picture cleanup still works");
 
+// ================================================================ update 23: mentor servers
+const u23 = readFileSync(dir + "update-23-mentor-servers.sql", "utf8");
+await db.exec(u23);
+console.log("\nloaded: update-23-mentor-servers.sql");
+section("mentor servers (update 23)");
+// ro and r2 are two mentors. o9 owns a second group. own3 is whoever owns the Recap Crew group by now.
+Object.assign(U, { ro: "00000000-0000-0000-0000-0000000000e1", r2: "00000000-0000-0000-0000-0000000000e2", o9: "00000000-0000-0000-0000-0000000000e3" });
+for (const k of ["ro", "r2", "o9"]) await db.query(`insert into auth.users (id, raw_user_meta_data) values ($1, $2)`, [U[k], meta(k)]);
+const G9 = (await one(`select public.make_group('Other Crew', $1) g`, [U.o9])).g;
+const own3id = (await one(`select owner_id::text o from public.groups where id=$1`, [G3])).o;
+const own3 = Object.keys(U).find(k => U[k] === own3id);
+const mem3 = own3 === "m3" ? "m4" : "m3";   // a normal member of Recap Crew
+const g3name = (await one(`select name from public.groups where id=$1`, [G3])).name, k3now = (await one(`select name from public.members where key=$1`, [k3])).name;
+ok(!!own3 && own3 !== "batko", "test setup: Recap Crew has an owner who isn't the app owner");
+await db.query(`insert into public.ticks (day, member_key, chart, journal, review, note) values ($1, $2, true, true, true, 'SECRETNOTE')
+  on conflict (day, member_key) do update set chart=true, journal=true, review=true, excused=false, note='SECRETNOTE'`, [d3, k3]);
+
+ok(!!(await rpc(own3, "create_server", ["Mine", U[own3]])).error, "a group owner can't create a server");
+ok(!!(await rpc("ro", "create_server", ["Mine", U.ro])).error, "a mentor can't create a server for themselves");
+ok(!!(await rpc("anon", "create_server", ["Mine", U.ro])).error, "signed-out visitors can't create a server");
+ok(!!(await rpc("batko", "create_server", ["Ghost", "00000000-0000-0000-0000-0000000000ff"])).error, "a server needs an owner who has signed in");
+ok(!!(await rpc("batko", "create_server", ["  ", U.ro])).error, "a server needs a name");
+r = await rpc("batko", "create_server", ["Ronan's server", U.ro]);
+ok(!r.error, "the app owner creates a server for a mentor");
+const S1 = r.rows && r.rows[0].v;
+const S2 = (await rpc("batko", "create_server", ["Second server", U.r2])).rows[0].v;
+let srvCode1 = (await one(`select code from public.servers where id=$1`, [S1])).code;
+const srvCode2 = (await one(`select code from public.servers where id=$1`, [S2])).code;
+
+ok(!!(await as("ro", `select * from public.servers`)).error, "nobody reads the servers table directly, not even its owner");
+ok(!!(await as("anon", `select * from public.servers`)).error, "signed-out visitors can't read servers");
+ok(!!(await as(mem3, `select * from public.server_groups`)).error, "nobody reads the list of linked groups directly");
+ok(!!(await as("ro", `insert into public.server_groups (group_id, server_id) values ($1, $2)`, [G3, S1])).error, "a mentor can't link a group by writing to the table");
+ok(!!(await as("ro", `update public.servers set owner_id=$1`, [U.ro])).error, "nobody changes a server by writing to the table");
+
+r = await rpc("ro", "my_servers", []);
+ok(!r.error && r.rows[0].v.length === 1 && r.rows[0].v[0].code === srvCode1 && r.rows[0].v[0].mine === true, "a mentor sees their own server and its code");
+ok((await rpc("r2", "my_servers", [])).rows[0].v.every(x => String(x.id) === String(S2)), "another mentor doesn't see it");
+ok((await rpc(mem3, "my_servers", [])).rows[0].v.length === 0, "a member has no servers");
+ok((await rpc("batko", "my_servers", [])).rows[0].v.length === 2, "the app owner sees every server");
+ok(!!(await rpc("anon", "my_servers", [])).error, "signed-out visitors can't list servers");
+
+ok(!!(await rpc(mem3, "link_server", [G3, srvCode1])).error, "a member can't link the group to a server");
+ok(!!(await rpc("o9", "link_server", [G3, srvCode1])).error, "the owner of another group can't link this group");
+ok(!!(await rpc("ro", "link_server", [G3, srvCode1])).error, "the mentor can't link a group they don't own");
+ok(!!(await rpc("anon", "link_server", [G3, srvCode1])).error, "signed-out visitors can't link a group");
+r = await rpc(own3, "link_server", [G3, "ZZZZ-ZZZ1"]);
+ok(!!r.error && /doesn't work/.test(r.error), "a wrong server code is refused");
+r = await rpc("ro", "server_overview", [S1]);
+ok(!r.error && r.rows[0].v.groups.length === 0, "before a group is linked the mentor sees no group");
+r = await rpc(own3, "link_server", [G3, srvCode1.replace("-", "").toLowerCase()]);
+ok(!r.error && r.rows[0].v === "Ronan's server", "the group owner links the group with the server code");
+
+r = await rpc(mem3, "group_server", [G3]);
+ok(!r.error && r.rows[0].v && r.rows[0].v.name === "Ronan's server" && !("code" in r.rows[0].v), "members see which server their group is on, without the code");
+ok((await rpc("o9", "group_server", [G3])).rows[0].v === null, "other groups can't see which server a group is on");
+ok(!!(await rpc("anon", "group_server", [G3])).error, "signed-out visitors can't either");
+
+r = await rpc("ro", "server_overview", [S1]);
+const ov = r.rows && r.rows[0].v, og = ov && ov.groups[0];
+ok(!r.error && ov.groups.length === 1 && og.id === G3 && og.name === g3name, "the mentor sees the linked group");
+ok(!!og && og.days.length > 0 && og.days.length <= 90 && og.days[og.days.length - 1] === d3 && og.today === d3, "with its trading days up to the open day");
+const mia = og && og.members.find(m => m.name === k3now);
+ok(!!mia && mia.marks.length === og.days.length && mia.marks.slice(-1) === "c", "and a mark per member per day (the member who ticked everything is complete today)");
+ok(og.members.every(m => Object.keys(m).sort().join() === "avatar_url,marks,name"), "members come with name, picture and marks only");
+ok(!JSON.stringify(ov).includes("SECRETNOTE") && !/"(note|images|pnl|rr|went_well|body)"/.test(JSON.stringify(ov)), "notes, pictures, P&L and comments are never in the mentor's view");
+ok(!ov.groups.some(x => x.id === G9), "a group that isn't linked isn't shown");
+
+ok(!!(await rpc("r2", "server_overview", [S1])).error, "another mentor can't open this server");
+ok((await rpc("r2", "server_overview", [S2])).rows[0].v.groups.length === 0, "and their own server doesn't show this group");
+ok(!!(await rpc(mem3, "server_overview", [S1])).error, "a member can't open the server");
+ok(!!(await rpc(own3, "server_overview", [S1])).error, "the group owner can't open the server either");
+ok(!!(await rpc("anon", "server_overview", [S1])).error, "signed-out visitors can't open a server");
+ok(!(await rpc("batko", "server_overview", [S1])).error, "the app owner can");
+ok(!!(await as("ro", `select * from public.server_days($1)`, [G3])).error, "the helper that lists trading days can't be called from the website");
+
+ok((await as("ro", `select * from public.ticks`)).rows.length === 0, "the mentor can't read the group's ticks or notes");
+ok((await as("ro", `select * from public.members`)).rows.length === 0, "or its member list");
+ok((await as("ro", `select * from public.comments`)).rows.length === 0, "or its comments");
+ok((await as("ro", `select * from public.reflections`)).rows.length === 0, "or its reflections");
+ok((await as("ro", `select * from public.groups`)).rows.length === 0, "or the group's settings and join code");
+ok(!!(await as("ro", `insert into public.ticks (day, member_key, chart) values ($1, $2, true)`, [d3, k4])).error, "the mentor can't tick for anyone");
+ok((await as("ro", `update public.ticks set chart=false`)).count === 0, "or change a tick");
+ok((await as("ro", `update public.groups set name='Hacked'`)).count === 0, "or change a group");
+ok((await as("ro", `update public.memberships set status='approved'`)).count === 0, "or approve anyone");
+
+ok(!!(await rpc("r2", "new_server_code", [S1])).error, "another mentor can't change the server code");
+ok(!!(await rpc(own3, "new_server_code", [S1])).error, "a group owner can't change the server code");
+r = await rpc("ro", "new_server_code", [S1]);
+ok(!r.error && r.rows[0].v !== srvCode1, "the server owner makes a new code");
+ok(!!(await rpc("o9", "link_server", [G9, srvCode1])).error, "the old code stops working");
+srvCode1 = r.rows[0].v;
+ok((await rpc("ro", "server_overview", [S1])).rows[0].v.groups.length === 1, "groups that were already linked stay linked");
+
+ok(!!(await rpc(mem3, "unlink_server", [G3])).error, "a member can't unlink the group");
+ok(!!(await rpc("r2", "unlink_server", [G3])).error, "another mentor can't unlink it");
+ok(!!(await rpc("o9", "unlink_server", [G3])).error, "another group's owner can't unlink it");
+ok(!!(await rpc("anon", "unlink_server", [G3])).error, "signed-out visitors can't unlink it");
+ok((await one(`select count(*)::int n from public.server_groups where group_id=$1`, [G3])).n === 1, "after all that the group is still linked");
+ok(!(await rpc("ro", "unlink_server", [G3])).error && (await one(`select count(*)::int n from public.server_groups`)).n === 0, "the server owner can take a group off the server");
+await rpc(own3, "link_server", [G3, srvCode1]);
+ok(!(await rpc(own3, "unlink_server", [G3])).error && (await one(`select count(*)::int n from public.server_groups`)).n === 0, "the group owner can unlink the group");
+ok((await rpc(mem3, "group_server", [G3])).rows[0].v === null, "members then see no server");
+ok((await rpc("ro", "server_overview", [S1])).rows[0].v.groups.length === 0, "and the mentor no longer sees the group");
+
+await rpc(own3, "link_server", [G3, srvCode1]);
+await rpc(own3, "link_server", [G3, srvCode2]);
+ok((await rpc("ro", "server_overview", [S1])).rows[0].v.groups.length === 0 && (await rpc("r2", "server_overview", [S2])).rows[0].v.groups.length === 1, "a group is on one server at a time");
+await rpc(own3, "link_server", [G3, srvCode1]);
+await rpc("o9", "link_server", [G9, srvCode1]);
+
+await db.exec(u23);
+ok((await one(`select count(*)::int n from public.servers`)).n === 2 && (await one(`select count(*)::int n from public.server_groups`)).n === 2, "running update 23 a second time keeps servers and links");
+ok(!!(await as("ro", `select * from public.servers`)).error && !(await rpc("ro", "server_overview", [S1])).error, "and the rules still hold after the second run");
+
+r = await rpc("ro", "export_my_data", []);
+ok(!r.error && r.rows[0].v.servers_you_own.length === 1 && r.rows[0].v.servers_you_own[0].server === "Ronan's server", "your data download lists the server you own");
+ok(!!(await rpc("ro", "delete_server", [S1])).error, "a mentor can't delete a server");
+ok(!!(await rpc(own3, "delete_server", [S1])).error, "a group owner can't delete a server");
+ok(!(await rpc("batko", "delete_server", [S2])).error && (await one(`select count(*)::int n from public.servers`)).n === 1, "the app owner deletes a server");
+await db.query(`delete from public.groups where id=$1`, [G9]);
+ok((await one(`select count(*)::int n from public.server_groups where group_id=$1`, [G9])).n === 0, "deleting a group takes it off the server");
+ok(!(await rpc("ro", "delete_my_account", [])).error && (await one(`select count(*)::int n from public.servers`)).n === 0
+  && (await one(`select count(*)::int n from public.server_groups`)).n === 0, "when a mentor deletes their account, the server and its links go too");
+ok((await one(`select count(*)::int n from public.groups where id=$1`, [G3])).n === 1 && (await one(`select count(*)::int n from public.ticks where member_key=$1`, [k3])).n >= 1, "the groups that were on it keep all their data");
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
