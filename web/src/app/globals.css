@@ -123,7 +123,7 @@
   .topbar .end #toggleme .meav { width: 22px; height: 22px; margin-left: -6px; }
   .tabbar button:active { transform: scale(0.94); }
   .tabbar .badge { position: absolute; top: 6px; right: calc(50% - 20px); min-width: 16px; height: 16px; border-radius: 8px; padding: 0 4px;
-                   background: var(--crit); color: #fff; font-size: 10px; font-weight: 700; display: grid; place-items: center; }
+                   background: var(--crit); color: var(--on-crit); font-size: 10px; font-weight: 700; display: grid; place-items: center; }
 
   /* ---------- content (solid, no glass) ---------- */
   .card { background: var(--card); border: 1px solid var(--line); box-shadow: inset 0 1px 0 var(--card-hi); border-radius: 16px; padding: 16px; min-width: 0; }
@@ -330,7 +330,7 @@
   .numfield b { font: 600 15px var(--font-data); color: var(--text-2); }
   .numfield input { flex: 1; min-width: 0; width: 100%; border: 0; background: transparent; color: var(--text); font: 600 16px var(--font-data); outline: none; text-align: right; }
   .numfield:focus-within { box-shadow: 0 0 0 2px var(--accent); }
-  #num-hint.bad { color: var(--crit); }
+  #num-hint.bad { color: var(--crit-text); }
   /* P&L and R: a plain grey chip; only the numbers are green or red (the red chip is for rule breaks) */
   .pnlchip { display: inline-flex; align-items: center; font: 600 12px var(--font-data); padding: 2px 8px; border-radius: 6px; background: var(--surface-2); color: var(--text-2); }
   .pnlchip.up, .tile b.up { color: var(--good-text); }
@@ -360,7 +360,7 @@
   .creplying { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
   .linkbtn { border: 0; background: none; padding: 0; color: var(--accent-text); font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
   .linkbtn:hover { text-decoration: underline; }
-  .okchip { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--good); }
+  .okchip { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--good-text); }
   .howto { margin: 0 0 6px; font-size: 14px; color: var(--text-2); }
   .howto summary { cursor: pointer; font-weight: 600; color: var(--accent-text); padding: 4px 0; }
   .howto ol { margin: 6px 0 4px; padding-left: 20px; display: grid; gap: 4px; }
@@ -505,11 +505,11 @@
   .result-set button { font-size: 14px; white-space: nowrap; padding: 0 4px; }
   @media (max-width: 360px) { .result-set button { font-size: 13px; } }
   .result-set + .sub-hint { margin-top: 8px; }
-  .result-set .r-win[aria-pressed="true"] { color: var(--good); }
-  .result-set .r-loss[aria-pressed="true"] { color: var(--crit); }
-  .result-set .r-gamble[aria-pressed="true"] { color: var(--warn); }
+  .result-set .r-win[aria-pressed="true"] { color: var(--good-text); }
+  .result-set .r-loss[aria-pressed="true"] { color: var(--crit-text); }
+  .result-set .r-gamble[aria-pressed="true"] { color: color-mix(in srgb, var(--warn) 50%, var(--text)); }   /* plain yellow is unreadable on white */
   .rtag i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-  .rtag.r-win { color: var(--good); } .rtag.r-loss { color: var(--crit); } .rtag.r-gamble { color: var(--warn); }
+  .rtag.r-win { color: var(--good-text); } .rtag.r-loss { color: var(--crit-text); } .rtag.r-gamble { color: color-mix(in srgb, var(--warn) 50%, var(--text)); }
   .ntag { display: inline-flex; align-items: center; gap: 4px; flex: none; font-size: 12px; font-weight: 600; color: var(--text-2); background: var(--surface-2); border-radius: 6px; padding: 1px 6px; }
   @media (max-width: 420px) { .ntag-text { display: none; } .rtag .ntag-text { display: inline; } }
   .time.urgent { color: var(--crit-text); }
@@ -852,7 +852,7 @@
   .gitem small { font-size: 13px; color: var(--muted); }
   .gitem .ic { color: var(--accent-text); }
   .adminseg { grid-template-columns: 1fr 1fr; }
-  .adminseg .count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--crit); color: #fff; font-size: 11px; font-weight: 700; margin-left: 4px; }
+  .adminseg .count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--crit); color: var(--on-crit); font-size: 11px; font-weight: 700; margin-left: 4px; }
 
   /* ---------- Me tab ---------- */
   .melist { display: flex; flex-direction: column; }
@@ -977,7 +977,7 @@
     .topbar .end .gearbtn svg { width: 19px; height: 19px; }
     .topbar .end .gearbtn .x { font-size: 15px; line-height: 1; }
     .topbar .end .gearbtn .count { position: absolute; top: -4px; right: -6px; }
-    .topbar .end .count { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--crit); color: #fff;
+    .topbar .end .count { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--crit); color: var(--on-crit);
                           font-size: 11px; font-weight: 700; display: inline-grid; place-items: center; }
     .round:hover:not(:disabled) { background: var(--glass-pill); }
     #app { gap: 16px; }
@@ -1107,7 +1107,7 @@
     .rail button[aria-current="page"] { color: var(--on-accent); background: var(--accent); }
     .rail .meav { width: 22px; height: 22px; box-shadow: 0 0 0 2px var(--lg-edge); }
     .rail .rail-sep { flex: 1; min-height: 14px; }
-    .rail .count { margin-left: auto; min-width: 19px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--crit); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+    .rail .count { margin-left: auto; min-width: 19px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--crit); color: var(--on-crit); font-size: 11px; font-weight: 700; display: grid; place-items: center; }
     .rail button:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
     /* people who ask for less transparency or more contrast get a solid bar */
     @media (prefers-reduced-transparency: reduce) { .rail { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; } .rail::before, .rail::after { display: none; } }
