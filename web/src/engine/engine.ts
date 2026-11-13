@@ -170,6 +170,7 @@ let tab = "day";
 let profileKey = null;   // whose profile page is open
 try { const t = localStorage.getItem("tab"); if (t) tab = t; } catch (e) {}
 let error = "", saving = 0, loaded = false, channel = null;
+let errorDetail = { of: "", text: "" };   // small print under an error (the technical text, for support); only shown with the error it belongs to
 let reflections: Record<string, any> = {};           // "monday|member" -> {week_start, member_key, went_well, to_fix}
 
 const group = () => groups.find(g => g.id === gid) || null;
@@ -245,7 +246,7 @@ async function loadGroups() {
     sb.from("memberships").select("*").eq("user_id", session.user.id),
     sb.from("group_requests").select("*").order("created_at", { ascending: false }),
   ]);
-  if (g.error) throw new Error("Couldn't load groups: " + g.error.message + ". Has database update 9 been run?");
+  if (g.error) throw new Error("Couldn't load your groups: " + g.error.message);
   groups = g.data || []; myMemberships = m.data || []; requests = r.data || [];
 }
 
@@ -303,7 +304,7 @@ async function openGroup(id) {
     loadTicks(id, snap),
   ]);
   const failed = [m, h, t].find(r => r.error);
-  if (failed) { error = "Couldn't load data: " + failed.error.message; }
+  if (failed) fail(failed.error, "Couldn't load the group");
   members = m.data || (snap ? snap.members : []);
   HOLIDAYS = new Set((h.data || []).map(r => r.day)); dateMemo.next.clear();
   ticks = t.ticks;
@@ -348,7 +349,7 @@ async function switchGroup(id) {
 // Everyone in (or waiting for) the open group, with their Discord name and picture.
 async function loadPeople() {
   const { data, error: e } = await sb.from("memberships").select("*").eq("group_id", gid).order("created_at");
-  if (e) { error = e.message; return; }
+  if (e) { fail(e, "Couldn't load the people in this group"); return; }
   const ids = (data || []).map(x => x.user_id);
   const pr = ids.length ? await sb.from("profiles").select("user_id, discord_name, avatar_url").in("user_id", ids) : { data: [] };
   people = (data || []).map(x => Object.assign({ discord_name: "Unknown", avatar_url: null }, (pr.data || []).find(p => p.user_id === x.user_id) || {}, x));
@@ -480,7 +481,7 @@ async function toggleReaction(kind, day, key) {
   const { error: e } = mineNow
     ? await sb.from("reactions").delete().eq("day", day).eq("member_key", key).eq("user_id", uid).eq("kind", kind)
     : await sb.from("reactions").insert({ day, member_key: key, kind });
-  if (e && !/duplicate/i.test(e.message)) { if (mineNow) add(); else drop(); error = e.message; render(); }
+  if (e && !/duplicate/i.test(e.message)) { if (mineNow) add(); else drop(); fail(e, "Your reaction wasn't saved"); render(); }
 }
 
 // ---------------------------------------------------------------- comments and replies on someone's post
@@ -553,7 +554,7 @@ async function sendComment(k) {
   const { data, error: e } = await sb.from("comments").insert({ day, member_key: key, body, reply_to: replyTo[k] || null })
     .select("id, day, member_key, author_key, user_id, reply_to, body, created_at").single();
   commentSending = "";
-  if (e) { error = isNetErr(e) ? "No connection. Your comment wasn't sent; try again." : e.message; return render(); }
+  if (e) { fail(e, "Your comment wasn't sent"); return render(); }
   addCommentLocal(data);
   delete commentDrafts[k]; delete replyTo[k];
   render();
@@ -562,7 +563,7 @@ async function deleteComment(id) {
   const c = findComment(id);
   if (!c) return;
   const { error: e } = await sb.from("comments").delete().eq("id", id);
-  if (e) { error = e.message; return render(); }
+  if (e) { fail(e, "The comment wasn't deleted"); return render(); }
   dropCommentLocal(id);
   render();
 }
@@ -635,9 +636,7 @@ async function saveTick(id) {
     return render();
   }
   if (e) {
-    error = e.code === "42501" || /row-level security/i.test(e.message)
-      ? "Not saved: this day is closed or the row isn't yours."
-      : "Not saved: " + e.message;
+    fail(e, "Not saved");
     noteState[id] = "error";
     // Reload the real row, but your typed note stays in the box and in the backup on this device.
     const { data } = await sb.from("ticks").select("*").eq("day", row.day).eq("member_key", row.member_key).maybeSingle();
@@ -909,7 +908,9 @@ async function saveReflection(id) {
     { week_start: r.week_start, member_key: r.member_key, went_well: r.went_well || "", to_fix: r.to_fix || "" }, { onConflict: "week_start,member_key" });
   saving--;
   delete pendingRefl[id];
-  error = e ? "Reflection not saved: " + (/row-level security|42501/.test(e.message + e.code) ? "this week is closed." : e.message) : "";
+  if (!e) error = "";
+  else if (/row-level security|42501/.test(e.message + e.code)) error = "Reflection not saved: this week is closed.";
+  else fail(e, "Reflection not saved");
   renderTop();
 }
 
@@ -972,8 +973,8 @@ async function shrink(file): Promise<any> {
 
 async function uploadShot(day, key, file) {
   if (!canEdit(day, key) || !file) return;
-  if (((tickOf(day, key) || {}).images || []).length + (uploading[key] || 0) >= MAX_SHOTS) { error = `Max ${MAX_SHOTS} screenshots per day.`; return render(); }
-  if (file.type && !file.type.startsWith("image/")) { error = "That file isn't a picture."; return render(); }
+  if (((tickOf(day, key) || {}).images || []).length + (uploading[key] || 0) >= MAX_SHOTS) { error = `That day already has ${MAX_SHOTS} pictures, the most allowed. Delete one to add another.`; return render(); }
+  if (file.type && !file.type.startsWith("image/")) { error = "That file isn't a picture. Pick a PNG or JPG."; return render(); }
   uploading[key] = (uploading[key] || 0) + 1; render();
   try {
     const blob = await shrink(file);
@@ -984,7 +985,8 @@ async function uploadShot(day, key, file) {
     error = "";
     editTick(day, key, row => { row.images = [...row.images, path]; });
   } catch (e) {
-    error = "Screenshot not saved: " + (/row-level security|unauthorized|403/i.test(e.message || "") ? "this day is closed or the row isn't yours." : (e.message || e));
+    if (/couldn't read this image/.test(e.message || "")) error = "Picture not saved: this file couldn't be read. Try a PNG or JPG.";
+    else fail(e, "Picture not saved");
   } finally {
     uploading[key]--; render();
   }
@@ -1165,23 +1167,23 @@ async function resolveReport(id, remove) {
   if (!r) return;
   if (remove && r.kind === "comment") {
     const del = await sb.from("comments").delete().eq("id", Number(r.image));
-    if (del.error) { error = del.error.message; return render(); }
+    if (del.error) { fail(del.error, "The comment wasn't removed"); return render(); }
     dropCommentLocal(Number(r.image));
     const same = reports.filter(x => x.kind === "comment" && x.image === r.image).map(x => x.id);
     return adminDo(sb.from("reports").update({ status: "handled" }).in("id", same), "Comment removed.");
   }
   if (remove) {
     const cur = await sb.from("ticks").select("images, note").eq("day", r.day).eq("member_key", r.member_key).maybeSingle();
-    if (cur.error) { error = cur.error.message; return render(); }
+    if (cur.error) { fail(cur.error, "Couldn't open the reported post"); return render(); }
     if (cur.data) {
       if (r.kind === "picture") {
         const st = await sb.storage.from("screenshots").remove([r.image]);
-        if (st.error) { error = "Couldn't delete the picture: " + st.error.message; return render(); }
+        if (st.error) { fail(st.error, "The picture wasn't removed"); return render(); }
         const up = await sb.from("ticks").update({ images: (cur.data.images || []).filter(p => p !== r.image) }).eq("day", r.day).eq("member_key", r.member_key);
-        if (up.error) { error = up.error.message; return render(); }
+        if (up.error) { fail(up.error, "The picture wasn't removed"); return render(); }
       } else {
         const up = await sb.from("ticks").update({ note: "" }).eq("day", r.day).eq("member_key", r.member_key);
-        if (up.error) { error = up.error.message; return render(); }
+        if (up.error) { fail(up.error, "The note wasn't removed"); return render(); }
       }
     }
     // other reports about the same thing are done too
@@ -1194,7 +1196,7 @@ async function resolveReport(id, remove) {
 async function removeShot(day, key, path) {
   if (!canEdit(day, key)) return;
   const { error: e } = await sb.storage.from("screenshots").remove([path]);
-  if (e) { error = "Couldn't delete: " + e.message; return render(); }
+  if (e) { fail(e, "The picture wasn't deleted"); return render(); }
   editTick(day, key, row => { row.images = row.images.filter(p => p !== path); });
 }
 
@@ -1336,7 +1338,7 @@ function renderPanelPics() {
 async function adminDo(promise, okMsg) {
   const res = await promise;
   const e = res.error;
-  error = e ? e.message : "";
+  if (e) fail(e, "That change wasn't saved"); else error = "";
   flash = !e && okMsg ? okMsg : "";
   await refreshAfterAdmin();
   render();
@@ -1459,7 +1461,7 @@ async function uploadLogo(file) {
     if (e) throw e;
     await adminDo(sb.from("groups").update({ logo_path: path }).eq("id", gid), "Logo updated.");
     if (old) sb.storage.from("logos").remove([old]);
-  } catch (e) { error = "Logo not saved: " + (e.message || e); render(); }
+  } catch (e) { if (/couldn't read this image/.test(e.message || "")) error = "Logo not saved: this file couldn't be read. Try a PNG or JPG."; else fail(e, "Logo not saved"); render(); }
 }
 
 // ---------------------------------------------------------------- mentor servers (update 23)
@@ -1490,7 +1492,7 @@ async function openServer(id: number, msg = "") {
   const { data, error: e } = await sb.rpc("server_overview", { s: id });
   if (e) {
     serverMsg = e.message;
-    if (screen === "loading") screen = "lobby"; else if (screen !== "server") error = e.message;
+    if (screen === "loading") screen = "lobby"; else if (screen !== "server") fail(e, "Couldn't open the mentor server");
     return render();
   }
   if (screen !== "server") { try { history.pushState({ ...navNow(), server: 1 }, ""); } catch (e2) {} }   // so Back returns to where you were
@@ -1671,7 +1673,6 @@ function watchSummary() {
 }
 
 function statusText() {
-  if (error) return `<small class="err">${esc(error.length > 48 ? "Not saved" : error)}</small>`;
   return saving || Object.keys(pending).length ? `<small>Saving…</small>` : "";
 }
 
@@ -1751,6 +1752,7 @@ function morphNode(a, b) {
 const PAGE_TITLE = { day: "Today", week: "Week", board: "Ranking", journal: "Journal", me: "Profile", admin: "Admin", help: "Help & support", settings: "Settings", groups: "Groups" };
 function renderTop() {
   renderNoteStatus();
+  renderErrBar();
   const top = document.getElementById("topbar");
   top.hidden = screen !== "app";
   if (screen !== "app") return;
@@ -1762,7 +1764,7 @@ function renderTop() {
     return;
   }
   if (isWide()) {
-    const status = error ? `<span class="err">${esc(error)}</span>` : saving || Object.keys(pending).length ? "Saving…" : "";
+    const status = saving || Object.keys(pending).length ? "Saving…" : "";
     morph(top, `${groupButton(24)}
       <div class="center">${tab === "day" ? `
         <button class="round" id="prev" aria-label="Previous trading day">${ic("chevron-left", 20)}</button>
@@ -2036,8 +2038,7 @@ function renderDay() {
     ${openLine}
     ${banner}${nudge}
   </div>`;
-  const err = error && !isWide() && error.length > 48 ? `<div class="card"><p class="msg err">${esc(error)}</p></div>` : "";
-  return { summary: summary + quick, list: err + `<div class="card"><div class="cardhead"><h2>${esc((group() || {}).name || "Your group")} ${k === today ? "today" : "on " + fmtDay(k, { weekday: "short" })}</h2></div>${rows || `<p class="empty">No members yet.</p>`}</div>` };
+  return { summary: summary + quick, list: `<div class="card"><div class="cardhead"><h2>${esc((group() || {}).name || "Your group")} ${k === today ? "today" : "on " + fmtDay(k, { weekday: "short" })}</h2></div>${rows || `<p class="empty">No members yet.</p>`}</div>` };
 }
 
 function renderWeek() {
@@ -2339,7 +2340,7 @@ function renderAdmin() {
     `<div class="card"><div class="cardhead"><h2>Approved</h2></div>${approvedHtml}</div>` + (orphanHtml ? `<div class="card"><div class="cardhead"><h2>Names without an account</h2></div>${orphanHtml}
       <p class="empty" style="margin-top:10px">These names have history but nobody is signed in as them. Remove one to take it off the board; its history is kept.</p></div>` : ""),
   ];
-  const note = flash ? `<div class="card"><p class="msg">${esc(flash)}</p></div>` : error ? `<div class="card"><p class="msg err">${esc(error)}</p></div>` : "";
+  const note = flash ? `<div class="card"><p class="msg">${esc(flash)}</p></div>` : "";
   const paused = g && g.status === "paused" ? `<div class="card"><p class="msg err">This group is paused by the app owner. Nobody can tick or change anything until it's resumed.</p></div>` : "";
   const owner = isAppOwner ? ownerDashboardHtml() : "";
   fixAdminView();
@@ -3334,6 +3335,10 @@ document.addEventListener("click", async e => {
   if (t.id === "viewer-report") { const v = viewing; return v && openReport("picture", v.day, v.key, v.path); }
   if (t.id === "report-cancel") return document.getElementById("reportdlg").close();
   if (t.id === "report-send") return sendReport();
+  if (t.id === "errbar-x") { error = ""; return renderErrBar(); }
+  if (t.id === "confirm-no") return document.getElementById("confirmdlg").close("no");
+  // A second tap that lands here by accident right after the window opened does nothing.
+  if (t.id === "confirm-yes") { if (Date.now() - confirmAt > 500) document.getElementById("confirmdlg").close("yes"); return; }
   if (d.reportNote) { const [day, key] = d.reportNote.split("|"); return openReport("note", day, key); }
   if (d.reportRemove) {
     if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Sure? Tap again"; return; }
@@ -3378,8 +3383,7 @@ document.addEventListener("click", async e => {
   }
   if (d.deleteGroup) {
     const x = groups.find(y => y.id === d.deleteGroup);
-    if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Delete everything?"; return; }
-    if (t.dataset.confirm2 !== "1") { t.dataset.confirm2 = "1"; t.textContent = `Really delete ${x.name}? Tap again`; return; }
+    if (!x || !(await askConfirm(`Delete ${x.name}?`, "This deletes the group for everyone in it, with all its ticks, notes and pictures. It can't be undone.", "Delete group"))) return;
     return adminDo(sb.from("groups").delete().eq("id", x.id), `${x.name} was deleted.`);
   }
   if (d.color) {
@@ -3432,7 +3436,7 @@ document.addEventListener("click", async e => {
     case "signin": {
       try { if (t.id === "signin-own") localStorage.setItem("lockedin.intent", "create"); else localStorage.removeItem("lockedin.intent"); } catch (err) { /* private mode */ }
       const { error: er } = await sb.auth.signInWithOAuth({ provider: "discord", options: { redirectTo: location.origin + location.pathname } });
-      if (er) { error = er.message; render(); }
+      if (er) { fail(er, "Sign-in didn't start"); render(); }
       return;
     }
     case "signout":
@@ -3452,9 +3456,9 @@ document.addEventListener("click", async e => {
     case "join": return joinWithCode();
     case "send-request": return sendGroupRequest();
     case "leave-group": {
-      if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Sure? Tap again"; return; }
+      if (!(await askConfirm(`Leave ${(group() || {}).name || "this group"}?`, "You can only come back if the owner approves you again.", "Leave group"))) return;
       const { error: e } = await sb.from("memberships").delete().eq("group_id", gid).eq("user_id", session.user.id);
-      if (e) { error = e.message; return render(); }
+      if (e) { fail(e, "You're still in the group"); return render(); }
       closePanel(); loaded = false; screen = "loading"; render(); return loadAll();
     }
     case "copy-support": {
@@ -3622,7 +3626,7 @@ document.addEventListener("click", e => { if (e.target.id === "daypick" && e.tar
   }, { passive: true });
 })();
 document.addEventListener("keydown", e => {
-  if (e.key !== "Escape" || document.getElementById("viewer").open || tour) return;
+  if (e.key !== "Escape" || document.getElementById("viewer").open || document.getElementById("confirmdlg").open || tour) return;
   if (editing || settingsOpen) return closePanel();
   if (profileKey) { profileKey = null; render(); return window.scrollTo(0, 0); }
   if (tab === "admin" || tab === "me" || tab === "journal") setTab("day");
@@ -3900,7 +3904,7 @@ async function flushOutbox() {
     if (JSON.stringify(cur[id]) === JSON.stringify(o[id])) delete cur[id];   // unless you changed it again meanwhile
     putOutbox(cur);
     if (e) error = e.code === "42501" || /row-level security/i.test(e.message)
-      ? `A tick from ${fmtDay(o[id].day)} couldn't upload: that day closed before you were back online.` : "Not saved: " + e.message;
+      ? `A tick from ${fmtDay(o[id].day)} couldn't upload: that day closed before you were back online.` : plainError(e, "Not saved").text;
     else if (noteState[id] === "offline") noteState[id] = "saved";
   }
   flushing = false;
@@ -3952,11 +3956,11 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.ser
 
 // ---------------------------------------------------------------- your data (download / delete)
 function dataMsg(text, bad?) { const el = document.getElementById("data-msg"); if (el) { el.textContent = text; el.classList.toggle("bad", !!bad); } }
-const notSetUp = m => /function|schema cache/i.test(m) ? "This isn't set up yet (database update 11)." : m;
+const notSetUp = (e, what) => /function|schema cache/i.test(e.message || "") ? what + ": this isn't available yet. Try again later." : plainError(e, what).text;
 async function exportMyData() {
   dataMsg("Preparing your file…");
   const { data, error: e } = await sb.rpc("export_my_data");
-  if (e) return dataMsg(notSetUp(e.message), true);
+  if (e) return dataMsg(notSetUp(e, "Your file wasn't made"), true);
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob); a.download = `lockedin-my-data-${today}.json`;
@@ -3965,21 +3969,17 @@ async function exportMyData() {
   dataMsg("Downloaded.");
 }
 async function deleteMyAccount(btn) {
-  if (!btn.classList.contains("armed")) {
-    btn.classList.add("armed"); btn.textContent = "Tap again to delete everything";
-    dataMsg("This deletes your account, ticks, notes, reflections and pictures for good. It can't be undone.", true);
-    return;
-  }
+  if (!(await askConfirm("Delete your account?", "This deletes your account, ticks, notes, reflections and pictures for good. It can't be undone.", "Delete my account"))) return;
   btn.disabled = true; dataMsg("Deleting…");
   const paths = await sb.rpc("my_screenshot_paths");
-  if (paths.error) { btn.disabled = false; return dataMsg(notSetUp(paths.error.message), true); }
+  if (paths.error) { btn.disabled = false; return dataMsg(notSetUp(paths.error, "Nothing was deleted"), true); }
   const list = (paths.data || []).map(x => typeof x === "string" ? x : x.my_screenshot_paths).filter(Boolean);
   for (let i = 0; i < list.length; i += 100) {
     const { error: e } = await sb.storage.from("screenshots").remove(list.slice(i, i + 100));
-    if (e) { btn.disabled = false; return dataMsg("Couldn't delete your pictures: " + e.message + ". Nothing else was deleted. Try again.", true); }
+    if (e) { btn.disabled = false; return dataMsg(plainError(e, "Your pictures weren't all deleted, and nothing else was").text, true); }
   }
   const { error: e } = await sb.rpc("delete_my_account");
-  if (e) { btn.disabled = false; return dataMsg(notSetUp(e.message), true); }
+  if (e) { btn.disabled = false; return dataMsg(notSetUp(e, "Your account wasn't deleted"), true); }
   try { Object.keys(localStorage).filter(k => /^(draft:|badges:|outbox|remindMins|group|tab|mnq-settings)/.test(k)).forEach(k => localStorage.removeItem(k)); } catch (err) {}
   await idbClear();
   closePanel();
@@ -3989,6 +3989,51 @@ async function deleteMyAccount(btn) {
 }
 
 // ---------------------------------------------------------------- errors
+// Turns a database or network error into a sentence a member can act on. Messages the database wrote for people
+// (its own "raise exception" lines, code P0001) are shown as they are. Anything technical goes in small print for support.
+function plainError(e, what = "That didn't work") {
+  const m = String((e && e.message) || e || ""), code = (e && e.code) || "";
+  if (isNetErr(e)) return { text: `${what}: no connection. Try again when you're back online.`, detail: "" };
+  if (code === "P0001" && m) return { text: m, detail: "" };
+  if (code === "42501" || /row-level security|permission denied|unauthorized|\b403\b/i.test(m)) return { text: `${what}: the day is closed, or you're not allowed to change this.`, detail: "" };
+  if (/jwt|not authenticated|\b401\b/i.test(m)) return { text: `${what}: you were signed out. Reload the page and sign in again.`, detail: "" };
+  if (code === "23505" || /duplicate/i.test(m)) return { text: `${what}: that already exists.`, detail: "" };
+  return { text: `${what}. Try again.${cfg.contactEmail ? " If it keeps happening, write to " + cfg.contactEmail + "." : ""}`, detail: m.slice(0, 160) };
+}
+function fail(e, what?: string) { const p = plainError(e, what); error = p.text; errorDetail = { of: p.text, text: p.detail }; }
+// One place for errors, on every signed-in screen: a bar under the top bar that stays until you close it or the next save works.
+// Screen readers read it out (role="alert"). The text is only rewritten when it changes, so it isn't read twice.
+function renderErrBar() {
+  const bar = document.getElementById("errbar");
+  if (!bar) return;
+  const show = !!error && screen !== "signin";   // the front page shows its own line
+  if (show) {
+    const small = errorDetail.of === error ? errorDetail.text : "";
+    const tx = document.getElementById("errbar-text"), dt = document.getElementById("errbar-detail");
+    if (tx.textContent !== error) tx.textContent = error;
+    if (dt.textContent !== small) dt.textContent = small;
+    dt.hidden = !small;
+  }
+  bar.hidden = !show;
+}
+// One question for the things that can't be undone (delete account, leave a group, delete a group): a small window
+// that says what is lost. It opens with Cancel in focus, and its red button is not where you just tapped,
+// so a double tap can't delete anything.
+let confirmAt = 0;
+function askConfirm(title: string, text: string, yes: string): Promise<boolean> {
+  const dlg = document.getElementById("confirmdlg");
+  if (!dlg || !dlg.showModal) return Promise.resolve(window.confirm(title + "\n\n" + text));
+  if (dlg.open) return Promise.resolve(false);
+  document.getElementById("confirm-title").textContent = title;
+  document.getElementById("confirm-text").textContent = text;
+  document.getElementById("confirm-yes").textContent = yes;
+  dlg.returnValue = "";
+  return new Promise(res => {
+    dlg.addEventListener("close", () => res(dlg.returnValue === "yes"), { once: true });
+    confirmAt = Date.now(); dlg.showModal();
+    document.getElementById("confirm-no").focus();
+  });
+}
 // If something breaks, show what went wrong (and a reload button) instead of an endless "Loading…".
 function showCrash(err) {
   const msg = err && err.message ? err.message + (err.stack && !err.stack.includes(err.message) ? "\n\n" + err.stack : "") : String(err);
@@ -3997,7 +4042,7 @@ function showCrash(err) {
   if (!app || app.dataset.crashed) return;
   app.dataset.crashed = "1";
   const sp = document.getElementById("splash"); if (sp) sp.remove();
-  app.innerHTML = `<div class="card"><p class="msg err"><b>Something went wrong.</b> Send your group owner a screenshot of this box.</p>
+  app.innerHTML = `<div class="card"><p class="msg err"><b>Something went wrong.</b> Tap Reload. If it keeps happening, send a screenshot of this box to ${esc(cfg.contactEmail)}.</p>
     <pre style="white-space:pre-wrap;font:12px/1.4 var(--font-data);color:var(--text-2);margin:10px 0">${esc(msg).slice(0, 1200)}</pre>
     <button class="btn plain small" onclick="location.reload()">Reload</button></div>`;
 }
@@ -4006,7 +4051,9 @@ function softError(err) {
   if (screen !== "app" || !loaded) return showCrash(err);
   console.error(err);
   const m = (err && err.message) || String(err);
-  error = isNetErr(err) ? "No connection. Changes are kept and retried." : "Something went wrong: " + m.slice(0, 80);
+  // Bad signal: nothing to show here. The offline bar already says what is waiting to upload, and failed actions report themselves.
+  if (isNetErr(err)) return;
+  { error = "Something went wrong. If the page looks off, reload it."; errorDetail = { of: error, text: m.slice(0, 160) }; }
   try { renderTop(); } catch (e) {}
 }
 window.addEventListener("error", e => softError(e.error || e.message));
@@ -4016,7 +4063,7 @@ function watchLoading() {
   clearTimeout(loadTimer);
   loadTimer = setTimeout(() => {
     if (screen === "loading") showCrash(new Error(`Still loading after 15 seconds (stuck at: ${loadStep}). ` +
-      "Tap Reload. If it keeps happening, send your group owner this message."));
+      "Tap Reload. If it keeps happening, send a screenshot of this box to " + cfg.contactEmail + "."));
   }, 15000);
 }
 watchLoading();

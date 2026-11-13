@@ -21,6 +21,10 @@ export default function Home() {
       <input type="file" id="shotinput" accept="image/*" multiple hidden />
       <input type="file" id="logoinput" accept="image/*" hidden />
       <div className="toast glass" id="toast" role="status" aria-live="polite" hidden></div>
+      <div className="errbar" id="errbar" role="alert" hidden>
+        <div><span id="errbar-text"></span><small id="errbar-detail" hidden></small></div>
+        <button className="round" id="errbar-x" aria-label="Close this message">{X}</button>
+      </div>
       <div className="scrim" id="scrim" hidden></div>
       <div className="ptr glass" id="ptr" aria-live="polite" hidden></div>
       <div className="tour" id="tour" hidden>
@@ -57,6 +61,14 @@ export default function Home() {
           <div className="repbtns"><button type="button" className="btn plain small" id="report-cancel">Cancel</button>
             <button type="button" className="btn primary small" id="report-send">Send report</button></div>
         </form>
+      </dialog>
+      <dialog id="confirmdlg" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+        <div className="repform">
+          <h2 id="confirm-title"></h2>
+          <p className="sub-hint" id="confirm-text"></p>
+          <div className="repbtns"><button type="button" className="btn plain" id="confirm-no">Cancel</button>
+            <button type="button" className="btn danger armed" id="confirm-yes"></button></div>
+        </div>
       </dialog>
       <Boot />
     </>

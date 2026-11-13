@@ -268,9 +268,11 @@
   dialog#viewer[open] { display: flex; flex-direction: column; }
   .vbar .vreport { background: rgba(255, 255, 255, 0.14); color: #fff; }
   /* report form: a small sheet over everything, also over the picture viewer */
-  dialog#reportdlg { border: 1px solid var(--line); border-radius: 16px; padding: 0; width: min(420px, calc(100vw - 32px));
+  dialog#reportdlg, dialog#confirmdlg { border: 1px solid var(--line); border-radius: 16px; padding: 0; width: min(420px, calc(100vw - 32px));
     background: var(--surface); color: var(--text); box-shadow: 0 20px 60px var(--glass-shade); }
-  dialog#reportdlg::backdrop { background: rgba(0, 0, 0, 0.6); }
+  dialog#reportdlg::backdrop, dialog#confirmdlg::backdrop { background: rgba(0, 0, 0, 0.6); }
+  #confirmdlg .sub-hint { font-size: 15px; line-height: 1.45; color: var(--text-2); margin: 6px 0 10px; }
+  #confirmdlg .repbtns { flex-wrap: wrap; }
   .repform { padding: 20px; display: grid; gap: 4px; }
   .repform h2 { margin: 0; font-size: 19px; }
   .repform .sub-hint { margin: 4px 0; }
@@ -617,6 +619,15 @@
     background: color-mix(in srgb, var(--warn) 16%, transparent); border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent); color: var(--text); }
   .offline-bar .ic { flex: none; color: var(--warn); }
   .offline-bar span { flex: 1; }
+  /* Errors: one solid bar under the top bar, on every screen, until you close it. */
+  .errbar { position: fixed; z-index: 45; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 70px); transform: translateX(-50%);
+    width: min(520px, calc(100% - 24px)); display: flex; align-items: flex-start; gap: 6px; padding: 12px 4px 12px 14px; border-radius: 12px;
+    background: color-mix(in srgb, var(--crit) 14%, var(--card)); border: 1px solid color-mix(in srgb, var(--crit) 45%, var(--card));
+    color: var(--text); font-size: 14px; line-height: 1.4; box-shadow: 0 10px 30px var(--glass-shade); }
+  .errbar[hidden] { display: none; }
+  .errbar > div { flex: 1; min-width: 0; overflow-wrap: anywhere; align-self: center; }
+  .errbar small { display: block; margin-top: 4px; font-size: 12px; color: var(--text-2); }
+  .errbar .round { flex: none; margin: -8px 0; color: var(--text); }
   .sub-hint.bad { color: var(--crit-text); }
   .datarow { display: flex; flex-wrap: wrap; gap: 8px; }
   .btn.danger { color: var(--crit-text); }
