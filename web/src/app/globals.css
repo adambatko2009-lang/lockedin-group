@@ -636,7 +636,7 @@
   .lp-nav .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
   .lp-nav .brand img { width: 26px; height: 26px; border-radius: 28%; }
   .lp-nav .links { display: none; gap: 26px; }
-  .lp-nav .links a { color: var(--lp-2); text-decoration: none; font: 500 13px var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; }
+  .lp-nav .links a { color: var(--lp-2); text-decoration: none; font: 500 14px var(--font-ui); }
   .lp-nav .links a:hover { color: #fff; }
   .lp-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 0 26px; border-radius: 12px;
     border: 0; font: 600 16px var(--font-ui); cursor: pointer; text-decoration: none; transition: transform .2s, box-shadow .2s, background .2s; }
@@ -1464,6 +1464,12 @@
 
   /* front page bar: a short centred bar, 300px wide */
   .lp-nav { width: min(300px, calc(100% - var(--lp-pad) * 2)); }
+  /* computers: the bar is as wide as the page and shows the page links, so nothing hides behind a menu button */
+  @media (min-width: 900px) {
+    .lp-nav { width: min(var(--lp-max), calc(100% - var(--lp-pad) * 2)); }
+    .lp-nav .links { display: flex; }
+    .lp-nav .lp-burger { display: none; }
+  }
   /* ---------- type roles ----------
      Front page: display (hero, section titles, band) stays big and tight, in sentence case.
      Explainers (steps, features, the two columns) are sentence case one clear step below,

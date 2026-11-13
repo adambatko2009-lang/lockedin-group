@@ -2633,6 +2633,7 @@ function renderLanding() {
   return `<div class="lp">
     <nav class="lp-nav" aria-label="LockedIn">
       ${link("home", `<img src="icons/icon-192.png" alt="">LockedIn`, "brand")}
+      <span class="links">${link("why", "Why")}${link("how", "How it works")}${link("features", "Features")}</span>
       <span class="nav-end">${inApp ? link("home", "Open app", "lp-btn white small") : `<button class="lp-btn white small" id="signin-nav">${SVG.discord}Sign in</button>`}
         <button class="lp-burger" id="lp-menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="lp-menu"><span class="lines"><i></i><i style="margin-top:5px"></i></span><svg class="x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>
     </nav>
