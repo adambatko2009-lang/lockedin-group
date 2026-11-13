@@ -1069,14 +1069,10 @@
     transition: transform .4s cubic-bezier(.2, .8, .2, 1), opacity .2s; pointer-events: none; }
   .rail .rail-ind { background: var(--rail-ind); }
 
-  /* top bar (and the phone's bottom bar): the same liquid glass as the icon bar */
+  /* top bar (and the phone's bottom bar): the same frosted glass as the icon bar. Plain: no painted-on shine or glow */
   .topbar.glass, .tabbar.glass { background: var(--lg-fill); border: 1px solid var(--lg-edge); isolation: isolate;
     -webkit-backdrop-filter: blur(26px) saturate(190%); backdrop-filter: blur(26px) saturate(190%);
     box-shadow: inset 0 1px 0 var(--lg-rim), inset 1px 0 0 color-mix(in srgb, var(--lg-rim) 45%, transparent), inset 0 -1px 0 color-mix(in srgb, var(--lg-rim) 30%, transparent), var(--lg-shadow); }
-  .topbar.glass::before, .tabbar.glass::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
-    background: radial-gradient(40% 140% at 20% 0%, color-mix(in srgb, var(--lg-glow) 70%, transparent), transparent 60%); }
-  .topbar.glass::after, .tabbar.glass::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
-    background: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--lg-glow) 30%, transparent) 50%, transparent 70%); opacity: 0.55; }
   @media (prefers-reduced-transparency: reduce) { .topbar.glass, .tabbar.glass { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
     .topbar.glass::before, .tabbar.glass::before, .topbar.glass::after, .tabbar.glass::after { display: none; } }
   @media (prefers-contrast: more) { .topbar.glass, .tabbar.glass { background: var(--surface); border-color: var(--text-2); }
@@ -1090,10 +1086,6 @@
       padding: 14px 10px; overflow-y: auto; scrollbar-width: none; border-radius: 24px; background: var(--lg-fill); border: 1px solid var(--lg-edge); isolation: isolate; overflow: hidden;
       -webkit-backdrop-filter: blur(26px) saturate(190%); backdrop-filter: blur(26px) saturate(190%);
       box-shadow: inset 0 1px 0 var(--lg-rim), inset 1px 0 0 color-mix(in srgb, var(--lg-rim) 45%, transparent), inset 0 -1px 0 color-mix(in srgb, var(--lg-rim) 30%, transparent), var(--lg-shadow); }
-    .rail::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
-      background: radial-gradient(120% 40% at 30% 0%, color-mix(in srgb, var(--lg-glow) 70%, transparent), transparent 60%); }
-    .rail::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
-      background: linear-gradient(115deg, transparent 35%, color-mix(in srgb, var(--lg-glow) 35%, transparent) 50%, transparent 65%); opacity: 0.6; }
     .rail[hidden] { display: none !important; }
     .rail .rail-brand { display: flex; align-items: center; gap: 10px; padding: 2px 8px 12px; font-size: 16px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
     .rail .rail-logo { width: 30px; height: 30px; border-radius: 28%; display: block; flex: none; }
