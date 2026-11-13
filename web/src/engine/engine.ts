@@ -2594,8 +2594,8 @@ function renderLanding() {
         <div class="lp-cta rv in d3">${signin()}${blink("how", "How it works")}</div>
         <button class="hero-own rv in d3" data-jump="start-own">Run a trading group? Start your own</button>
         ${errMsg}
-        <p class="fine rv in d3">${pendingInvite() ? "You've been invited to a group. Sign in with Discord and you'll be on its waiting list." : "Free. You'll need a join code from your group's owner."}</p>
-        <p class="fine rv in d3">By signing in you agree to the ${link("terms", "Terms")} and the ${link("privacy", "Privacy policy")}.</p>
+        <p class="fine rv in d3">${pendingInvite() ? "You've been invited to a group. Sign in with Discord and you'll be on its waiting list." : "Free. You'll need a join code from your group's owner."}
+          By signing in you agree to the ${link("terms", "Terms")} and the ${link("privacy", "Privacy policy")}.</p>
       </div>
       <figure class="hero-app rv in d2" role="img" aria-label="Example of a group's day in LockedIn: the last member ticks their box and the group reaches 5 of 5 done before the cutoff.">
         <div class="mock">${rows}</div>
@@ -2623,8 +2623,8 @@ function renderLanding() {
     </section>
     <section class="lp-sec tryit" aria-labelledby="try-title">
       <div class="try-text">
-        <h2 class="rv" id="try-title">Tick your<span class="dim">own boxes</span></h2>
-        <p class="sub rv d2">This is your row in LockedIn. Tick the boxes and watch your circle change. Nothing here is saved.</p>
+        <h2 class="rv" id="try-title">Try it yourself<span class="dim">nothing is saved</span></h2>
+        <p class="sub rv d2">This is your row in LockedIn. Tick the boxes and watch your circle change.</p>
       </div>
       <div class="try-card rv d1" id="try-card">${tryCardHtml()}</div>
     </section>
