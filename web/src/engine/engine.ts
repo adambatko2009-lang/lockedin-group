@@ -2760,7 +2760,7 @@ function initStory() {
   const NOTE = "Waited for the 9:45 retest and took 1R. Stopped after two trades.";
   const weekRow = (n, cells) => `<span class="n">${n}</span>` + cells.map(c => `<i style="background:${{ o: "#22c55e", p: "#fbbf24", m: "#ef4444", e: "#2a2b31" }[c]}"></i>`).join("");
   q("#s-feed").innerHTML = `
-    <div class="ma-card ma-top"><span class="ma-chip"><b>L</b>LockedIn</span><span class="ma-date">Fri 6 Nov</span></div>
+    <div class="ma-card ma-top"><span class="ma-chip"><b>L</b>LockedIn</span><span class="ma-date">${esc(fmtDay(currentTradingDay()))}</span></div>
     <div class="ma-card"><div class="ma-track"><i></i></div>
       <div class="ma-meta"><span class="ma-count"><span id="ma-done">3</span><small>/7 done</small></span><span class="ma-left">2h 30m left</span></div>
       <div class="ma-stack" id="ma-stack"></div></div>
