@@ -2735,19 +2735,14 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && document.d
 
 // ---------------------------------------------------------------- front page scroll story
 // The phone stays in place while the app inside it plays one day: tick, notes, everyone done, ranking.
-// Made-up names only. The phone turns toward the mouse (computers only, not with reduced motion).
+// Made-up names only. The phone turns slowly as you scroll and does nothing else: it does not follow the mouse.
 let story = null;
-const storyMouse = { x: 0, y: 0 };
-addEventListener("pointermove", e => {
-  if (e.pointerType !== "mouse") return;
-  storyMouse.x = e.clientX / innerWidth - 0.5; storyMouse.y = e.clientY / innerHeight - 0.5;
-}, { passive: true });
 function initStory() {
   const root = document.getElementById("story");
   if (!root) { story = null; return; }
   if (story && story.root === root) return;
   const q = sel => root.querySelector(sel), qa = sel => [...root.querySelectorAll(sel)];
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches, fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const CH = [
     { t: ["Tick your", "homework"], b: "One tap per box after your session. All required boxes ticked turns your circle green.", bg: [2, 8, 23], hl: 0 },
     { t: ["Show your", "work"], b: "Write what happened and add chart screenshots. Your group reads it and learns from it.", bg: [2, 16, 28], hl: 0 },
@@ -2782,7 +2777,7 @@ function initStory() {
   const sText = q("#story-text"), sTitle = q("#story-title"), sBody = q("#story-body");
   q("#st-chapters").innerHTML = CH.map((c, i) => `<li><span>0${i + 1}</span>${c.t.join(" ")}<div class="bar"><i></i></div></li>`).join("");
   const chLis = qa("#st-chapters li"), chBars = qa("#st-chapters .bar i"), dots = qa("#st-dots i"), tabs = qa("#ma-tabbar span");
-  const S: any = { root, chap: -1, feedY: 0, smoothY: 0, spin: 0, spinV: 0, visible: false, anchors: [0, 0, 0, 0], cm: { x: 0, y: 0 }, last: performance.now() };
+  const S: any = { root, chap: -1, feedY: 0, smoothY: 0, visible: false, anchors: [0, 0, 0, 0] };
   function measure() {
     const sc = screenEl.clientWidth / 375;
     scaleBox.style.transform = `scale(${sc})`;
@@ -2791,7 +2786,7 @@ function initStory() {
   }
   function setChapter(i) {
     if (i === S.chap) return;
-    const first = S.chap === -1; S.chap = i;
+    S.chap = i;
     const c = CH[i];
     sTitle.setAttribute("aria-label", c.t.join(" "));
     sTitle.innerHTML = c.t.map((l, j) => `<span class="st-clip" aria-hidden="true"><span style="--delay:${j * 90}ms">${l}</span></span>`).join("");
@@ -2802,7 +2797,6 @@ function initStory() {
     dots.forEach((d, j) => d.classList.toggle("on", j === i));
     q("#ma-hl").style.transform = `translateX(calc(${c.hl * 100}% + ${c.hl * 6}px))`;
     tabs.forEach((t2, j) => t2.classList.toggle("on", j === c.hl));
-    if (!first) S.spinV += 900;
   }
   const lerp = (a, b, t) => a + (b - a) * t, clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v)), ease = t => t * t * (3 - 2 * t);
   function apply(p) {
@@ -2831,19 +2825,14 @@ function initStory() {
     pts.forEach(el => el.textContent = Math.round(+el.dataset.pts - 6 + 6 * k));
     q("#ma-toast").classList.toggle("on", ci === 3 && local > 0.45 && local < 0.95);
   }
-  S.frame = now => {
-    const dt = Math.min(0.05, (now - S.last) / 1000); S.last = now;
+  S.frame = () => {
     if (!S.visible) return;
     const r = root.getBoundingClientRect(), total = r.height - innerHeight, pr = clamp(-r.top / total);
     apply(pr);
     S.smoothY += (S.feedY - S.smoothY) * (reduce ? 1 : 0.12);
     feed.style.transform = `translate3d(0, ${(-S.smoothY).toFixed(1)}px, 0)`;
-    const mx = fine && !reduce ? storyMouse.x : 0, my = fine && !reduce ? storyMouse.y : 0;
-    S.cm.x += (mx - S.cm.x) * 0.05; S.cm.y += (my - S.cm.y) * 0.05;
-    S.spinV += (-170 * S.spin - 22 * S.spinV) * dt; S.spin += S.spinV * dt;   // a quick turn at a new chapter, settling back like a spring
-    const t = now / 1000, ry = -22 + pr * 34 + S.cm.x * 26 + (reduce ? 0 : S.spin * 0.8), rx = 8 + S.cm.y * -14, bob = reduce ? 0 : Math.sin(t * 1.05) * 8;
-    phoneEl.style.transform = `translateY(${bob.toFixed(1)}px) perspective(1600px) rotateY(${ry.toFixed(2)}deg) rotateX(${rx.toFixed(2)}deg) rotateZ(${(3 - pr * 6).toFixed(2)}deg)`;
-    phoneEl.style.filter = !reduce && Math.abs(S.spinV) > 150 ? `blur(${Math.min(2.5, Math.abs(S.spinV) / 500).toFixed(2)}px)` : "none";
+    // one slow turn from left to right over the whole story, tied to the scroll position
+    phoneEl.style.transform = `perspective(1600px) rotateY(${(-22 + pr * 34).toFixed(2)}deg) rotateX(8deg) rotateZ(${(3 - pr * 6).toFixed(2)}deg)`;
   };
   if ("IntersectionObserver" in window) new IntersectionObserver(l => l.forEach(e => { S.visible = e.isIntersecting; })).observe(root); else S.visible = true;
   S.measure = measure;
@@ -2852,7 +2841,7 @@ function initStory() {
   story = S;
 }
 addEventListener("resize", () => { if (story && story.root.isConnected) story.measure(); });
-(function storyLoop(now) { if (story && story.root.isConnected) story.frame(now); else if (story) story = null; requestAnimationFrame(storyLoop); })(performance.now());
+(function storyLoop(now) { if (story && story.root.isConnected) story.frame(); else if (story) story = null; requestAnimationFrame(storyLoop); })(performance.now());
 
 // Fade sections in as they scroll into view (everything shows at once if motion is reduced).
 function revealLanding() {
