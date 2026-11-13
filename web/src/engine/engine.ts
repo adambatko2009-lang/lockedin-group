@@ -1436,6 +1436,14 @@ async function saveGroupSettings() {
     const num = id => Math.max(0, Math.min(10, Math.round(+val(id) || 0)));
     patch.boxes = boxes;
     patch.points = { complete: num("pt-complete"), partial: num("pt-partial"), bonus: num("pt-bonus") };
+    // Past days are scored with today's boxes and points, so a change here moves everyone's history. Say so first.
+    // (Renaming a box changes nothing, so that saves without a question.)
+    const oldB = group().boxes || DEFAULT_BOXES, oldP = group().points || { complete: 2, partial: 1, bonus: 1 };
+    const rescored = SLOTS.some(k => ((oldB[k] || {}).kind || "off") !== boxes[k].kind)
+      || ["complete", "partial", "bonus"].some(f => +oldP[f] !== patch.points[f]);
+    if (rescored && !(await askConfirm("Save for past days too?",
+      "Past days are scored with the boxes and points you save now. Days that were Complete can become Partial, and streaks and points can change for everyone in the group. Nobody's ticks are deleted, so changing it back brings the old scores back.",
+      "Save boxes", false))) return;
   }
   if (has("g-cutoff")) { patch.cutoff_hour = +val("g-cutoff"); patch.timezone = val("g-tz"); }
   if (!Object.keys(patch).length) return;
@@ -2405,7 +2413,7 @@ function gsPageHtml(part: string, g): string {
       <select id="box-kind-${k}" aria-label="Box ${i + 1}">${[["req", "Required"], ["bonus", "Bonus"], ["off", "Off"]].map(([v, l]) =>
         `<option value="${v}" ${b[k].kind === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("");
     return `<div class="card gsettings"><div class="cardhead"><h2>Homework boxes</h2></div>
-    <p class="empty" style="margin:-2px 0 8px">Complete = all required boxes ticked. Bonus boxes give extra points.</p>
+    <p class="empty" style="margin:-2px 0 8px">Complete = all required boxes ticked. Bonus boxes give extra points. A change here also re-scores past days.</p>
     ${boxRows}
     <span class="flabel">Points</span>
     <div class="pointsrow">
@@ -4020,13 +4028,14 @@ function renderErrBar() {
 // that says what is lost. It opens with Cancel in focus, and its red button is not where you just tapped,
 // so a double tap can't delete anything.
 let confirmAt = 0;
-function askConfirm(title: string, text: string, yes: string): Promise<boolean> {
+function askConfirm(title: string, text: string, yes: string, danger = true): Promise<boolean> {
   const dlg = document.getElementById("confirmdlg");
   if (!dlg || !dlg.showModal) return Promise.resolve(window.confirm(title + "\n\n" + text));
   if (dlg.open) return Promise.resolve(false);
   document.getElementById("confirm-title").textContent = title;
   document.getElementById("confirm-text").textContent = text;
-  document.getElementById("confirm-yes").textContent = yes;
+  const ok = document.getElementById("confirm-yes");
+  ok.textContent = yes; ok.className = danger ? "btn danger armed" : "btn primary";   // red only when something is deleted
   dlg.returnValue = "";
   return new Promise(res => {
     dlg.addEventListener("close", () => res(dlg.returnValue === "yes"), { once: true });
