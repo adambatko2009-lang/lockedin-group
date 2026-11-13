@@ -2751,10 +2751,10 @@ function initStory() {
   const q = sel => root.querySelector(sel), qa = sel => [...root.querySelectorAll(sel)];
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches, fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
   const CH = [
-    { t: ["Tick your", "homework"], b: "One tap per box after your session. All required boxes ticked turns your circle green.", bg: [2, 8, 23], glow: "rgba(37, 99, 235, 0.5)", hl: 0 },
-    { t: ["Show your", "work"], b: "Write what happened and add chart screenshots. Your group reads it and learns from it.", bg: [2, 16, 28], glow: "rgba(14, 165, 233, 0.42)", hl: 0 },
-    { t: ["Beat the", "cutoff"], b: "Everyone sees who's done before the day closes. Nobody wants to be the red circle.", bg: [2, 20, 14], glow: "rgba(34, 197, 94, 0.38)", hl: 1 },
-    { t: ["Climb the", "ranking"], b: "Points, streaks for days in a row, and 31 badges to earn. Every day counts.", bg: [10, 10, 16], glow: "rgba(251, 191, 36, 0.28)", hl: 2 },
+    { t: ["Tick your", "homework"], b: "One tap per box after your session. All required boxes ticked turns your circle green.", bg: [2, 8, 23], hl: 0 },
+    { t: ["Show your", "work"], b: "Write what happened and add chart screenshots. Your group reads it and learns from it.", bg: [2, 16, 28], hl: 0 },
+    { t: ["Beat the", "cutoff"], b: "Everyone sees who's done before the day closes. Nobody wants to be the red circle.", bg: [2, 20, 14], hl: 1 },
+    { t: ["Climb the", "ranking"], b: "Points, streaks for days in a row, and 31 badges to earn. Every day counts.", bg: [10, 10, 16], hl: 2 },
   ];
   const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>';
   const XS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg>';
@@ -2881,7 +2881,6 @@ function initStory() {
     chBars.forEach((b, j) => b.style.transform = `scaleX(${j < ci ? 1 : j === ci ? local : 0})`);
     const nxt = CH[Math.min(3, ci + 1)], mix = ci < 3 ? ease(clamp((local - 0.7) / 0.3)) : 0;
     root.style.setProperty("--st-bg", `rgb(${CH[ci].bg.map((v, j) => Math.round(lerp(v, nxt.bg[j], mix)))})`);
-    root.style.setProperty("--st-glow", mix > 0.5 ? nxt.glow : CH[ci].glow);
     S.feedY = ci < 3 ? lerp(S.anchors[ci], S.anchors[ci + 1], ease(clamp((local - 0.75) / 0.25))) : S.anchors[3];
     const ticks = ci > 0 ? 4 : Math.floor(clamp((local - 0.1) / 0.6) * 4.999);
     boxes.forEach((bx, j) => { const on = j < ticks; if (on !== bx.classList.contains("on")) { bx.classList.toggle("on", on); if (on) { bx.classList.add("pop"); setTimeout(() => bx.classList.remove("pop"), 260); } } });
