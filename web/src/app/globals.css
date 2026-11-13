@@ -733,7 +733,7 @@
   .mock-legend { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: -4px; font: 500 12px var(--font-data); color: var(--lp-2); }
   .mock-legend span:last-child { color: rgba(245, 245, 247, 0.82); }
   .mock-row { display: flex; align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.07); }
-  .mock-row .av { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #fff; flex: none; }
+  .mock-row .av { box-shadow: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #fff; flex: none; }
   .mock-row > b { flex: 1; font-size: 15px; }
   .mock-row .chips { display: flex; gap: 5px; }
   .mock-row .chips i { width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid rgba(255, 255, 255, 0.2); }
@@ -1040,8 +1040,8 @@
   @property --hole { syntax: "<length>"; inherits: false; initial-value: 0px; }
   #splash { position: fixed; inset: 0; z-index: 100; display: grid; place-content: center; justify-items: center; gap: 14px;
     background: var(--base);
-    color: var(--text); font: 600 15px var(--font-ui); letter-spacing: 0.04em; }
-  #splash img { width: 68px; height: 68px; border-radius: 28%; box-shadow: 0 0 0 1px var(--card-line), 0 24px 60px rgba(0, 0, 0, 0.55); animation: splash-in .6s cubic-bezier(.2, .8, .2, 1) both; }
+    color: var(--text); font: 600 15px var(--font-ui); }
+  #splash img { width: 68px; height: 68px; border-radius: 28%; box-shadow: 0 0 0 1px var(--card-line); animation: splash-in .6s cubic-bezier(.2, .8, .2, 1) both; }
   #splash span { opacity: 0.85; animation: splash-in .6s .12s cubic-bezier(.2, .8, .2, 1) both; }
   @keyframes splash-in { from { opacity: 0; transform: scale(0.86) translateY(6px); } }
   #splash.opening { -webkit-mask: radial-gradient(circle at 50% 50%, transparent var(--hole), #000 calc(var(--hole) + 1px));
