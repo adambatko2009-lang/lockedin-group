@@ -151,7 +151,7 @@ const sb = configured ? createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
 }) : null;
 
 // The date of the current Terms and Privacy policy. Change it when they change, and everyone is asked to accept again.
-const TERMS_VERSION = "2026-11-13";
+const TERMS_VERSION = "2026-11-14";
 let screen = "loading";          // loading | setup | signin | waiting | rejected | app
 let session = null, profile = null;
 let isAdmin = false;             // can manage the open group: its owner, a group admin, or the app owner
