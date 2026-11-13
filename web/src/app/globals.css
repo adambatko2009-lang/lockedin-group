@@ -1176,7 +1176,7 @@
   .lp-own { border-radius: 16px; background: #0b0b0d; border-color: rgba(255, 255, 255, 0.14); }
   .lp-own h2 { font-size: clamp(30px, 4.4vw, 52px) !important; }
   .lp-final { padding-top: 110px; }
-  .lp-final h2 { font-size: clamp(48px, 11vw, 140px); }
+  .lp-final h2 { font-size: clamp(34px, 5vw, 64px); }
   @media (min-width: 900px) {
     .lp-hero.home { grid-template-columns: 1.15fr 0.85fr; padding-top: 170px; }
     .lp-sec.split { grid-template-columns: 1.2fr 1fr; }
@@ -1230,7 +1230,7 @@
   @media (min-width: 900px) { .story-grid { grid-template-columns: 1fr auto 1fr; grid-template-rows: 1fr; align-items: center; padding: 90px 40px 40px; gap: 32px; max-width: 1400px; margin: 0 auto; } }
   .story-text { position: relative; z-index: 120; max-width: 420px; }
   .lp .story-text h2 { font-size: clamp(30px, 3.6vw, 48px); margin: 12px 0 0; }
-  /* quieter: giant type only at the start (the hero) and the end (Stop trading alone); sections in between speak smaller */
+  /* quieter: giant type only at the start (the hero); everything after it speaks smaller */
   .lp-sec h2 { font-size: clamp(30px, 4vw, 52px); }
   .lp .lp-own h2 { font-size: clamp(26px, 3.2vw, 40px) !important; }
   .lp .chrome { font-size: clamp(72px, 10vw, 128px); }
@@ -1242,7 +1242,7 @@
   .story-text.play .st-body .w { opacity: 1; transform: none; }
   .st-chapters { display: none; position: relative; z-index: 120; justify-self: end; width: 240px; list-style: none; margin: 0; padding: 0; }
   @media (min-width: 900px) { .st-chapters { display: grid; } }
-  .st-chapters li { display: grid; grid-template-columns: 32px 1fr; align-items: center; padding: 11px 0; border-top: 1px solid var(--lp-line); color: #6b6b75; font-size: 14px; transition: color .3s; }
+  .st-chapters li { display: grid; grid-template-columns: 32px 1fr; align-items: center; padding: 11px 0; border-top: 1px solid var(--lp-line); color: var(--lp-2); font-size: 14px; transition: color .3s; }
   .st-chapters li span { font: 500 12px var(--font-data); letter-spacing: 0.08em; }
   .st-chapters li[aria-current="step"] { color: #fff; }
   .st-chapters .bar { grid-column: 1 / -1; height: 2px; margin-top: 10px; background: rgba(255, 255, 255, 0.1); border-radius: 1px; overflow: hidden; }
