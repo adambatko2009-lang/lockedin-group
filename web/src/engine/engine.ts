@@ -1953,13 +1953,13 @@ function badgesFor(s) {
   }));
 }
 const topStreakBadge = s => badgesFor(s).filter(b => b.id.startsWith("streak") && b.earned).pop();
-// Discord picture when we have one; otherwise (or if it fails to load) a colored circle with the initial.
+// Discord picture when we have one; otherwise (or if it fails to load) a plain grey circle with the initial.
+// Grey on purpose: green, yellow and red mean something on these pages, so a random colour reads as a status.
 function avatarHtml(m, px) {
   const url = m.avatar_url ? m.avatar_url + (m.avatar_url.includes("?") ? "&" : "?") + "size=" + (px > 40 ? 128 : 64) : "";
-  return `<span class="av" style="width:${px}px;height:${px}px;font-size:${Math.round(px * 0.44)}px;background:${avatarColor(m.key)}" aria-hidden="true">${esc((m.name.trim()[0] || "?").toUpperCase())}${url
+  return `<span class="av" style="width:${px}px;height:${px}px;font-size:${Math.round(px * 0.44)}px" aria-hidden="true">${esc((m.name.trim()[0] || "?").toUpperCase())}${url
     ? `<img src="${esc(url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}</span>`;
 }
-const avatarColor = key => `hsl(${[...key].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7)} 45% 42%)`;
 
 function rankOf(key) {
   const rows = activeMembers().map(m => ({ key: m.key, name: m.name, ...stats(m.key) }))

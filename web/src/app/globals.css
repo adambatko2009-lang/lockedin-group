@@ -435,7 +435,8 @@
   .namebtn { border: 0; background: none; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; max-width: 100%;
              overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .namebtn:hover { text-decoration: underline; text-underline-offset: 3px; }
-  .av { position: relative; flex: none; display: inline-grid; place-items: center; border-radius: 50%; overflow: hidden; color: #fff; font-weight: 700; line-height: 1; }
+  .av { position: relative; flex: none; display: inline-grid; place-items: center; border-radius: 50%; overflow: hidden; font-weight: 700; line-height: 1;
+        background: var(--surface-2); color: var(--text-2); box-shadow: inset 0 0 0 1px var(--line-strong); }
   .av img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .phead { display: flex; align-items: center; gap: 14px; }
   .phead h1 { font-size: 24px; letter-spacing: -0.02em; margin: 0; }
