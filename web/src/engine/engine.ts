@@ -1976,9 +1976,10 @@ function renderDay() {
     : `<p class="open-line all">${due ? "Everyone is done." : "Everyone is excused."}</p>`;
   // Read top to bottom: how long, until when, how many are done. One bar: the share that is done.
   const pct = due ? Math.round(doneN / due * 100) : 0;
-  const count = due ? `<p class="sum-count"><span class="num">${doneN}</span> of <span class="num">${due}</span> done</p>` : "";
+  const count = due ? `<div class="sum-done"><p class="sum-big"><span class="num">${doneN}</span><small> of <span class="num">${due}</span></small></p><p class="sum-until">${due === 1 ? "member" : "members"} done</p></div>` : "";
   const bar = due ? `<div class="donebar" role="progressbar" aria-label="Members done" aria-valuemin="0" aria-valuemax="${due}" aria-valuenow="${doneN}"><i style="width:${pct}%"></i></div>` : "";
-  // How many are done on the left, how long is left on the right; one bar under both.
+  // How many are done on the left, how long is left on the right, both as a big number with one small line
+  // under it, so neither side leaves an empty corner. One bar under both.
   const summary = `<div class="card daysum">
     <div class="sum-head">
       ${count}

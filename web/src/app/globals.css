@@ -1491,10 +1491,12 @@
 /* ================================================================ Today: one summary that says how long is left and who is still open.
    Mono only for the numbers; the words around them are in the interface font. */
 .sum-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
-.sum-count, .sum-time, .sum-until { margin: 0; }
+.sum-big, .sum-time, .sum-until { margin: 0; }
 .daysum .num { font-family: var(--font-data); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
-.sum-count { font-size: 15px; font-weight: 600; color: var(--text-2); padding-bottom: 2px; white-space: nowrap; }
-.sum-count .num { color: var(--text); }
+.sum-done { min-width: 0; }
+.sum-big { font: 650 32px/1.1 var(--font-ui); color: var(--text); letter-spacing: -0.02em; white-space: nowrap; }
+.sum-big > .num { letter-spacing: -0.04em; }
+.sum-big small { font-size: 17px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
 .sum-when { margin-left: auto; text-align: right; min-width: 0; }
 .sum-time { font: 650 32px/1.1 var(--font-ui); color: var(--text); letter-spacing: -0.02em; white-space: nowrap; }
 .sum-time .num { letter-spacing: -0.04em; }
@@ -1506,7 +1508,7 @@
 .open-line { margin: 12px 0 0; font-size: 15px; line-height: 1.45; color: var(--text-2); text-wrap: pretty; }
 .open-line b { font-weight: 600; color: var(--text); margin-right: 4px; }
 .open-line.all { color: var(--text); font-weight: 600; }
-@media (min-width: 960px) { .sum-time { font-size: 36px; } }
+@media (min-width: 960px) { .sum-time, .sum-big { font-size: 36px; } }
 
 /* Phones: once the summary card has scrolled away, the time left takes the group name's place in the top bar (same height, so nothing jumps) */
 .topbar .mid { position: relative; }
