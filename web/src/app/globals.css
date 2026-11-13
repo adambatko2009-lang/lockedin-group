@@ -1200,9 +1200,6 @@
   .lp-btn svg { width: 20px; height: 20px; }
   .vcol.us li b { background: #2563eb; color: #fff; }
   .stage3d { position: relative; display: grid; place-items: center; width: 100%; min-height: 560px; }
-  .behind { position: absolute; left: 50%; top: 50%; transform: translate(-58%, -50%); margin: 0; z-index: 0; white-space: nowrap; pointer-events: none;
-    font: 700 clamp(64px, 10vw, 150px)/0.86 var(--font-ui); letter-spacing: -0.055em; text-transform: uppercase;
-    color: transparent; -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.55); }
   .phone3d { position: relative; z-index: 1; }
   /* perspective is part of the transform (not the parent) and the phone is one layer: iPhone Safari drew only part of the picture otherwise */
   .stage3d .phone { --rx: 0deg; --ry: 0deg; will-change: transform; -webkit-backface-visibility: hidden; backface-visibility: hidden;
@@ -1218,7 +1215,7 @@
   .stage3d .phone-screen { -webkit-mask-image: -webkit-radial-gradient(white, black); isolation: isolate; }
   .stage3d .phone-screen::before { z-index: 2; }
   @media (prefers-reduced-motion: reduce) { .stage3d .phone { transition: none; } }
-  @media (max-width: 899px) { .stage3d { min-height: 0; padding: 30px 0 10px; } .behind { font-size: 19vw; } .stage3d .phone { width: min(270px, 70vw); } }
+  @media (max-width: 899px) { .stage3d { min-height: 0; padding: 30px 0 10px; } .stage3d .phone { width: min(270px, 70vw); } }
 
 
   /* ================================================================ front page: the scroll story (the phone stays put while the app inside it plays out) */

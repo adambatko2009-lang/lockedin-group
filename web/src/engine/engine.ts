@@ -2465,9 +2465,8 @@ function renderLanding() {
       <div class="mock-bar"><i></i></div>
       <div class="mock-legend"><span>Today's homework</span><span>Chart · Journal · HTF</span></div>
       ${person("Alex", "#2563eb", [1, 1, 1])}${person("Sam", "#0e7490", [1, 1, 1])}${person("Riley", "#0d9488", [1, 1, 1])}${person("Morgan", "#ea580c", [1, 1, 1])}${person("Jordan", "#db2777", [1, 0, 1], true)}`;
-  // The real app (a demo group) in a tilted 3D phone, with big text behind it.
+  // The real app (a demo group) in a tilted 3D phone.
   const phone = `<div class="stage3d">
-      <p class="behind" aria-hidden="true">Tick it.<br>See it.<br>Lock in.</p>
       <div class="phone3d rv in d2"><div class="phone"><div class="phone-screen">
         <img src="assets/app-day.jpg" width="781" height="1690" alt="The LockedIn app with a demo group: today's homework, ticked boxes, notes and chart pictures">
       </div></div></div>
