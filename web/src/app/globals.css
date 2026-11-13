@@ -664,7 +664,7 @@
   .nextlink .arrow { grid-row: 1 / span 2; grid-column: 2; font-size: 34px; transition: transform .3s; }
   .nextlink:hover .arrow { transform: translateX(8px); }
   .foot-links { display: flex; flex-wrap: wrap; gap: 8px 20px; }
-  .foot-links a { color: var(--lp-2); text-decoration: none; font: 500 13px var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; }
+  .foot-links a { color: var(--lp-2); text-decoration: none; font: 500 14px var(--font-ui); }
   .foot-links a:hover, .foot-links a[aria-current="page"] { color: #fff; }
   .legal { max-width: 720px; margin: 0 auto; padding: 150px 20px 40px; text-align: left; }
   .legal h1 { font-size: clamp(36px, 7vw, 56px); letter-spacing: -0.04em; font-weight: 600; margin: 14px 0 12px; line-height: 1.05; }
@@ -1118,7 +1118,7 @@
   /* ================================================================ front page: bold black-and-white editorial look */
   .lp { background: #000; }
   .lp h1, .lp h2 { font-weight: 700; letter-spacing: -0.04em; line-height: 0.98; text-wrap: balance; }
-  .lp-hero.home h1 { text-transform: uppercase; letter-spacing: -0.045em; line-height: 0.9; }   /* only the home hero is in capitals */
+  .lp-hero.home h1 { letter-spacing: -0.045em; line-height: 0.98; }   /* sentence case, like every other heading */
   .lp .dim { display: block; color: #74747e; }
   .lp-hero h1 { font-size: clamp(42px, 7.2vw, 96px); }
   .lp h2 { font-size: clamp(34px, 6vw, 76px); }
@@ -1350,7 +1350,7 @@
   .lp-menu .in { position: relative; flex: 1; display: flex; flex-direction: column; width: min(1120px, calc(100% - 24px)); margin: 0 auto;
     padding: calc(max(12px, env(safe-area-inset-top, 0px)) + 78px) 16px calc(28px + env(safe-area-inset-bottom, 0px)); }
   .lp-menu nav { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
-  .lp-menu nav a { color: #fff; text-decoration: none; font: 700 clamp(44px, 9vw, 96px)/1 var(--font-ui); letter-spacing: -0.045em; text-transform: uppercase; width: fit-content;
+  .lp-menu nav a { color: #fff; text-decoration: none; font: 700 clamp(36px, 9vw, 56px)/1.15 var(--font-ui); letter-spacing: -0.035em; width: fit-content;
     opacity: 0; transform: translateY(28px); transition: opacity .5s var(--ex, ease) var(--delay, 0ms), transform .6s cubic-bezier(0.16, 1, 0.3, 1) var(--delay, 0ms), color .2s; }
   .lp-menu nav a:hover, .lp-menu nav a[aria-current="page"] { color: var(--lp-blue); }
   .lp-menu.open nav a { opacity: 1; transform: none; }
@@ -1358,7 +1358,7 @@
     opacity: 0; transition: opacity .4s .25s; }
   .lp-menu.open .mfoot { opacity: 1; }
   .lp-menu .mfoot .small-links { display: flex; gap: 20px; }
-  .lp .lp-menu .mfoot .small-links a { color: var(--lp-2); text-decoration: none; font: 500 13px var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; }
+  .lp .lp-menu .mfoot .small-links a { color: var(--lp-2); text-decoration: none; font: 500 14px var(--font-ui); }
   .lp .lp-menu .mfoot .small-links a:hover { color: #fff; }
   .lp-burger .x { display: none; } .menu-on .lp-burger .lines { display: none; } .menu-on .lp-burger .x { display: block; }
   .lp-burger svg { width: 18px; height: 18px; color: #fff; }
@@ -1469,7 +1469,7 @@
   /* front page bar: a short centred bar, 300px wide */
   .lp-nav { width: min(300px, calc(100% - var(--lp-pad) * 2)); }
   /* ---------- type roles ----------
-     Front page: display (hero, section titles, band) stays big, tight and in capitals.
+     Front page: display (hero, section titles, band) stays big and tight, in sentence case.
      Explainers (steps, features, the two columns) are sentence case one clear step below,
      with roomy body text so each point reads as an explanation, not another headline. */
   h1, h2, h3, .lp-final h2 { text-wrap: balance; }

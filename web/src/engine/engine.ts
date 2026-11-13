@@ -2590,7 +2590,7 @@ function renderLanding() {
   }
   else body = `<header class="lp-hero home">
       <div class="hero-text">
-        <h1 class="rv in d1">Daily trading homework<span class="dim">Tracked as a group</span></h1>
+        <h1 class="rv in d1">Daily trading homework<span class="dim">tracked as a group</span></h1>
         <p class="lead rv in d2">Your Discord group picks the boxes, like chart, journal and HTF. Everyone ticks them off after their session, and everyone can see who did.</p>
         <div class="lp-cta rv in d3">${signin()}${blink("how", "How it works")}</div>
         <button class="hero-own rv in d3" data-jump="start-own">Run a trading group? Start your own</button>
