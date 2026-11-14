@@ -1976,7 +1976,16 @@ function renderDay() {
   let quick = "";
   if (quickOn) {
     const rec = tickOf(k, me) || {};
-    quick = `<div class="card quick"><div class="cardhead"><h2>Your homework</h2></div><div class="qgrid">${RULES.map(([r, label, kind]) =>
+    // All required boxes ticked: the card says so, with today's points and your streak. An excused day is not "done".
+    const done = statusOf(k, me) === "COMPLETE";
+    let doneLine = "";
+    if (done) {
+      const pts = dayPoints("COMPLETE", RULES.filter(r => r[2] === "bonus" && rec[r[0]]).length), run = stats(me).run;
+      doneLine = `<span class="sr-only">Done for today. </span><b><span class="num">+${pts}</span> ${pts === 1 ? "point" : "points"}</b>${run ? ` · <span class="num">${run}</span>-day streak` : ""}`;
+    }
+    // The status line is always in the card (empty until you're done), so screen readers announce it when the text
+    // appears. The text only changes when your points or streak change, so a redraw doesn't read it out again.
+    quick = `<div class="card quick"><div class="cardhead"><h2>${done ? "Done for today" : "Your homework"}</h2>${done ? `<span class="dot COMPLETE qdot" aria-hidden="true">${ICON.COMPLETE}</span>` : ""}</div><p class="qdone" role="status">${doneLine}</p><div class="qgrid">${RULES.map(([r, label, kind]) =>
       `<button class="q ${kind}" data-tick="${me}:${r}" aria-pressed="${!!rec[r]}"><span class="qc">${!rec[r] ? "" : kind === "bonus" ? PLUS_SVG : ic("check", 18).replace('<circle cx="12" cy="12" r="9"/>', "")}</span>
         <span><b>${label}</b><small>${kind === "bonus" ? (rec[r] ? "Bonus, +" + POINTS.bonus : "Bonus") : "Required"}</small></span></button>`).join("")}</div>
       <button class="qnote" data-edit="${me}" aria-expanded="${inlineHere(me, k)}">${SVG.note.replace("<svg ", '<svg width="18" height="18" ')}${inlineHere(me, k) ? "Close note & pictures" : rec.note || (rec.images || []).length ? "Edit note & pictures" : "Add note & pictures"}</button>
@@ -2064,6 +2073,8 @@ function renderWeek() {
     <ul class="legend" aria-label="What the squares mean">${key}</ul></div>`;
 }
 
+// Points for one day: the status, plus each ticked bonus box. Used by the ranking and by the "Done for today" line.
+const dayPoints = (st, bonusTicks) => (POINTS[st] || 0) + POINTS.bonus * bonusTicks;
 // Everyone's points, streaks and badges. Remembered until the next change (the ranking asks for every member).
 function stats(key) {
   if (statsCache.has(key)) return statsCache.get(key);
@@ -2094,7 +2105,7 @@ function computeStats(key) {
     if (raw && !since) since = k;
     const bonusTicks = bonusBoxes.filter(b => rec[b]).length;   // the group's bonus boxes
     social += bonusTicks;
-    points += (POINTS[st] || 0) + POINTS.bonus * bonusTicks;
+    points += dayPoints(st, bonusTicks);
     if (st === "COMPLETE") { run++; best = Math.max(best, run); completeDays++; if (prevSt === "MISSING") comebacks++; if (rec.no_trade) noTrades++; }
     else if (isFinal(k)) run = 0;
     if (isFinal(k)) { closed++; if (st === "COMPLETE") complete++; prevSt = st; w.n++; if (st !== "COMPLETE") w.ok = false; }
@@ -3261,7 +3272,14 @@ document.addEventListener("click", async e => {
       return;
     }
     if (t.animate && !matchMedia("(prefers-reduced-motion: reduce)").matches) t.animate([{ transform: "scale(0.94)" }, { transform: "scale(1.04)" }, { transform: "scale(1)" }], { duration: 280, easing: "ease-out" });
-    return editTick(selected, key, row => { row[r] = !row[r]; });
+    // Your last required box today: the green circle in "Done for today" pops once (not on later redraws).
+    const mineToday = key === myKey() && selected === today, wasDone = mineToday && statusOf(selected, key) === "COMPLETE";
+    editTick(selected, key, row => { row[r] = !row[r]; });
+    if (mineToday && !wasDone && statusOf(selected, key) === "COMPLETE" && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const c = document.querySelector(".quick .qdot");
+      if (c && c.animate) c.animate([{ transform: "scale(0.7)" }, { transform: "scale(1.15)" }, { transform: "scale(1)" }], { duration: 420, easing: "cubic-bezier(.2,.8,.2,1)" });
+    }
+    return;
   }
   if (d.edit) return editing && panelMode === "inline" && editing.key === d.edit && editing.day === selected ? closePanel() : openPanel(selected, d.edit);
   if (t.id === "open-settings" || d.rail === "settings") return openSettings();
