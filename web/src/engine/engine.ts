@@ -1766,7 +1766,10 @@ function linkify(text) {
 const dot = (st, name?) => `<span class="dot ${st}" role="img" aria-label="${name ? esc(name) + ": " : ""}${LABEL[st]}" title="${LABEL[st]}">${ICON[st]}</span>`;
 const wideQuery = window.matchMedia("(min-width: 960px)");
 const isWide = () => wideQuery.matches;
-const pendingCount = () => people.filter(p => p.status === "pending").length + (isAppOwner ? requests.filter(r => r.status === "pending").length : 0);
+// People waiting to join the open group. Requests to start a group show under All groups, so they are counted apart.
+const pendingCount = () => people.filter(p => p.status === "pending").length;
+// Everything waiting on the Admin tab (the phone tab bar shows one number for both lists).
+const adminWaiting = () => pendingCount() + (isAppOwner ? requests.filter(r => r.status === "pending").length : 0);
 
 function tabsList() { return isAdmin ? ["day", "week", "board", "admin", "me"] : ["day", "week", "board", "me"]; }
 
@@ -1981,7 +1984,7 @@ function renderTabbar() {
   const cur = /^(journal|settings|groups|help)$/.test(tab) ? "me" : tab, i = Math.max(0, list.indexOf(cur));
   morph(bar, `<div class="pill" style="width:calc((100% - 10px) / ${list.length});transform:translateX(${i * 100}%);opacity:${list.includes(cur) ? 1 : 0}" aria-hidden="true"></div>` +
     list.map(t => `<button data-tab="${t}"${t === cur ? ' aria-current="page"' : ""} aria-label="${labels[t]}">${t === "admin" ? SVG.gear : t === "me" ? meIcon() : SVG[t]}<span>${labels[t]}</span>
-      ${t === "admin" && pendingCount() ? `<i class="badge">${pendingCount()}</i>` : ""}</button>`).join(""));
+      ${t === "admin" && adminWaiting() ? `<i class="badge">${adminWaiting()}</i>` : ""}</button>`).join(""));
 }
 
 // Phone bottom bar: press and hold (or just slide sideways), drag the glass lens across, let go to switch.
