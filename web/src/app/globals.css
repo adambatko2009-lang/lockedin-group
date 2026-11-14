@@ -854,10 +854,17 @@
   .srv-strip i.x { background: none; box-shadow: inset 0 0 0 1px var(--line-strong); }
   .srv-foot { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 32px; }
   .srv-new { flex-wrap: wrap; }
-  .srv-new select { flex: 1; min-width: 140px; }
   /* search box over a list of people; 16px text stops phones zooming in on tap */
-  .pick-search { flex: 1; min-width: 140px; font-size: 16px; -webkit-appearance: none; appearance: none; }
-  .gsettings .pick-search { display: block; width: 100%; margin-bottom: 8px; }
+  .pick { position: relative; flex: 1; min-width: 160px; }
+  .pick-search { width: 100%; font-size: 16px; -webkit-appearance: none; appearance: none; }
+  .gsettings .pick { margin-bottom: 8px; }
+  /* matching names open above the box, so a phone keyboard below never covers them */
+  .pick-list { position: absolute; left: 0; right: 0; bottom: calc(100% + 4px); z-index: 20; max-height: 232px; overflow-y: auto;
+               padding: 4px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); }
+  .pick-opt { display: block; width: 100%; min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: none;
+              color: var(--text); font: 15px var(--font-ui); text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pick-opt:hover, .pick-opt:focus-visible { background: var(--surface-2); }
+  .pick-none { margin: 0; padding: 12px; font-size: 14px; color: var(--muted); }
   .glist { display: flex; flex-direction: column; gap: 6px; }
   .gitem { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2); text-align: left; cursor: pointer; }
   .gitem[aria-current="true"] { border-color: var(--accent); }
