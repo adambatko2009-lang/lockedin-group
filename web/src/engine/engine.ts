@@ -1721,6 +1721,14 @@ type PickOpt = { v: string; label: string; find: unknown[] };
 const pickQuery: Record<string, string> = {};
 const pickChosen: Record<string, string> = {};
 const pickClear = (id: string): void => { delete pickQuery[id]; delete pickChosen[id]; };
+// Redraw for a name search box. A redraw empties the other fields next to it (like a new server's name and tag),
+// so what was typed in them is put back.
+function renderKeepingFields(): void {
+  const kept: [string, string][] = [];
+  document.querySelectorAll("#app input.field[id], #app textarea[id]").forEach((el: HTMLInputElement) => { if (!el.dataset.pickFor) kept.push([el.id, el.value]); });
+  render();
+  kept.forEach(([fid, v]) => { const el = document.getElementById(fid) as HTMLInputElement | null; if (el && el.value !== v) el.value = v; });
+}
 function pickBox(id: string, what: string, opts: PickOpt[]): string {
   const q = (pickQuery[id] || "").trim().toLowerCase(), chosen = pickChosen[id] || "";
   const open = !!q && !chosen;
@@ -3588,7 +3596,7 @@ document.addEventListener("click", async e => {
   if (!t) return;
   const d = t.dataset;
   // a name tapped in a name box's list: pick that person and put their name in the box
-  if (d.pickIn) { pickChosen[d.pickIn] = d.pickVal; pickQuery[d.pickIn] = d.pickLabel; return render(); }
+  if (d.pickIn) { pickChosen[d.pickIn] = d.pickVal; pickQuery[d.pickIn] = d.pickLabel; return renderKeepingFields(); }
   // the small "i" button: show or fold its explanation, right here (it also works inside the sheets)
   if (d.info) {
     const open = !infoOpen.delete(d.info);
@@ -3953,7 +3961,10 @@ document.addEventListener("click", async e => {
 document.addEventListener("input", e => {
   if (e.target.dataset && e.target.dataset.cbox) { commentDrafts[e.target.dataset.cbox] = e.target.value; return; }
   if (e.target.id === "faq-search") { faqQuery = e.target.value.slice(0, 80); return render(); }
-  if (e.target.dataset && e.target.dataset.pickFor) { const id = e.target.dataset.pickFor; pickQuery[id] = e.target.value.slice(0, 40); delete pickChosen[id]; return render(); }
+  if (e.target.dataset && e.target.dataset.pickFor) {
+    const id = e.target.dataset.pickFor; pickQuery[id] = e.target.value.slice(0, 40); delete pickChosen[id];
+    return renderKeepingFields();
+  }
   if (tab === "admin" && e.target.closest && e.target.closest("#app")) adminDirty = true;
   if (e.target.id === "terms-ok") { document.getElementById("accept-terms").disabled = !e.target.checked; return; }
   if ((e.target.id === "panel-pnl" || e.target.id === "panel-rr") && editing) {
