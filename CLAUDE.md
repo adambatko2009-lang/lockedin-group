@@ -191,7 +191,7 @@ labels above headings, a "Made with AI" tag.
 **Do:**
 - Use the variables at the top of `globals.css` (`--bg`, `--card`, `--line`, `--text`, `--text-2`, `--muted`,
   `--accent`, `--accent-text`, `--good`, `--warn`, `--crit`, `--crit-text`, `--good-text`). No new hard-coded
-  colors. Everything must work in dark (the default) and light, and with all eight group colors.
+  colors. Everything must work in dark (the default) and light, and with all seven group colors.
 - Text contrast at least 4.5:1 on its background in both themes.
 - Cards are flat and solid with one thin border. Glass (`.glass`) is only for the navigation bars.
 - Corners come from the sizes already used (10, 12, 14, 16px). A button's corner radius must stay well under

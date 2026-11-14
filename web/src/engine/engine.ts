@@ -692,6 +692,7 @@ function tagPickHtml(rec) {
 function renderTagPick() {
   const box = document.getElementById("panel-tags");
   if (box && editing) box.innerHTML = tagPickHtml(tickOf(editing.day, editing.key) || {});
+  foldVals();
 }
 function addCustomBreak() {
   const input = document.getElementById("newbreak"), msg = document.getElementById("add-break-msg");
@@ -1199,6 +1200,16 @@ async function removeShot(day, key, path) {
 }
 
 // ---------------------------------------------------------------- edit panel (note + pictures for one row)
+// The note section keeps the result, the note and the pictures open. P&L and R, rule breaks and the weekly reflection
+// are one-line rows under them (like the pages in Group settings): each shows what is filled in and opens with a tap.
+const foldNum = rec => [hasNum(rec.pnl) ? fmtPnl(+rec.pnl) : "", hasNum(rec.rr) ? fmtR(+rec.rr) : ""].filter(Boolean).join(" · ") || "Not filled in";
+const foldTags = rec => { const on = rec.rule_breaks || []; return on.length ? esc(on.map(b => BREAK_LABEL[b] || b).join(", ")) : "None"; };
+const foldRefl = (wk, key) => { const r = reflections[wk + "|" + key] || {}; return r.went_well || r.to_fix ? "Written" : "Not written yet"; };
+function foldVals() {
+  if (!editing) return;
+  const rec = tickOf(editing.day, editing.key) || {}, set = (id, html) => { const el = document.getElementById(id); if (el && el.innerHTML !== html) el.innerHTML = html; };
+  set("fold-num", foldNum(rec)); set("fold-tags", foldTags(rec)); set("fold-refl", foldRefl(mondayOf(editing.day), editing.key));
+}
 function openPanel(day, key) {
   if (!canEdit(day, key)) return;
   if (!inlineOK(day)) { tab = "day"; profileKey = null; selected = day; weekStart = mondayOf(day); window.scrollTo(0, 0); }
@@ -1219,27 +1230,29 @@ function openPanel(day, key) {
     <h3 class="result-h">How did the day go?</h3>
     <div class="segset four result-set" role="group" aria-label="How did the day go?">${resultBtnsHtml(rec)}</div>
     <p class="sub-hint" id="result-hint">${resultHint(rec)}</p>
-    <div class="numrow">
-      <label class="numfield"><span>P&amp;L</span><b aria-hidden="true">$</b><input id="panel-pnl" inputmode="decimal" autocomplete="off" placeholder="0" value="${hasNum(rec.pnl) ? +rec.pnl : ""}" aria-label="P&L in dollars"></label>
-      <label class="numfield"><span>R</span><input id="panel-rr" inputmode="decimal" autocomplete="off" placeholder="0" value="${hasNum(rec.rr) ? +rec.rr : ""}" aria-label="Risk-reward in R"></label>
-    </div>
-    <p class="sub-hint" id="num-hint">Optional. Use a minus for a loss, like -150. Your group sees it.</p>
     <h3>Note</h3>
     <textarea id="panel-note" maxlength="10000" placeholder="What did you trade, what did you learn?">${esc(noteText)}</textarea>
     <p class="note-status" id="note-status" aria-live="polite"></p>
     <h3>Pictures <span id="panel-pics-count"></span></h3>
     <p class="sub-hint" style="margin:-4px 0 8px">Pictures are deleted automatically 60 days after the day.</p>
     <div class="pics" id="panel-pics"></div>
-    <h3>Rule breaks today</h3>
+    <details class="fold"><summary><b>P&amp;L and R</b><span class="fold-val" id="fold-num">${foldNum(rec)}</span><span class="fold-chev" aria-hidden="true">${ic("chevron-down", 18)}</span></summary><div class="fold-in">
+      <div class="numrow">
+      <label class="numfield"><span>P&amp;L</span><b aria-hidden="true">$</b><input id="panel-pnl" inputmode="decimal" autocomplete="off" placeholder="0" value="${hasNum(rec.pnl) ? +rec.pnl : ""}" aria-label="P&L in dollars"></label>
+      <label class="numfield"><span>R</span><input id="panel-rr" inputmode="decimal" autocomplete="off" placeholder="0" value="${hasNum(rec.rr) ? +rec.rr : ""}" aria-label="Risk-reward in R"></label>
+    </div>
+    <p class="sub-hint" id="num-hint">Optional. Use a minus for a loss, like -150. Your group sees it.</p></div></details>
+    <details class="fold"><summary><b>Rule breaks today</b><span class="fold-val" id="fold-tags">${foldTags(rec)}</span><span class="fold-chev" aria-hidden="true">${ic("chevron-down", 18)}</span></summary><div class="fold-in">
     <p class="sub-hint">Be honest: it never costs points, and it helps you spot patterns.</p>
-    <div id="panel-tags">${tagPickHtml(rec)}</div>
-    ${(wk => canEditReflection(wk, key) && isRecapDay(day) ? `<h3 id="panel-refl">Weekly reflection · ${fmtDay(wk, { weekday: undefined })} – ${fmtDay(addDays(wk, 4), { weekday: undefined })}</h3>
+    <div id="panel-tags">${tagPickHtml(rec)}</div></div></details>
+    ${(wk => canEditReflection(wk, key) && isRecapDay(day) ? `<details class="fold" id="panel-refl"><summary><b>Weekly reflection</b><span class="fold-val" id="fold-refl">${foldRefl(wk, key)}</span><span class="fold-chev" aria-hidden="true">${ic("chevron-down", 18)}</span></summary><div class="fold-in">
+    <p class="sub-hint">For ${fmtDay(wk, { weekday: undefined })} – ${fmtDay(addDays(wk, 4), { weekday: undefined })}.</p>
     <div class="reflect">
       <label for="panel-refl-well">What went well</label>
       <textarea id="panel-refl-well" data-refl="went_well" data-week="${wk}" data-key="${key}" maxlength="600" placeholder="Patience on entries, followed the plan…">${esc((reflections[wk + "|" + key] || {}).went_well)}</textarea>
       <label for="panel-refl-fix">What to fix next week</label>
       <textarea id="panel-refl-fix" data-refl="to_fix" data-week="${wk}" data-key="${key}" maxlength="600" placeholder="Stop moving my stop, size down after a loss…">${esc((reflections[wk + "|" + key] || {}).to_fix)}</textarea>
-      <p class="hint">Saves automatically · the whole group can read it</p></div>` : "")(mondayOf(day))}
+      <p class="hint">Saves automatically · the whole group can read it</p></div></div></details>` : "")(mondayOf(day))}
     ${isAdmin ? `<h3>Admin</h3>
     <label class="switchrow"><span><b>Excused</b><small>Sick, travelling… Doesn't count as missed, doesn't break the streak.</small></span>
       <input type="checkbox" id="panel-excused" role="switch" ${rec.excused ? "checked" : ""}></label>` : ""}
@@ -2139,6 +2152,8 @@ const ACHIEVEMENTS = [
   { id: "patience", icon: "pause", unit: "no-trade days",     metric: s => s.noTrades,     goals: [1, 10, 25], one: "Sat out" },
   { id: "first",    icon: "target", unit: "complete day",      metric: s => s.completeDays, goals: [1], one: "First complete" },
 ];
+// How many badges there are to earn. The front page uses this, so the number follows the list above.
+const BADGE_COUNT = ACHIEVEMENTS.reduce((n, a) => n + a.goals.length, 0);
 function badgesFor(s) {
   return ACHIEVEMENTS.flatMap(a => a.goals.map((goal, i) => {
     const have = a.metric(s);
@@ -2740,10 +2755,10 @@ function proofHtml() {
 }
 function renderLanding() {
   const page = landPage(), inApp = !!session && screen !== "signin";   // signed in, reading the Privacy or Terms page
-  // Buttons look the same as inside the app.
-  const signin = (id = "signin", label = "Sign in with Discord") => `<button class="lp-btn white" id="${id}">${SVG.discord}${label}</button>`;
+  // The same buttons as inside the app (.btn), not a front-page copy of them.
+  const signin = (id = "signin", label = "Sign in with Discord") => `<button class="btn primary" id="${id}">${SVG.discord}${label}</button>`;
   const link = (p, label, cls = "") => `<a href="${p === "home" ? "./" : "?p=" + p}" data-land="${p}" class="${cls}"${page === p ? ' aria-current="page"' : ""}>${label}</a>`;
-  const blink = (p, label) => link(p, label, "lp-btn ghost");
+  const blink = (p, label) => link(p, label, "btn plain");
   const person = (name, color, chips, last?) => `<div class="mock-row${last ? " late" : ""}"><span class="av" style="background:${color}">${name[0]}</span><b>${name}</b>
     <span class="chips">${chips.map((c, i) => `<i class="${c ? "on" : ""}${last && i === 1 ? " late-box" : ""}"></i>`).join("")}</span>
     <span class="st">${last ? `<span class="warn">${SYM.half}</span><span class="good late-st">${SYM.check}</span>` : `<span class="good">${SYM.check}</span>`}</span></div>`;
@@ -2756,7 +2771,7 @@ function renderLanding() {
   const rows = `<div class="mock-top"><span><b><span class="count-old">4</span><span class="count-new">5</span></b>/5 done</span><span>1h 12m left</span></div>
       <div class="mock-bar"><i></i></div>
       <div class="mock-legend"><span>Today's homework</span><span>Chart · Journal · HTF</span></div>
-      ${person("Alex", "#2563eb", [1, 1, 1])}${person("Sam", "#0e7490", [1, 1, 1])}${person("Riley", "#0d9488", [1, 1, 1])}${person("Morgan", "#ea580c", [1, 1, 1])}${person("Jordan", "#db2777", [1, 0, 1], true)}`;
+      ${person("Alex", "#2563eb", [1, 1, 1])}${person("Sam", "#0e7490", [1, 1, 1])}${person("Riley", "#0f766e", [1, 1, 1])}${person("Morgan", "#c2410c", [1, 1, 1])}${person("Jordan", "#be185d", [1, 0, 1], true)}`;
   // The real app (a demo group) in a tilted 3D phone.
   const phone = `<div class="stage3d">
       <div class="phone3d rv in d2"><div class="phone"><div class="phone-screen">
@@ -2811,7 +2826,7 @@ function renderLanding() {
       <div class="flist" style="margin-top:0">
         ${row("Daily homework", "One tap per box. Your group decides the boxes: chart with execution, journal, HTF, or your own.")}
         ${row("Notes &amp; chart pictures", "Write what happened and paste screenshots of your trades. Tap any picture to zoom in.")}
-        ${row("Streaks, points &amp; badges", "A ranking for your group, streaks for days in a row, and 31 badges to earn.")}
+        ${row("Streaks, points &amp; badges", `A ranking for your group, streaks for days in a row, and ${BADGE_COUNT} badges to earn.`)}
         ${row("Works like an app", "Add it to your home screen. It opens full screen and keeps working with bad signal.")}
         ${row("Kept inside your group", "Other groups can't see your ticks, notes or pictures. Only your group, its owner and the app owner can.")}
       </div>
@@ -2890,7 +2905,7 @@ function renderLanding() {
         <p class="fine rv in d3">${pendingInvite() ? "You've been invited to a group. Sign in with Discord and you'll be on its waiting list." : "Free. You'll need a join code from your group's owner."}
           By signing in you agree to the ${link("terms", "Terms")} and the ${link("privacy", "Privacy policy")}.</p>
       </div>
-      <figure class="hero-app rv in d2" role="img" aria-label="Example of a group's day in LockedIn: the last member ticks their box and the group reaches 5 of 5 done before the cutoff.">
+      <figure class="hero-app rv d2" role="img" aria-label="Example of a group's day in LockedIn: the last member ticks their box and the group reaches 5 of 5 done before the cutoff.">
         <div class="mock">${rows}</div>
       </figure>
     </header>
@@ -2901,13 +2916,8 @@ function renderLanding() {
             <h2 id="story-title">Tick your homework</h2>
             <p class="st-body" id="story-body"></p>
           </div>
-          <div class="s-stage" aria-hidden="true">
-            <div class="s-phone" id="s-phone"><div class="s-screen" id="s-screen">
-              <div class="ma-toast" id="ma-toast"><span class="md">${ic("flame", 20)}</span><div><b>Achievement unlocked</b><span>20 day streak</span></div></div>
-              <div class="s-scale" id="s-scale"><div class="s-feed" id="s-feed"></div></div>
-              <div class="ma-tabbar" id="ma-tabbar"><i class="hl" id="ma-hl"></i>
-                <span class="on">${SVG.day}Today</span><span>${SVG.week}Week</span><span>${SVG.board}Ranking</span><span>${SVG.me}Profile</span></div>
-            </div></div>
+          <div class="s-stage" aria-hidden="true" inert>
+            <div class="s-phone" id="s-phone"><div class="s-screen" id="s-screen"><div class="s-scale" id="s-scale"></div></div></div>
           </div>
           <ol class="st-chapters" id="st-chapters"></ol>
           <div class="st-dots" id="st-dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
@@ -2919,7 +2929,7 @@ function renderLanding() {
         <h2 class="rv" id="try-title">Try it yourself<span class="dim">nothing is saved</span></h2>
         <p class="sub rv d2">This is your row in LockedIn. Tick the boxes and watch your circle change.</p>
       </div>
-      <div class="try-card rv d1" id="try-card">${tryCardHtml()}</div>
+      <div class="card try-card rv d1" id="try-card">${tryCardHtml()}</div>
     </section>
     ${proofHtml()}
     <section class="lp-sec" id="start-own">${own}</section>`;
@@ -2927,7 +2937,7 @@ function renderLanding() {
     <nav class="lp-nav" aria-label="LockedIn">
       ${link("home", `<img src="icons/icon-192.png" alt="">LockedIn`, "brand")}
       <span class="links">${link("why", "Why")}${link("how", "How it works")}${link("features", "Features")}</span>
-      <span class="nav-end">${inApp ? link("home", "Open app", "lp-btn white small") : `<button class="lp-btn white small" id="signin-nav">${SVG.discord}Sign in</button>`}
+      <span class="nav-end">${inApp ? link("home", "Open app", "btn primary small") : `<button class="btn primary small" id="signin-nav">${SVG.discord}Sign in</button>`}
         <button class="lp-burger" id="lp-menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="lp-menu"><span class="lines"><i></i><i style="margin-top:5px"></i></span><svg class="x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span>
     </nav>
     <div class="lp-menu" id="lp-menu" role="dialog" aria-modal="true" aria-label="Menu">
@@ -2935,7 +2945,7 @@ function renderLanding() {
       <div class="in">
         <nav aria-label="Pages">${[["home", "Home"], ["why", "Why"], ["how", "How it works"], ["features", "Features"]].map(([p2, l], i) => link(p2, l).replace("<a ", `<a style="--delay:${80 + i * 60}ms" `)).join("")}</nav>
         <div class="mfoot">
-          ${inApp ? link("home", "Back to the app", "lp-btn white") : `<button class="lp-btn white" id="signin-menu">${SVG.discord}Sign in with Discord</button>`}
+          ${inApp ? link("home", "Back to the app", "btn primary") : `<button class="btn primary" id="signin-menu">${SVG.discord}Sign in with Discord</button>`}
           <span class="small-links">${link("privacy", "Privacy")}${link("terms", "Terms")}${cfg.contactEmail ? `<a href="mailto:${esc(cfg.contactEmail)}">Contact</a>` : ""}</span>
         </div>
       </div>
@@ -2959,30 +2969,33 @@ function renderLanding() {
 // ---------------------------------------------------------------- front page: try it yourself (nothing is saved)
 const TRY_BOXES = [["chart", "Chart with execution", "Required"], ["journal", "Journal", "Required"], ["review", "HTF", "Required"], ["social", "Social", "Bonus"]];
 const tryState = { chart: false, journal: false, review: false, social: false };
+// The same statuses as the app: nothing ticked on an open day is "Waiting" (a neutral circle), never red.
 function tryStatus() {
   const req = TRY_BOXES.filter(b => b[2] === "Required"), done = req.filter(b => tryState[b[0]]).length;
-  return done === req.length ? "COMPLETE" : done ? "PARTIAL" : "MISSING";
+  return done === req.length ? "COMPLETE" : done ? "PARTIAL" : "WAITING";
 }
-// "Fri 6 Nov closes in 2h 14m": the same cutoff as the app (09:00 New York, next trading day)
+// The same cutoff as the app (09:00 New York, next trading day). More than a day away (a weekend), it names the day instead.
 function tryClock() {
   const day = currentTradingDay(), mins = Math.max(0, Math.round((closesAt(day) - Date.now()) / 60000));
-  const open = opensAt(day), close = closesAt(day), frac = Math.min(1, Math.max(0, (Date.now() - open) / (close - open)));
-  return { day, text: `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, "0")}m`, frac, urgent: mins <= 60 };
+  const far = mins > 24 * 60 ? `${fmtDay(nextTrading(day), { weekday: "long", day: undefined, month: undefined })} ${hh(9)}` : "";
+  return { day, far, text: `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, "0")}m`, urgent: mins <= 60 };
 }
+const tryClockHtml = c => `${ic("clock", 15)}${c.far ? `Closes <b>${c.far}</b>` : `Closes in <b>${c.text}</b>`}`;
+// Your row and your boxes, drawn with the app's own styles (.dot, .q), so the demo looks like the real thing.
 function tryCardHtml() {
   const st = tryStatus(), c = tryClock(), req = TRY_BOXES.filter(b => b[2] === "Required");
   const left = req.filter(b => !tryState[b[0]]).length, bonus = tryState.social ? POINTS.bonus : 0;
   const pts = (st === "COMPLETE" ? POINTS.COMPLETE : st === "PARTIAL" ? POINTS.PARTIAL : 0) + bonus;
   const msg = st === "COMPLETE" ? (tryState.social ? "Complete, with the bonus. Your circle is green." : "Complete. Your circle is green.")
-    : st === "PARTIAL" ? `${left} more required ${left === 1 ? "box" : "boxes"} to go green.` : "Tick a box to start your day.";
-  return `<div class="try-top"><span class="mono">Homework for ${esc(fmtDay(c.day))}</span>
-      <span class="try-clock${c.urgent ? " urgent" : ""}" id="try-clock">${ic("clock", 15)}Closes in <b>${c.text}</b></span></div>
-    <div class="try-track" aria-hidden="true"><i id="try-fill" style="width:${(c.frac * 100).toFixed(1)}%"></i></div>
-    <div class="try-me"><span class="try-av" aria-hidden="true">Y</span><b>You</b>
-      <span class="try-st ${st}" role="img" aria-label="Your status: ${LABEL[st] || st}">${ICON[st]}</span></div>
-    <div class="try-boxes">${TRY_BOXES.map(([k, l, kind]) => `<button type="button" class="try-box${kind === "Bonus" ? " bonus" : ""}" data-try="${k}" aria-pressed="${tryState[k]}">
-        <span class="c" aria-hidden="true">${tryState[k] ? SYM.check : ""}</span><span><b>${l}</b><small>${kind}</small></span></button>`).join("")}</div>
-    <div class="try-foot" role="status" aria-live="polite"><span>${msg}</span><span class="try-pts">+${pts} ${pts === 1 ? "point" : "points"}</span></div>
+    : st === "PARTIAL" ? `${left} more required ${left === 1 ? "box" : "boxes"} to go green.` : "Nothing ticked yet. Your circle stays open until the cutoff.";
+  return `<div class="try-top"><span class="try-day">Homework for ${esc(fmtDay(c.day))}</span>
+      <span class="try-clock${c.urgent ? " urgent" : ""}" id="try-clock">${tryClockHtml(c)}</span></div>
+    <div class="mrow try-me"><span class="name"><span class="av" style="width:26px;height:26px;font-size:11px" aria-hidden="true">Y</span>You</span>
+      <span class="dot ${st} try-st" role="img" aria-label="Your status: ${LABEL[st]}">${ICON[st]}</span></div>
+    <div class="quick"><div class="qgrid">${TRY_BOXES.map(([k, l, kind]) => `<button type="button" class="q ${kind === "Bonus" ? "bonus" : "req"}" data-try="${k}" aria-pressed="${tryState[k]}">
+        <span class="qc">${!tryState[k] ? "" : kind === "Bonus" ? PLUS_SVG : ic("check", 18).replace('<circle cx="12" cy="12" r="9"/>', "")}</span>
+        <span><b>${l}</b><small>${kind === "Bonus" ? (tryState[k] ? "Bonus, +" + POINTS.bonus : "Bonus") : "Required"}</small></span></button>`).join("")}</div></div>
+    <div class="try-foot" role="status" aria-live="polite"><span>${msg}</span><span class="try-pts"><span class="num">+${pts}</span> ${pts === 1 ? "point" : "points"}</span></div>
     <p class="try-note">Cutoff: 09:00 New York time on the next trading day. Each group can choose its own time and boxes.</p>`;
 }
 function tryRender(pop) {
@@ -3006,9 +3019,8 @@ document.addEventListener("click", e => {
 setInterval(() => {
   const el = document.getElementById("try-clock");
   if (!el) return;
-  const c = tryClock(), fill = document.getElementById("try-fill");
-  el.innerHTML = `${ic("clock", 15)}Closes in <b>${c.text}</b>`; el.classList.toggle("urgent", c.urgent);
-  if (fill) fill.style.width = (c.frac * 100).toFixed(1) + "%";
+  const c = tryClock();
+  el.innerHTML = tryClockHtml(c); el.classList.toggle("urgent", c.urgent);
 }, 15000);
 
 // ---------------------------------------------------------------- front page menu (top right)
@@ -3027,7 +3039,9 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && document.d
 
 
 // ---------------------------------------------------------------- front page scroll story
-// The phone stays in place while the app inside it plays one day: tick, notes, everyone done, ranking.
+// The phone stays in place while the app inside it plays one day: tick, note, the week, the ranking.
+// Everything inside the phone is drawn with the app's own styles (cards, boxes, bars), so it looks like the real app.
+// Nothing scrolls inside the phone: like the real app, another page opens with a tap on the bottom bar.
 // Made-up names only. The phone turns slowly as you scroll and does nothing else: it does not follow the mouse.
 let story = null;
 function initStory() {
@@ -3037,45 +3051,94 @@ function initStory() {
   const q = sel => root.querySelector(sel), qa = sel => [...root.querySelectorAll(sel)];
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const CH = [
-    { t: ["Tick your", "homework"], b: "One tap per box after your session. All required boxes ticked turns your circle green.", bg: [2, 8, 23], hl: 0 },
-    { t: ["Show your", "work"], b: "Write what happened and add chart screenshots. Your group reads it and learns from it.", bg: [2, 16, 28], hl: 0 },
-    { t: ["Beat the", "cutoff"], b: "Everyone sees who's done before the day closes. Nobody wants to be the red circle.", bg: [2, 20, 14], hl: 1 },
-    { t: ["Climb the", "ranking"], b: "Points, streaks for days in a row, and 31 badges to earn. Every day counts.", bg: [10, 10, 16], hl: 2 },
+    { t: ["Tick your", "homework"], b: "One tap per box after your session. All required boxes ticked turns your circle green.", bg: [2, 8, 23] },
+    { t: ["Show your", "work"], b: "Write what happened and add chart screenshots. Your group reads it and learns from it.", bg: [2, 16, 28] },
+    { t: ["Beat the", "cutoff"], b: "Everyone sees who's done before the day closes. Nobody wants to be the red circle.", bg: [2, 20, 14] },
+    { t: ["Climb the", "ranking"], b: `Points, streaks for days in a row, and ${BADGE_COUNT} badges to earn. Every day counts.`, bg: [10, 10, 16] },
   ];
-  const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>';
-  const XS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg>';
-  const HALF = '<svg viewBox="0 0 24 24"><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>';
-  const LINE = '<svg viewBox="0 0 64 64" preserveAspectRatio="none"><path d="M4 46 L18 40 L28 28 L40 36 L60 18" fill="none" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  const icon = st => st === "ok" ? CHECK : st === "part" ? HALF : st === "miss" ? XS : "";
-  const MEM = [["Taylor", "#3b82f6", null, true], ["Alex", "#b45309", "ok"], ["Sam", "#be185d", "ok"], ["Morgan", "#0f766e", "ok"], ["Riley", "#1d4ed8", "part"], ["Jordan", "#15803d", "miss"], ["Casey", "#047857", "miss"]];
-  const BOX = [["Chart with execution", "Required"], ["Journal", "Required"], ["HTF", "Required"], ["Social", "Bonus"]];
-  const RANK: any[] = [["Alex", "#b45309", 118, "47-day best streak"], ["Taylor", "#3b82f6", 103, "20-day streak"], ["Sam", "#be185d", 81, "68% complete"], ["Morgan", "#0f766e", 60, "12-day streak"], ["Riley", "#1d4ed8", 32, "41% complete"]];
+  const CHECK = ic("check", 18).replace('<circle cx="12" cy="12" r="9"/>', "");   // the same check as in "Your homework"
+  const LINE = '<svg viewBox="0 0 64 64" preserveAspectRatio="none" aria-hidden="true"><path d="M4 46 L18 40 L28 28 L40 36 L60 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  // The phone shows the last Friday (today, if it is one), so the week page always has five days in it.
+  let day = addDays(mondayOf(currentTradingDay()), 4);
+  if (day > currentTradingDay()) day = addDays(day, -7);
+  const week = [0, 1, 2, 3, 4].map(i => addDays(mondayOf(day), i));
+  // name, Monday to Thursday (c complete, p partial, m missing, e excused), status on Friday before anyone finishes late
+  const MEM: any[] = [["Taylor", "cccc", "WAITING"], ["Alex", "cccc", "COMPLETE"], ["Sam", "cpcc", "COMPLETE"], ["Morgan", "pccm", "COMPLETE"],
+    ["Riley", "mcpc", "PARTIAL"], ["Jordan", "cecc", "WAITING"]];
+  const PAST = { c: "COMPLETE", p: "PARTIAL", m: "MISSING", e: "EXCUSED" };
+  const BOX = [["Chart with execution", "req"], ["Journal", "req"], ["HTF", "req"], ["Social", "bonus"]];
+  const RANK: any[] = [["Alex", 118, "47-day streak · 96% of days done", "diamond"], ["Taylor", 103, "20-day streak · 91% of days done", "gold", true], ["Sam", 81, "9-day streak · 84% of days done", "bronze"],
+    ["Morgan", 60, "78% of days done", ""], ["Jordan", 38, "66% of days done", ""], ["Riley", 32, "58% of days done", ""]];
   const NOTE = "Waited for the 9:45 retest and took 1R. Stopped after two trades.";
-  const weekRow = (n, cells) => `<span class="n">${n}</span>` + cells.map(c => `<i style="background:${{ o: "#22c55e", p: "#fbbf24", m: "#ef4444", e: "#2a2b31" }[c]}"></i>`).join("");
-  q("#s-feed").innerHTML = `
-    <div class="ma-card ma-top"><span class="ma-chip"><b>L</b>LockedIn</span><span class="ma-date">${esc(fmtDay(currentTradingDay()))}</span></div>
-    <div class="ma-card"><div class="ma-track"><i></i></div>
-      <div class="ma-meta"><span class="ma-count"><span id="ma-done">3</span><small>/7 done</small></span><span class="ma-left">2h 30m left</span></div>
-      <div class="ma-stack" id="ma-stack"></div></div>
-    <div class="ma-card"><p class="ma-h">Your homework</p><div class="ma-boxes">${BOX.map(([l, k]) => `<div class="ma-box"><span class="c">${CHECK}</span><span><b>${l}</b><small>${k}</small></span></div>`).join("")}</div></div>
-    <div class="ma-card">${MEM.map(([n, col, st, you]) => `<div class="ma-mem">
-        <span class="ma-av" style="background:${col}">${n[0]}</span><span class="ma-name">${n}${you ? '<span class="ma-you">YOU</span>' : ""}</span>
-        <span class="ma-st ${st || ""}">${icon(st)}</span>
-        ${you ? `<p class="ma-note" id="ma-note"></p><div class="ma-shots"><span class="ma-shot">${LINE}</span><span class="ma-shot">${LINE}</span></div>` : ""}</div>`).join("")}</div>
-    <div class="ma-card"><p class="ma-h">This week</p><div class="ma-week"><span></span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span>
-      ${weekRow("Taylor", ["o", "o", "o", "o", "e"])}${weekRow("Alex", ["o", "o", "o", "o", "o"])}${weekRow("Sam", ["o", "p", "o", "o", "o"])}${weekRow("Morgan", ["p", "o", "o", "m", "o"])}${weekRow("Riley", ["m", "o", "p", "o", "e"])}</div></div>
-    <div class="ma-card"><p class="ma-h">Ranking</p><ol class="ma-rank">${RANK.map(([n, col, pts, d], i) => `<li><span class="r">${i + 1}</span><span class="ma-av" style="background:${col}">${n[0]}</span><span><b>${n}</b><small>${d}</small></span><span class="pts" data-pts="${pts}">${pts - 6}</span></li>`).join("")}</ol></div>`;
-  const feed = q("#s-feed"), scaleBox = q("#s-scale"), screenEl = q("#s-screen"), phoneEl = q("#s-phone");
-  const boxes = qa(".ma-box"), mems = qa(".ma-mem"), note = q("#ma-note"), shots = qa(".ma-shot"), pts = qa(".pts");
-  const sText = q("#story-text"), sTitle = q("#story-title"), sBody = q("#story-body");
+  const av = (name, px) => `<span class="av" style="width:${px}px;height:${px}px;font-size:${Math.round(px * 0.44)}px">${name[0]}</span>`;
+  const gname = `<span class="gname"><span class="glogo acc-blue" style="width:16px;height:16px;font-size:8px">N</span><span>NQ Morning</span></span>`;
+  const arrow = (dir, off = false) => `<span class="round"${off ? ' style="opacity:0.3"' : ""}>${ic("chevron-" + dir, 20)}</span>`;
+  const TOPS = [
+    arrow("left") + `<div class="mid">${gname}<span class="datepick"><b>${esc(fmtDay(day))}</b></span></div>` + arrow("right", true),
+    arrow("left") + `<div class="mid">${gname}<b>${esc(fmtDay(week[0], { weekday: undefined }))} – ${esc(fmtDay(week[4], { weekday: undefined }))}</b></div>` + arrow("right", true),
+    `<span></span><div class="mid">${gname}<b>Ranking</b></div><span></span>`,
+  ];
+  const TABS = [["day", "Today"], ["week", "Week"], ["board", "Ranking"], ["me", "Profile"]];
+  q("#s-scale").innerHTML = `
+    <div class="topbar glass" id="s-top"></div>
+    <div class="s-page on">
+      <div class="card daysum">
+        <div class="sum-head">
+          <div class="sum-done"><p class="sum-big"><span class="num" id="ma-done">3</span><small> of <span class="num">${MEM.length}</span></small></p><p class="sum-until">members done</p></div>
+          <div class="sum-when"><p class="sum-time"><span class="num">2</span>h <span class="num">30</span>m left</p><p class="sum-until">until <span class="num">09:00</span> New York</p></div>
+        </div>
+        <div class="donebar"><i id="ma-bar"></i></div>
+        <p class="open-line" id="ma-open"></p>
+      </div>
+      <div class="card quick">
+        <div class="cardhead"><h2 id="ma-qh">Your homework</h2><span class="dot COMPLETE qdot" id="ma-qdot" hidden>${ICON.COMPLETE}</span></div>
+        <p class="qdone" id="ma-qdone"></p>
+        <div class="qgrid">${BOX.map(([l, kind]) => `<div class="q ${kind}" aria-pressed="false"><span class="qc"></span><span><b>${l}</b><small>${kind === "bonus" ? "Bonus" : "Required"}</small></span></div>`).join("")}</div>
+        <div class="qnote" id="ma-qnote">${SVG.note.replace("<svg ", '<svg width="18" height="18" ')}<span>Add note &amp; pictures</span></div>
+        <div class="s-note" id="s-note"><div>
+          <div class="s-notebox"><span id="ma-note"></span></div>
+          <div class="shots"><span class="shot s-shot">${LINE}</span><span class="shot s-shot">${LINE}</span></div>
+        </div></div>
+      </div>
+    </div>
+    <div class="s-page">
+      <div class="card"><div class="cardhead"><h2>This week</h2></div>
+        <p class="page-hint">Each square is one person's homework for one day. Tap a square to open that day, or a name to see their profile.</p>
+        <div class="grid-wrap"><table class="grid"><thead><tr><th class="who"></th>${week.map(k => `<th>${fmtDay(k, { day: undefined, month: undefined })}<br>${parse(k).getUTCDate()}</th>`).join("")}</tr></thead>
+          <tbody>${MEM.map(([n, past]) => `<tr><td class="who">${n}</td>${[...past].map(c => `<td><div class="cell ${PAST[c]}">${ICON[PAST[c]]}</div></td>`).join("")}<td><div class="cell today s-today"></div></td></tr>`).join("")}</tbody></table></div>
+        <ul class="legend">${["COMPLETE", "PARTIAL", "MISSING", "WAITING", "EXCUSED"].map(st => `<li><span class="cell ${st}">${ICON[st]}</span>${st === "WAITING" ? "Waiting: today, still open" : LABEL[st]}</li>`).join("")}</ul>
+      </div>
+    </div>
+    <div class="s-page">
+      <div class="card"><div class="cardhead"><h2>Points</h2></div>
+        <p class="page-hint">Points for finished homework, highest first. Open <b>Scoring</b> at the bottom to see how points work.</p>
+        <ol class="lb">${RANK.map(([n, pts, d, tier, you], i) => `<li class="${i ? "" : "top"}"><span class="rk">${i + 1}</span>${av(n, 32)}
+          <div class="who2"><b>${n}${tier ? `<span class="mini-badge tier-${tier}">${ic("flame", 13)}</span>` : ""}${you ? `<span class="you">You</span>` : ""}</b><span>${d}</span></div>
+          <span class="pts" data-pts="${pts}">${pts - 6}</span></li>`).join("")}</ol>
+      </div>
+    </div>
+    <div class="toast glass" id="ma-toast"><div class="medal tier-gold"><span>${ic("flame", 26)}</span></div><div><b>Badge earned</b><span>20 day streak</span></div></div>
+    <div class="tabbar glass"><div class="pill" id="ma-pill" style="width:calc((100% - 10px) / ${TABS.length})"></div>${TABS.map(([k, l]) =>
+      `<button type="button" tabindex="-1">${k === "me" ? `<span class="meav">${SVG.me}</span>` : SVG[k]}<span>${l}</span></button>`).join("")}</div>
+    <i class="s-tap" id="s-tap"></i>`;
+  const scaleBox = q("#s-scale"), screenEl = q("#s-screen"), phoneEl = q("#s-phone");
+  const boxes = qa(".q"), todayCells = qa(".s-today"), note = q("#ma-note"), shots = qa(".s-shot"), pts = qa(".pts"), pages = qa(".s-page"), tabs = qa(".tabbar button");
+  const sText = q("#story-text"), sTitle = q("#story-title"), sBody = q("#story-body"), tapEl = q("#s-tap");
   q("#st-chapters").innerHTML = CH.map((c, i) => `<li><span>0${i + 1}</span>${c.t.join(" ")}<div class="bar"><i></i></div></li>`).join("");
-  const chLis = qa("#st-chapters li"), chBars = qa("#st-chapters .bar i"), dots = qa("#st-dots i"), tabs = qa("#ma-tabbar span");
-  const S: any = { root, chap: -1, feedY: 0, smoothY: 0, visible: false, anchors: [0, 0, 0, 0] };
+  const chLis = qa("#st-chapters li"), chBars = qa("#st-chapters .bar i"), dots = qa("#st-dots i");
+  const S: any = { root, chap: -1, page: -1, ticks: 0, noteOpen: false, hint: -1, visible: false };
   function measure() {
     const sc = screenEl.clientWidth / 375;
     scaleBox.style.transform = `scale(${sc})`;
-    const viewH = screenEl.clientHeight / sc, maxY = Math.max(0, feed.scrollHeight - viewH);
-    S.anchors = [0, Math.min(maxY, mems[0].offsetTop - 100), Math.min(maxY, mems[3].offsetTop - 60), maxY];
+    scaleBox.style.height = (screenEl.clientHeight / sc).toFixed(1) + "px";
+  }
+  // A short ring where a finger would tap. Only when the story moves forward, and not if you prefer less motion.
+  function tap(el) {
+    if (reduce || !el) return;
+    let x = el.offsetWidth / 2, y = el.offsetHeight / 2;
+    for (let n = el; n && n !== scaleBox; n = n.offsetParent) { x += n.offsetLeft; y += n.offsetTop; }
+    tapEl.style.left = x + "px"; tapEl.style.top = y + "px";
+    tapEl.classList.remove("go"); void tapEl.offsetWidth; tapEl.classList.add("go");
   }
   function setChapter(i) {
     if (i === S.chap) return;
@@ -3088,8 +3151,15 @@ function initStory() {
     requestAnimationFrame(() => sText.classList.add("play"));
     chLis.forEach((li, j) => j === i ? li.setAttribute("aria-current", "step") : li.removeAttribute("aria-current"));
     dots.forEach((d, j) => d.classList.toggle("on", j === i));
-    q("#ma-hl").style.transform = `translateX(calc(${c.hl * 100}% + ${c.hl * 6}px))`;
-    tabs.forEach((t2, j) => t2.classList.toggle("on", j === c.hl));
+  }
+  // Another page of the app: the bottom bar's highlight moves to it, as it does after a real tap.
+  function setPage(i) {
+    if (i === S.page) return;
+    S.page = i;
+    pages.forEach((pg, j) => pg.classList.toggle("on", j === i));
+    tabs.forEach((t2, j) => j === i ? t2.setAttribute("aria-current", "page") : t2.removeAttribute("aria-current"));
+    q("#ma-pill").style.transform = `translateX(${i * 100}%)`;
+    q("#s-top").innerHTML = TOPS[i];
   }
   const lerp = (a, b, t) => a + (b - a) * t, clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v)), ease = t => t * t * (3 - 2 * t);
   function apply(p) {
@@ -3098,22 +3168,46 @@ function initStory() {
     chBars.forEach((b, j) => b.style.transform = `scaleX(${j < ci ? 1 : j === ci ? local : 0})`);
     const nxt = CH[Math.min(3, ci + 1)], mix = ci < 3 ? ease(clamp((local - 0.7) / 0.3)) : 0;
     root.style.setProperty("--st-bg", `rgb(${CH[ci].bg.map((v, j) => Math.round(lerp(v, nxt.bg[j], mix)))})`);
-    S.feedY = ci < 3 ? lerp(S.anchors[ci], S.anchors[ci + 1], ease(clamp((local - 0.75) / 0.25))) : S.anchors[3];
+    // Today for the first two steps, then Week, then Ranking. Just before a page changes, a tap shows on its tab.
+    setPage(ci < 2 ? 0 : ci - 1);
+    const hint = (ci === 1 || ci === 2) && local > 0.88 ? ci : -1;
+    if (hint !== S.hint) { if (hint > S.hint) tap(tabs[hint]); S.hint = hint; }
+    // step 1: the boxes get ticked one by one
     const ticks = ci > 0 ? 4 : Math.floor(clamp((local - 0.1) / 0.6) * 4.999);
-    boxes.forEach((bx, j) => { const on = j < ticks; if (on !== bx.classList.contains("on")) { bx.classList.toggle("on", on); if (on) { bx.classList.add("pop"); setTimeout(() => bx.classList.remove("pop"), 260); } } });
-    const youDone = ticks >= 3, fixed = ci > 2 ? 3 : ci === 2 ? Math.floor(clamp((local - 0.15) / 0.55) * 3.999) : 0;
-    mems.forEach((m, j) => {
-      const st = j === 0 ? (youDone ? "ok" : null) : (j >= 4 && j - 4 < fixed ? "ok" : MEM[j][2]);
-      const dot = m.querySelector(".ma-st"), cur = ["ok", "part", "miss"].find(k => dot.classList.contains(k)) || null;
-      if (cur !== st) { dot.className = "ma-st " + (st || "") + " flip"; dot.innerHTML = icon(st); setTimeout(() => dot.classList.remove("flip"), 30); }
+    if (ticks !== S.ticks) {
+      boxes.forEach((bx, j) => { bx.setAttribute("aria-pressed", String(j < ticks)); bx.querySelector(".qc").innerHTML = j >= ticks ? "" : BOX[j][1] === "bonus" ? PLUS_SVG : CHECK;
+        if (BOX[j][1] === "bonus") bx.querySelector("small").textContent = j < ticks ? "Bonus, +" + POINTS.bonus : "Bonus"; });
+      if (ticks > S.ticks) tap(boxes[ticks - 1]);
+      S.ticks = ticks;
+      const done = ticks >= 3, points = dayPoints("COMPLETE", ticks > 3 ? 1 : 0);
+      q("#ma-qh").textContent = done ? "Done for today" : "Your homework";
+      q("#ma-qdot").hidden = !done;
+      q("#ma-qdone").innerHTML = done ? `<b><span class="num">+${points}</span> ${points === 1 ? "point" : "points"}</b> · <span class="num">20</span>-day streak` : "";
+    }
+    // step 2: the note section opens under the boxes, a note is typed, two pictures are added
+    const noteOpen = ci > 1 || (ci === 1 && local > 0.06);
+    if (noteOpen !== S.noteOpen) {
+      S.noteOpen = noteOpen;
+      q("#s-note").classList.toggle("on", noteOpen);
+      q("#ma-qnote span").textContent = noteOpen ? "Close note & pictures" : "Add note & pictures";
+      if (noteOpen && ci === 1) tap(q("#ma-qnote"));
+    }
+    const chars = ci > 1 ? NOTE.length : ci === 1 ? Math.floor(clamp((local - 0.14) / 0.46) * NOTE.length) : 0;
+    note.innerHTML = NOTE.slice(0, chars) + (ci === 1 && noteOpen && chars < NOTE.length ? '<span class="caret"></span>' : "");
+    shots.forEach((s2, j) => s2.classList.toggle("on", ci > 1 || (ci === 1 && local > 0.66 + j * 0.08)));
+    // step 3: the last two finish before the cutoff (Riley, then Jordan)
+    const youDone = ticks >= 3, fixed = ci > 2 ? 2 : ci === 2 ? Math.floor(clamp((local - 0.2) / 0.5) * 2.999) : 0;
+    todayCells.forEach((cell, j) => {
+      const st = j === 0 ? (youDone ? "COMPLETE" : ticks ? "PARTIAL" : "WAITING") : j >= 4 && j - 4 < fixed ? "COMPLETE" : MEM[j][2];
+      if (cell.dataset.st !== st) { cell.dataset.st = st; cell.className = "cell today s-today " + st; cell.innerHTML = ICON[st]; }
     });
-    const done = 3 + (youDone ? 1 : 0) + fixed;
-    q("#ma-done").textContent = done;
-    const part = fixed >= 1 ? 0 : 1, miss = Math.max(0, 2 - Math.max(0, fixed - 1)), none = youDone ? 0 : 1;
-    q("#ma-stack").innerHTML = [["#22c55e", done], ["#fbbf24", part], ["#ef4444", miss], ["#2a2b31", none]].filter(x => x[1]).map(([c2, n]) => `<i style="flex-grow:${n};background:${c2}"></i>`).join("");
-    const chars = ci > 1 ? NOTE.length : ci === 1 ? Math.floor(clamp((local - 0.08) / 0.5) * NOTE.length) : 0;
-    note.innerHTML = NOTE.slice(0, chars) + (ci === 1 && chars < NOTE.length ? '<span class="caret"></span>' : "");
-    shots.forEach((s2, j) => s2.classList.toggle("on", ci > 1 || (ci === 1 && local > 0.6 + j * 0.08)));
+    const doneN = 3 + (youDone ? 1 : 0) + fixed;
+    q("#ma-done").textContent = doneN;
+    q("#ma-bar").style.width = Math.round(doneN / MEM.length * 100) + "%";
+    const open = [youDone ? "" : ticks ? "You (partly)" : "You", fixed < 1 ? "Riley (partly)" : "", fixed < 2 ? "Jordan" : ""].filter(Boolean);
+    const line = q("#ma-open"), lineHtml = open.length ? `<b>Still open</b> ${open.join(", ")}` : "Everyone is done.";
+    if (line.innerHTML !== lineHtml) { line.innerHTML = lineHtml; line.className = "open-line" + (open.length ? "" : " all"); }
+    // step 4: points count up and a badge is earned
     const k = ci === 3 ? ease(clamp(local / 0.5)) : 0;
     pts.forEach(el => el.textContent = Math.round(+el.dataset.pts - 6 + 6 * k));
     q("#ma-toast").classList.toggle("on", ci === 3 && local > 0.45 && local < 0.95);
@@ -3122,15 +3216,13 @@ function initStory() {
     if (!S.visible) return;
     const r = root.getBoundingClientRect(), total = r.height - innerHeight, pr = clamp(-r.top / total);
     apply(pr);
-    S.smoothY += (S.feedY - S.smoothY) * (reduce ? 1 : 0.12);
-    feed.style.transform = `translate3d(0, ${(-S.smoothY).toFixed(1)}px, 0)`;
     // one slow turn from left to right over the whole story, tied to the scroll position
     phoneEl.style.transform = `perspective(1600px) rotateY(${(-22 + pr * 34).toFixed(2)}deg) rotateX(8deg) rotateZ(${(3 - pr * 6).toFixed(2)}deg)`;
   };
   if ("IntersectionObserver" in window) new IntersectionObserver(l => l.forEach(e => { S.visible = e.isIntersecting; })).observe(root); else S.visible = true;
   S.measure = measure;
   measure(); if (document.fonts) document.fonts.ready.then(() => story === S && measure());
-  apply(0);
+  S.ticks = -1; apply(0);
   story = S;
 }
 addEventListener("resize", () => { if (story && story.root.isConnected) story.measure(); });
@@ -3267,8 +3359,8 @@ document.addEventListener("click", async e => {
   if (d.profile) { profileKey = d.profile; profilePart = "profile"; if (tab === "admin") tab = "day"; render(); requestAnimationFrame(pageEnter); return window.scrollTo(0, 0); }
   if (t.id === "goto-reflect") {
     openPanel(today, myKey());
-    const el = document.getElementById("panel-refl");
-    if (el) el.scrollIntoView({ block: "start" });
+    const el = document.getElementById("panel-refl") as HTMLDetailsElement;
+    if (el) { el.open = true; el.scrollIntoView({ block: "start" }); }
     return;
   }
   if (t.id === "profile-back") { profileKey = null; render(); return window.scrollTo(0, 0); }
@@ -3342,7 +3434,9 @@ document.addEventListener("click", async e => {
   if (d.break && editing) {
     const b = d.break, on = t.getAttribute("aria-pressed") !== "true";
     t.setAttribute("aria-pressed", String(on));
-    return editTick(editing.day, editing.key, row => { row.rule_breaks = on ? [...new Set([...row.rule_breaks, b])] : row.rule_breaks.filter(x => x !== b); });
+    editTick(editing.day, editing.key, row => { row.rule_breaks = on ? [...new Set([...row.rule_breaks, b])] : row.rule_breaks.filter(x => x !== b); });
+    foldVals();
+    return;
   }
   if (t.id === "panel-close" || t.id === "panel-done") return closePanel();
   if (d.removeShot) {
@@ -3609,9 +3703,10 @@ document.addEventListener("input", e => {
     const rec = tickOf(day, key) || {};
     document.querySelectorAll("[data-result]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.result === resultOf(rec))));
     const h = document.getElementById("result-hint"); if (h) h.textContent = resultHint(rec);
+    foldVals();
     return;
   }
-  if (e.target.dataset && e.target.dataset.refl) return editReflection(e.target.dataset.week, e.target.dataset.key, e.target.dataset.refl, e.target.value);
+  if (e.target.dataset && e.target.dataset.refl) { editReflection(e.target.dataset.week, e.target.dataset.key, e.target.dataset.refl, e.target.value); foldVals(); return; }
   if (e.target.id === "panel-excused" && editing) { const on = e.target.checked; return editTick(editing.day, editing.key, row => { row.excused = on; }); }
   if (e.target.id !== "panel-note" || !editing) return;
   const v = e.target.value;
