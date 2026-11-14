@@ -1565,3 +1565,21 @@ button.mini { display: flex; align-items: center; justify-content: space-between
 .lp .proof figcaption { margin-top: 14px; font-size: 15px; color: rgba(245, 245, 247, 0.72); }
 .lp .proof figcaption b { color: #f5f5f7; font-weight: 600; margin-right: 8px; }
 @media (min-width: 900px) { .lp .proof { grid-template-columns: 1fr 1fr; column-gap: 56px; } }
+
+/* Touch screens: small controls keep their look but get a taller, invisible tap area (44px), so a thumb doesn't miss.
+   Mouse users are not affected. */
+@media (pointer: coarse) {
+  .btn.small, .segset button, .tagpick button, button.react, .clink, .reportlink, #gotoday, .swatch, .pmenu summary,
+  .cardhead .round, .tour-x, .vtop .round { position: relative; }
+  .btn.small::after, .segset button::after, .tagpick button::after, button.react::after, .clink::after, .reportlink::after,
+  .swatch::after, .pmenu summary::after, .cardhead .round::after, .tour-x::after, .vtop .round::after, .pic > button.remove::after {
+    content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 44px; transform: translateY(-50%); }
+  .swatch::after, .pmenu summary::after, .cardhead .round::after, .tour-x::after, .vtop .round::after, .pic > button.remove::after {
+    left: 50%; right: auto; min-width: 44px; width: 100%; transform: translate(-50%, -50%); }
+  /* These two sit right under a note or a comment, which can hold links: their tap area grows downward, away from the text. */
+  .clink::after, .reportlink::after { top: -4px; transform: none; }
+  /* "Today" sits right under the date, so its tap area only grows sideways and down. */
+  #gotoday::after { content: ""; position: absolute; top: 0; bottom: -14px; left: -12px; right: -12px; }
+  /* iPhones zoom the whole page when you tap a field with text under 16px. */
+  select, .field, .cform .cbox, .reqbox textarea.field, .panel textarea, .reflect textarea, .repform textarea, .note input { font-size: 16px; }
+}
