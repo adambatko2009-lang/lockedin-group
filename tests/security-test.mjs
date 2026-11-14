@@ -1230,5 +1230,46 @@ ok((await srvTag(SL)) === "LONG" && (await srvTag(SX)) === "XY1" && (await joinC
 ok(!!(await as("tb", `insert into public.group_requests (name, server_id) values ('Sneaky', $1)`, [SL])).error
   && !!(await rpc("ta", "set_server_tag", [SL, "ZZZ"])).error, "and the rules still hold after the second run");
 
+// ================================================================ update 27: mentor group view
+const u27 = readFileSync(dir + "update-27-mentor-group-view.sql", "utf8");
+await db.exec(u27);
+console.log("\nloaded: update-27-mentor-group-view.sql");
+section("mentor group view (update 27)");
+// Two fresh servers: V1 is Taylor's (ta) and G3 is on it, V2 belongs to another mentor (tc). G9 is on no server.
+const V1 = (await rpc("batko", "create_server", ["View one", U.ta, "VW1"])).rows[0].v;
+const V2 = (await rpc("batko", "create_server", ["View two", U.tc, "VW2"])).rows[0].v;
+await db.query(`insert into public.server_groups (group_id, server_id) values ($1, $2)
+  on conflict (group_id) do update set server_id = excluded.server_id`, [G3, V1]);
+await db.query(`delete from public.server_groups where group_id = $1`, [G9]);
+r = await rpc("ta", "server_group_view", [G3]);
+const gv = r.rows && r.rows[0] && r.rows[0].v;
+ok(!r.error && !!gv && gv.group.id === G3 && gv.group.name === g3name && String(gv.server.id) === String(V1) && gv.server.name === "View one", "the mentor opens a group that is on their server");
+ok(!!gv && Object.keys(gv.group).sort().join() === "boxes,color,cutoff_hour,id,logo_path,name,points,status,timezone", "the group comes with its name, look and rules only: no join code and no owner");
+ok(!!gv && gv.today === d3 && gv.days.length > 0 && gv.days.length <= 90 && gv.days[gv.days.length - 1] === d3, "with the open day and the trading days up to it");
+ok(!!gv && gv.members.length > 0 && gv.members.every(m => Object.keys(m).sort().join() === "avatar_url,name,sort,ticks"), "members come with name, picture, order and ticks only");
+const gvMia = gv && gv.members.find(m => m.name === k3now), gvToday = gvMia && gvMia.ticks.find(t => t[0] === d3);
+ok(!!gvToday && gvToday.length === 2 && gvToday[1] === "1110000", "a tick is a day and which of the six boxes are ticked, plus excused");
+ok(!!gv && gv.members.every(m => m.ticks.every(t => /^\d{4}-\d\d-\d\d$/.test(t[0]) && /^[01]{7}$/.test(t[1]))), "every tick has that shape and nothing else");
+ok(!!gv && !JSON.stringify(gv).includes("SECRETNOTE") && !/"(note|images|pnl|rr|result|rule_breaks|went_well|body|join_code|owner_id|key|member_key)"/.test(JSON.stringify(gv)),
+  "notes, pictures, results, comments, the join code and member ids are never in it");
+await db.query(`insert into public.ticks (day, member_key, chart, note) values ($1, $2, true, 'OLDNOTE') on conflict (day, member_key) do nothing`, ["2020-01-06", k3]);
+r = await rpc("ta", "server_group_view", [G3]);
+ok(!r.error && !JSON.stringify(r.rows[0].v).includes("2020-01-06"), "only the last 90 trading days are in it");
+ok(!!(await rpc("ta", "server_group_view", [G9])).error, "the mentor can't open a group that is on no server");
+ok(!(await rpc("tc", "server_overview", [V2])).error && !!(await rpc("tc", "server_group_view", [G3])).error, "another mentor, with a server of their own, can't open a group on this server");
+ok(!!(await rpc(mem3, "server_group_view", [G3])).error, "a member can't use the mentor view");
+ok(!!(await rpc(own3, "server_group_view", [G3])).error, "the group's own owner can't use it either");
+ok(!!(await rpc("o9", "server_group_view", [G3])).error, "another group's owner can't open it");
+ok(!!(await rpc("anon", "server_group_view", [G3])).error, "signed-out visitors can't open it");
+ok(!!(await rpc("ta", "server_group_view", ["no-such-group"])).error, "a group that doesn't exist is refused the same way");
+ok(!(await rpc("batko", "server_group_view", [G3])).error && !!(await rpc("batko", "server_group_view", [G9])).error, "the app owner can, but only for a group that is on a server");
+ok((await as("ta", `select * from public.ticks`)).rows.length === 0 && (await as("ta", `select * from public.groups`)).rows.length === 0, "the mentor still can't read the group's tables");
+ok(!!(await as("ta", `insert into public.ticks (day, member_key, chart) values ($1, $2, true)`, [d3, k4])).error
+  && (await as("ta", `update public.ticks set chart=false`)).count === 0 && (await as("ta", `update public.groups set name='Hacked'`)).count === 0, "and still can't tick or change anything");
+await rpc(own3, "unlink_server", [G3]);
+ok(!!(await rpc("ta", "server_group_view", [G3])).error, "after the group owner unlinks the group the mentor can't open it anymore");
+await db.exec(u27);
+ok(!!(await rpc(mem3, "server_group_view", [G3])).error && !!(await rpc("anon", "server_group_view", [G3])).error, "running update 27 a second time keeps the rules");
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

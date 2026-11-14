@@ -35,6 +35,7 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
 | `supabase/update-24-monthly-and-mentor-recaps.sql` | A monthly ranking in a group's Discord, and a summary of all linked groups in a mentor's Discord (run once, after update 23, before pushing) |
 | `supabase/update-25-break-even-result.sql` | A day's result can also be Break even (run once, after update 24, before pushing) |
 | `supabase/update-26-server-tags.sql` | Server tags: someone who asks for a new group can type a server's tag (like BNQ); once approved the group is on that server and its join code starts with the tag (run once, after update 25, before pushing) |
+| `supabase/update-27-mentor-group-view.sql` | A mentor can open a group on their server and look at each day's boxes and the week, without changing anything (run once, after update 26, before pushing) |
 | `supabase/sign-out-everyone-except-owner.sql` | Signs everyone but you out; no data is removed (run when needed) |
 | `web/public/vendor/` | Fonts and their licenses, hosted on our own site (see `web/public/vendor/THIRD-PARTY-NOTICES.md`) |
 | `supabase/functions/send-reminders/index.ts` | Runs every 5 minutes in Supabase (Edge Functions) and deletes pictures older than 60 days. Its reminder part finds nobody since update 22 |
@@ -57,8 +58,8 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
   its join code, and who its group admins are.
 - App owner (you): everything in every group. Approves group requests, creates, pauses and deletes groups, hands a group to a new owner.
   Creates and deletes mentor servers, and gives each server its tag.
-- Mentor (owner of a server you created): sees, for each group linked to their server, the members' names and pictures, which days
-  each member finished their boxes, and streaks. Never notes, pictures, results, comments or reflections. Can't tick, edit or approve
+- Mentor (owner of a server you created): sees, for each group linked to their server, the members' names and pictures, which boxes
+  each member ticked each day (Open group shows the day and the week), and streaks. Never notes, pictures, results, comments or reflections. Can't tick, edit or approve
   anything. A group is only linked when its own group owner types the server code, or when the person who asked for the group
   typed the server's tag and you approved the request. Other mentors never see it.
   Can paste a Discord webhook link so LockedIn posts a weekly or monthly summary of the linked groups in their Discord: group
