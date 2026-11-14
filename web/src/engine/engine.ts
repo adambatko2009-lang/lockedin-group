@@ -1947,7 +1947,7 @@ function miniStatus(k, key, rec) {
   const st = statusOf(k, key);
   if (st === "EXCUSED") return "Excused";
   const req = RULES.filter(r => r[2] === "req"), bonus = RULES.filter(r => r[2] === "bonus" && rec[r[0]]);
-  if (st === "COMPLETE") return "All done" + (bonus.length ? `, plus ${bonus.map(r => esc(r[1])).join(", ")}` : "");
+  if (st === "COMPLETE") return "Complete" + (bonus.length ? `, plus ${bonus.map(r => esc(r[1])).join(", ")}` : "");
   const missing = req.filter(r => !rec[r[0]]);
   if (missing.length === req.length && !bonus.length) return "Nothing ticked yet";
   return `Missing ${missing.map(r => esc(r[1])).join(", ")}`;
@@ -2067,7 +2067,7 @@ function renderWeek() {
   }).join("")}</tr>`).join("");
   // "This week" only for the week we are in. Other weeks are named by their Monday.
   const weekTitle = weekStart === mondayOf(today) ? "This week" : "Week of " + esc(fmtDay(weekStart, { weekday: undefined }));
-  const key = ["COMPLETE", "PARTIAL", "MISSING", "WAITING", "UNLOGGED", "EXCUSED"].map(st => `<li><span class="cell ${st}" aria-hidden="true">${ICON[st]}</span>${st === "WAITING" ? "Today, not done yet" : LABEL[st]}</li>`).join("");
+  const key = ["COMPLETE", "PARTIAL", "MISSING", "WAITING", "UNLOGGED", "EXCUSED"].map(st => `<li><span class="cell ${st}" aria-hidden="true">${ICON[st]}</span>${st === "WAITING" ? "Waiting: today, still open" : LABEL[st]}</li>`).join("");
   if (!body) return `<div class="card"><div class="cardhead"><h2>${weekTitle}</h2></div><p class="empty">No members yet.</p></div>`;
   return `<div class="card"><div class="cardhead"><h2>${weekTitle}</h2></div>
     <p class="page-hint">Each square is one person's homework for one day. Tap a square to open that day, or a name to see their profile.</p>

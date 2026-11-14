@@ -14,6 +14,8 @@
     --crit-text: #c4271f;   /* red text that's readable on white (the bright red is for backgrounds) */
     --good-text: #17803a;   /* the same for green */
     --discord: #5865f2;
+    /* badge tiers: darker on white, brighter on dark. The top tier (legend) uses the group's color. */
+    --tier-bronze: #9a5a2b; --tier-silver: #5f6f7a; --tier-gold: #976008; --tier-diamond: #0b7499;
     --glass: rgba(255, 255, 255, 0.6); --glass-edge: rgba(10, 10, 11, 0.10); --glass-shade: rgba(0, 0, 0, 0.08);
     --glass-pill: rgba(10, 10, 11, 0.07); --glass-hi: rgba(255, 255, 255, 0.8);
     --font-ui: "Schibsted Grotesk", -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, sans-serif;
@@ -29,6 +31,7 @@
       --accent: var(--acc); --accent-text: var(--acc-dk); --on-accent: #ffffff;
       --good: #28c840; --warn: #febc2e; --crit: #ff5f57; --on-good: #0a0a0b; --on-warn: #0a0a0b; --on-crit: #0a0a0b;
       --crit-text: #ff7a73; --good-text: #3ddc5a;
+      --tier-bronze: #c27c48; --tier-silver: #9fb0bb; --tier-gold: #e3b341; --tier-diamond: #5cc8f0;
       --glass: rgba(255, 255, 255, 0.08); --glass-edge: rgba(255, 255, 255, 0.18); --glass-shade: rgba(0, 0, 0, 0.35);
       --glass-pill: rgba(255, 255, 255, 0.14); --glass-hi: rgba(255, 255, 255, 0.14);
       color-scheme: dark;
@@ -42,6 +45,7 @@
       --accent: var(--acc); --accent-text: var(--acc-dk); --on-accent: #ffffff;
       --good: #28c840; --warn: #febc2e; --crit: #ff5f57; --on-good: #0a0a0b; --on-warn: #0a0a0b; --on-crit: #0a0a0b;
       --crit-text: #ff7a73; --good-text: #3ddc5a;
+      --tier-bronze: #c27c48; --tier-silver: #9fb0bb; --tier-gold: #e3b341; --tier-diamond: #5cc8f0;
       --glass: rgba(255, 255, 255, 0.08); --glass-edge: rgba(255, 255, 255, 0.18); --glass-shade: rgba(0, 0, 0, 0.35);
       --glass-pill: rgba(255, 255, 255, 0.14); --glass-hi: rgba(255, 255, 255, 0.14);
       color-scheme: dark;
@@ -111,7 +115,7 @@
   .tabbar button { position: relative; min-height: 50px; border: 0; background: transparent; border-radius: 12px; cursor: pointer;
                    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; color: var(--text-2); }
   .tabbar button svg { width: 22px; height: 22px; }
-  .tabbar button span { font-size: 11px; font-weight: 600; }
+  .tabbar button span { font-size: 12px; font-weight: 600; }
   .tabbar button[aria-current="page"] { color: var(--text); }
   .tabbar button[aria-current="page"] svg { color: var(--accent-text); }
   /* your Discord picture in place of the Me icon */
@@ -123,7 +127,7 @@
   .topbar .end #toggleme .meav { width: 22px; height: 22px; margin-left: -6px; }
   .tabbar button:active { transform: scale(0.94); }
   .tabbar .badge { position: absolute; top: 6px; right: calc(50% - 20px); min-width: 16px; height: 16px; border-radius: 8px; padding: 0 4px;
-                   background: var(--crit); color: var(--on-crit); font-size: 10px; font-weight: 700; display: grid; place-items: center; }
+                   background: var(--crit); color: var(--on-crit); font-size: 11px; font-weight: 700; display: grid; place-items: center; }
 
   /* ---------- content (solid, no glass) ---------- */
   .card { background: var(--card); border: 1px solid var(--line); box-shadow: inset 0 1px 0 var(--card-hi); border-radius: 16px; padding: 16px; min-width: 0; }
@@ -154,7 +158,7 @@
   .mrow { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
   .name { flex: 1; font-size: 17px; font-weight: 600; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
   .name .namebtn { flex: 0 1 auto; min-width: 4ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .you { font-size: 11px; font-weight: 700; color: var(--accent-text); border: 1px solid currentColor; border-radius: 6px; padding: 0 5px; margin-left: 6px; vertical-align: 2px; }
+  .you { font-size: 12px; font-weight: 700; color: var(--accent-text); border: 1px solid currentColor; border-radius: 6px; padding: 0 5px; margin-left: 6px; vertical-align: 2px; }
   .icon { width: 44px; height: 44px; margin: -8px 0; border: 0; background: transparent; border-radius: 50%; color: var(--muted); cursor: pointer; display: grid; place-items: center; }
   .icon svg { width: 19px; height: 19px; }
   .icon.has { color: var(--accent-text); }
@@ -474,17 +478,17 @@
   .badge.locked .medal { color: var(--muted); }
   .badge.locked .medal span { opacity: 0.45; }
   .badge b { display: block; font-size: 13px; font-weight: 600; line-height: 1.2; }
-  .badge small { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; text-transform: capitalize; }
+  .badge small { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; text-transform: capitalize; }
   .badge .bar { height: 4px; border-radius: 2px; background: var(--surface-2); margin: 6px 8px 0; overflow: hidden; }
   .badge .bar i { display: block; height: 100%; background: var(--accent-text); border-radius: 2px; }
-  .tier-bronze { --tier: #c27c48; } .tier-silver { --tier: #9fb0bb; } .tier-gold { --tier: #e3b341; }
-  .tier-diamond { --tier: #5cc8f0; } .tier-legend { --tier: #b37df0; }
+  .tier-bronze { --tier: var(--tier-bronze); } .tier-silver { --tier: var(--tier-silver); } .tier-gold { --tier: var(--tier-gold); }
+  .tier-diamond { --tier: var(--tier-diamond); } .tier-legend { --tier: var(--accent-text); }
   .mini-badge { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; color: var(--tier); margin-left: 6px; vertical-align: -4px;
                 background: color-mix(in srgb, var(--tier) 22%, var(--surface)); box-shadow: inset 0 0 0 1.5px var(--tier); }
   .heat-wrap { overflow-x: auto; }
   table.heat { border-collapse: separate; border-spacing: 3px; width: 100%; table-layout: fixed; }
   .heat th { width: 34px; }
-  .heat th { font: 600 11px var(--font-ui); color: var(--muted); text-align: left; padding-right: 4px; }
+  .heat th { font: 600 12px var(--font-ui); color: var(--muted); text-align: left; padding-right: 4px; }
   .heat td i { display: block; width: 100%; max-width: 26px; aspect-ratio: 1; border-radius: 4px; background: var(--surface-2); }
   .heat td i.none { background: transparent; }
   .heat td i.COMPLETE { background: var(--good); }
@@ -841,7 +845,7 @@
   .phead h1 .rolechip { font-size: 12px; padding: 1px 7px; vertical-align: 4px; letter-spacing: 0; }
   .rolechip.role-owner { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
   .rolechip.role-member { color: var(--muted); }
-  .rolechip { display: inline-block; font-size: 11px; font-weight: 700; color: var(--accent-text); border: 1px solid currentColor; border-radius: 6px; padding: 0 5px; margin-left: 8px; vertical-align: 2px; }
+  .rolechip { display: inline-block; font-size: 12px; font-weight: 700; color: var(--accent-text); border: 1px solid currentColor; border-radius: 6px; padding: 0 5px; margin-left: 8px; vertical-align: 2px; }
   .codebox { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
   .codebox code { font: 600 24px var(--font-data); letter-spacing: 0.08em; margin-right: auto; user-select: all; -webkit-user-select: all; }
   .field.wide { width: 100%; }
@@ -977,7 +981,7 @@
     position: absolute; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; padding: 5px; box-sizing: border-box; }
   .tablens .lens-track > * { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-height: 50px; color: var(--text-2); position: relative; }
   .tablens .lens-track svg { width: 22px; height: 22px; }
-  .tablens .lens-track span { font-size: 11px; font-weight: 600; }
+  .tablens .lens-track span { font-size: 12px; font-weight: 600; }
   .tablens .lens-track .meav { width: 24px; height: 24px; font-size: 0; }
   .tablens .lens-track .hot, .tablens .lens-track .hot svg { color: var(--accent-text); }
   .tablens .lens-track .badge { display: none; }
