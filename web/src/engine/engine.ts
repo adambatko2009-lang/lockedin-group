@@ -1630,17 +1630,29 @@ function serverCardHtml() {
       <div class="addrow" style="margin-top:0"><input class="field code" id="srv-code" placeholder="ABCD-1234" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false">
         <button class="btn primary small" id="srv-link">Link</button></div>`) + `</div>`;
 }
+// Search boxes over the lists of people (Admin and group settings), so a long list stays easy to use.
+// What was typed is kept here by the list's id, and the list is drawn again with only the names that match.
+const pickQuery: Record<string, string> = {};
+const pickQ = (id: string): string => (pickQuery[id] || "").trim().toLowerCase();
+const pickMatch = (id: string, ...names: unknown[]): boolean => !pickQ(id) || names.some(n => String(n == null ? "" : n).toLowerCase().includes(pickQ(id)));
+const pickSearch = (id: string, what: string): string =>
+  `<input class="field pick-search" type="search" id="ps-${esc(id)}" data-pick-for="${esc(id)}" value="${esc(pickQuery[id] || "")}" placeholder="Search names" aria-label="Search ${esc(what)}" autocomplete="off" spellcheck="false" maxlength="40">`;
 // App owner: every server, and making one for a mentor who has signed in.
 function serversCardHtml() {
   const rows = myServers.map(s => `<div class="grow"><div class="ghead"><div><b>${esc(s.name)}</b>
       <span class="sub">Owner: ${esc(s.owner || "Unknown")} · ${s.groups} linked · code ${esc(s.code)}</span></div></div>
     <div class="actions" style="margin-left:0"><button class="btn plain small" data-open-server="${s.id}">Open</button>
       <button class="btn danger small" data-delete-server="${s.id}">Delete</button></div></div>`).join("") || `<p class="empty">No servers yet.</p>`;
-  const opts = [...allProfiles].sort((a, b) => String(a.discord_name).localeCompare(String(b.discord_name)))
-    .map(p => `<option value="${esc(p.user_id)}">${esc(p.discord_name)}</option>`).join("");
+  // while searching, the first name that matches is picked, so Create works straight away
+  const shown = [...allProfiles].sort((a, b) => String(a.discord_name).localeCompare(String(b.discord_name)))
+    .filter(p => pickMatch("new-server-owner", p.discord_name));
+  const searching = !!pickQ("new-server-owner");
+  const opts = `<option value="">${searching && !shown.length ? "No one matches" : "Owner"}</option>` + shown
+    .map((p, i) => `<option value="${esc(p.user_id)}" ${searching && i === 0 ? "selected" : ""}>${esc(p.discord_name)}</option>`).join("");
   return `<div class="card"><div class="cardhead"><h2>Mentor servers · ${myServers.length}</h2></div>${rows}
     <div class="addrow srv-new"><input class="field" id="new-server" placeholder="Server name" maxlength="40" aria-label="Server name">
-      <select id="new-server-owner" aria-label="Server owner"><option value="">Owner</option>${opts}</select>
+      ${pickSearch("new-server-owner", "server owners")}
+      <select id="new-server-owner" aria-label="Server owner">${opts}</select>
       <button class="btn primary small" id="create-server">Create</button></div>
     <p class="empty" style="margin-top:10px">The mentor signs in with Discord once, then you pick them here. They get a server code for their group owners.
       A mentor only sees boxes and streaks. Deleting a server doesn't touch its groups.</p></div>`;
@@ -2569,12 +2581,14 @@ function transferCardHtml(g) {
   if (!g || !session) return "";
   const cands = people.filter(p => p.status === "approved" && p.member_key && p.user_id !== g.owner_id);
   const nameOf = k => (members.find(m => m.key === k) || {}).name || k;
+  const shown = cands.filter(p => pickMatch("xfer-to", nameOf(p.member_key), p.discord_name)), searching = !!pickQ("xfer-to");
   return `<div class="card gsettings dangerzone"><div class="cardhead"><h2>Move group to a new owner</h2></div>
     <p class="empty" style="margin:-2px 0 10px">The new owner gets everything you can do here: settings, join code, approving people and reports.
       You stay in the group as a normal member and can't undo this yourself. The Discord recap link is removed; the new owner adds their own.</p>
     ${cands.length ? `<label class="flabel" for="xfer-to">New owner</label>
-    <select id="xfer-to" class="field"><option value="">Choose someone</option>${cands.map(p =>
-      `<option value="${esc(p.user_id)}">${esc(nameOf(p.member_key))} (${esc(p.discord_name)} on Discord)</option>`).join("")}</select>
+    ${pickSearch("xfer-to", "members")}
+    <select id="xfer-to" class="field"><option value="">${searching && !shown.length ? "No one matches" : "Choose someone"}</option>${shown.map((p, i) =>
+      `<option value="${esc(p.user_id)}" ${searching && i === 0 ? "selected" : ""}>${esc(nameOf(p.member_key))} (${esc(p.discord_name)} on Discord)</option>`).join("")}</select>
     <label class="flabel" for="xfer-confirm">Type the group's name to confirm</label>
     <input class="field wide" id="xfer-confirm" autocomplete="off" placeholder="${esc(g.name)}">
     <div class="dcbtns"><button class="btn danger small" id="xfer-go">Move group</button></div>
@@ -2611,14 +2625,16 @@ function ownerDashboardHtml() {
   const groupRows = groups.map(x => {
     const inGroup = allMemberships.filter(m => m.group_id === x.id && m.status === "approved");
     const waiting = allMemberships.filter(m => m.group_id === x.id && m.status === "pending").length;
-    const ownerOpts = inGroup.map(m => `<option value="${m.user_id}" ${m.user_id === x.owner_id ? "selected" : ""}>${esc(profileName(m.user_id))}</option>`).join("");
+    const pid = "owner-" + x.id, searching = !!pickQ(pid), shown = inGroup.filter(m => pickMatch(pid, profileName(m.user_id)));
+    const ownerOpts = shown.length ? shown.map((m, i) => `<option value="${m.user_id}" ${(searching ? i === 0 : m.user_id === x.owner_id) ? "selected" : ""}>${esc(profileName(m.user_id))}</option>`).join("")
+      : `<option value="">No one matches</option>`;
     return `<div class="grow ${x.status}">
       <div class="ghead">${groupLogo(x, 36)}<div><b>${esc(x.name)}${x.status === "paused" ? `<span class="rolechip">Paused</span>` : ""}</b>
         <span class="sub">Owner: ${esc(profileName(x.owner_id))} · ${inGroup.length} in group${waiting ? ` · ${waiting} waiting` : ""} · code ${esc(x.join_code)}</span></div></div>
       <div class="actions">
         <button class="btn plain small" data-open-group="${x.id}">Open</button>
         <button class="btn plain small" data-pause-group="${x.id}">${x.status === "paused" ? "Resume" : "Pause"}</button>
-        ${inGroup.length > 1 ? `<select id="owner-${x.id}" aria-label="New owner for ${esc(x.name)}">${ownerOpts}</select>
+        ${inGroup.length > 1 ? `${pickSearch(pid, "members of " + x.name)}<select id="owner-${x.id}" aria-label="New owner for ${esc(x.name)}">${ownerOpts}</select>
           <button class="btn plain small" data-set-owner="${x.id}">Make owner</button>` : ""}
         <button class="btn danger small" data-delete-group="${x.id}">Delete</button></div></div>`;
   }).join("");
@@ -3623,6 +3639,7 @@ document.addEventListener("click", async e => {
   }
   if (d.setOwner) {
     const uid = document.getElementById("owner-" + d.setOwner).value;
+    if (!uid) { error = "Pick the new owner first."; flash = ""; return render(); }
     return adminDo(sb.from("groups").update({ owner_id: uid }).eq("id", d.setOwner), `${profileName(uid)} owns this group now.`);
   }
   if (d.deleteGroup) {
@@ -3795,6 +3812,7 @@ document.addEventListener("click", async e => {
 document.addEventListener("input", e => {
   if (e.target.dataset && e.target.dataset.cbox) { commentDrafts[e.target.dataset.cbox] = e.target.value; return; }
   if (e.target.id === "faq-search") { faqQuery = e.target.value.slice(0, 80); return render(); }
+  if (e.target.dataset && e.target.dataset.pickFor) { pickQuery[e.target.dataset.pickFor] = e.target.value.slice(0, 40); return render(); }
   if (tab === "admin" && e.target.closest && e.target.closest("#app")) adminDirty = true;
   if (e.target.id === "terms-ok") { document.getElementById("accept-terms").disabled = !e.target.checked; return; }
   if ((e.target.id === "panel-pnl" || e.target.id === "panel-rr") && editing) {

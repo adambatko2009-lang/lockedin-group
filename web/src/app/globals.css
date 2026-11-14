@@ -855,6 +855,9 @@
   .srv-foot { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 32px; }
   .srv-new { flex-wrap: wrap; }
   .srv-new select { flex: 1; min-width: 140px; }
+  /* search box over a list of people; 16px text stops phones zooming in on tap */
+  .pick-search { flex: 1; min-width: 140px; font-size: 16px; -webkit-appearance: none; appearance: none; }
+  .gsettings .pick-search { display: block; width: 100%; margin-bottom: 8px; }
   .glist { display: flex; flex-direction: column; gap: 6px; }
   .gitem { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2); text-align: left; cursor: pointer; }
   .gitem[aria-current="true"] { border-color: var(--accent); }
