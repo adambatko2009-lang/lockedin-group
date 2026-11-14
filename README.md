@@ -33,6 +33,7 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
 | `supabase/update-22-remove-notifications.sql` | Notifications removed: deletes saved push addresses and stops owner alerts (run once, after update 21, before pushing) |
 | `supabase/update-23-mentor-servers.sql` | Mentor servers: a mentor sees the boxes and streaks of every group linked to their server, and can't change anything (run once, after update 22, before pushing) |
 | `supabase/update-24-monthly-and-mentor-recaps.sql` | A monthly ranking in a group's Discord, and a summary of all linked groups in a mentor's Discord (run once, after update 23, before pushing) |
+| `supabase/update-25-break-even-result.sql` | A day's result can also be Break even (run once, after update 24, before pushing) |
 | `supabase/sign-out-everyone-except-owner.sql` | Signs everyone but you out; no data is removed (run when needed) |
 | `web/public/vendor/` | Fonts and their licenses, hosted on our own site (see `web/public/vendor/THIRD-PARTY-NOTICES.md`) |
 | `supabase/functions/send-reminders/index.ts` | Runs every 5 minutes in Supabase (Edge Functions) and deletes pictures older than 60 days. Its reminder part finds nobody since update 22 |

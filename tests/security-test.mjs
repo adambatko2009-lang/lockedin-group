@@ -1099,5 +1099,32 @@ ok(!!(await rpc("mt2", "remove_server_discord", [T1])).error && !(await rpc("mt"
 await rpc("mt", "save_server_discord", [T1, hookS, true, true]);
 ok(!(await rpc("batko", "delete_server", [T1])).error && (await one(`select count(*)::int n from public.server_discord`)).n === 0, "deleting a server deletes its Discord link");
 
+// ================================================================ update 25: break even result
+const u25 = readFileSync(dir + "update-25-break-even-result.sql", "utf8");
+r = await as("sid", `update public.ticks set no_trade = false, result = 'breakeven' where member_key='sid' and day=$1`, [t14]);
+ok(!!r.error, "before update 25, break even is refused");
+await db.exec(u25);
+console.log("\nloaded: update-25-break-even-result.sql");
+section("break even result (update 25)");
+r = await as("sid", `update public.ticks set no_trade = false, result = 'breakeven' where member_key='sid' and day=$1`, [t14]);
+ok(!r.error && r.count === 1, "member marks their own day as break even");
+for (const v of ["win", "loss", "gamble"]) {
+  r = await as("sid", `update public.ticks set result = $2 where member_key='sid' and day=$1`, [t14, v]);
+  ok(!r.error && r.count === 1, `the old result "${v}" still works`);
+}
+r = await as("sid", `update public.ticks set result = 'jackpot' where member_key='sid' and day=$1`, [t14]);
+ok(!!r.error, "unknown results are still refused");
+r = await as("sid", `update public.ticks set result = 'breakeven' where member_key='sid' and day=$1`, [t14]);
+r = await as("sid", `update public.ticks set no_trade = true where member_key='sid' and day=$1`, [t14]);
+ok(!!r.error, "a day still can't be both no-trade and break even");
+r = await as("sid", `update public.ticks set result = 'breakeven' where member_key <> 'sid'`);
+ok(!!r.error || r.count === 0, "a member can't mark someone else's day as break even");
+r = await as("uma", `update public.ticks set result = 'breakeven' where member_key='sid'`);
+ok(!!r.error || r.count === 0, "someone outside the group can't either");
+r = await as(null, `update public.ticks set result = 'breakeven'`);
+ok(!!r.error || r.count === 0, "a signed-out visitor can't either");
+await db.exec(u25);
+ok((await one(`select result from public.ticks where member_key='sid' and day=$1`, [t14])).result === "breakeven", "running update 25 a second time keeps saved results");
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

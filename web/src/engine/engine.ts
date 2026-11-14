@@ -571,12 +571,13 @@ async function deleteComment(id) {
 const shortLabel = l => { const w = String(l).trim().split(/\s+/)[0] || l; return w.length > 11 ? w.slice(0, 10) + "…" : w; };
 
 // A day's result: one of these, or nothing picked yet. "No trade" uses the no_trade column.
-const RESULTS = [["win", "Win"], ["loss", "Loss"], ["notrade", "No trade"], ["gamble", "Gamble"]];
+const RESULTS = [["win", "Win"], ["loss", "Loss"], ["breakeven", "Break even"], ["notrade", "No trade"], ["gamble", "Gamble"]];
 const resultOf = rec => rec && rec.no_trade ? "notrade" : (rec && rec.result) || null;
 const resultBtnsHtml = rec => RESULTS.map(([v, l]) => `<button data-result="${v}" class="r-${v}" aria-pressed="${resultOf(rec) === v}">${l}</button>`).join("");
 const resultHint = rec => ({
   win: "Marked as a win. Tap again to clear.",
   loss: "Marked as a loss. Losses are part of it, the homework still counts.",
+  breakeven: "Marked as break even: you traded and ended flat.",
   notrade: "You sat out on purpose. Chart with executions, journal and HTF are still required.",
   gamble: "Marked as a gamble: a trade outside your plan. Being honest here helps you spot it.",
 }[resultOf(rec)] || "Pick one. Tap it again to clear.");
@@ -772,7 +773,7 @@ const FAQ: any[] = [
   ["How do I start my own group?", "Open <b>Groups</b> → <b>Start your own group</b>, type a name and send the request. Once it's approved you're the owner: your own join code, boxes, points, cutoff time, color and logo."],
   ["When does the day close?", "Each group has a cutoff time and time zone (by default 09:00 New York time). You can tick a day's boxes until the cutoff on the next trading day. After that the day is closed."],
   ["I missed the cutoff or ticked the wrong box", "Closed days can't be changed by members. Ask your group's owner or an admin: they can correct ticks, and excuse a day (sick, travelling) so it doesn't break your streak."],
-  ["What do Win, Loss, No trade and Gamble mean?", "Pick how your day went in your note panel. Gamble is a trade outside your plan. P&amp;L and R are optional; if you type a P&amp;L and haven't picked anything yet, it picks Win or Loss for you."],
+  ["What do Win, Loss, Break even, No trade and Gamble mean?", "Pick how your day went in your note panel. Break even is a day you traded and ended flat. Gamble is a trade outside your plan. P&amp;L and R are optional; if you type a P&amp;L and haven't picked anything yet, it picks Win or Loss for you."],
   ["How long are my pictures kept?", "Up to 10 pictures per day. They're deleted automatically 60 days after the day, so save any you want to keep."],
   ["Who can see my notes, pictures and P&amp;L?", "Only the people in your group. Your group's owner and admins, and the app owner, can also see them to run the group and the app. Other groups never see anything of yours."],
   ["How do I change my name?", "Your name is your Discord display name. Change it in Discord and it updates in LockedIn the next time you sign in."],
@@ -1228,7 +1229,7 @@ function openPanel(day, key) {
     <header><div><b id="panel-title" role="heading" aria-level="2">${inlineOK(day) ? "Note &amp; pictures" : esc(m ? m.name : key)}</b><span>${fmtDay(day, { weekday: "long", month: "long" })}</span></div>
       <button class="round" id="panel-close" aria-label="Close">${SYM.x}</button></header>
     <h3 class="result-h">How did the day go?</h3>
-    <div class="segset four result-set" role="group" aria-label="How did the day go?">${resultBtnsHtml(rec)}</div>
+    <div class="result-set" role="group" aria-label="How did the day go?">${resultBtnsHtml(rec)}</div>
     <p class="sub-hint" id="result-hint">${resultHint(rec)}</p>
     <h3>Note</h3>
     <textarea id="panel-note" maxlength="10000" placeholder="What did you trade, what did you learn?">${esc(noteText)}</textarea>
