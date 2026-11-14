@@ -11,7 +11,6 @@ const CSP = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 's
 // Before anything is drawn: your group's color and light/dark mode (remembered on this device), so the
 // opening screen matches your group. It shows on every open and reload, but never if you prefer less motion (globals.css).
 const BEFORE_PAINT = `try {
-  window.__liStart = performance.now();
   const root = document.documentElement, accent = localStorage.getItem("accent");
   if (/^[a-z]{3,12}$/.test(accent || "")) root.dataset.accent = accent;
   const theme = (JSON.parse(localStorage.getItem("mnq-settings") || "{}").theme) || "dark";

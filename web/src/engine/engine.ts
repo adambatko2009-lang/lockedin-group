@@ -335,7 +335,6 @@ async function openGroup(id) {
   if (faqOpenSlug) { const d = document.getElementById("faq-" + faqOpenSlug); faqOpenSlug = null; if (d) d.scrollIntoView({ block: "center" }); }
   if (!failed) saveSnapshot();
   flushOutbox();
-  maybeStartTour();
 }
 
 async function switchGroup(id) {
@@ -735,7 +734,6 @@ async function loadSettings() {
     applyTheme();
   }
   settingsLoaded = true;
-  maybeStartTour();
 }
 let settingsLoaded = false;
 async function saveSettings() {
@@ -1395,6 +1393,7 @@ async function useInvite() {
   if (!code || !session) return false;
   try { localStorage.removeItem(INVITE_KEY); } catch (err) { /* nothing to clean */ }
   const { data, error: e } = await sb.rpc("join_group", { code });
+  if (e) lobbyForm = true;   // show the form, so the message about the link is not hidden behind a waiting card
   joinMsg = e ? `That invite link didn't work: ${e.message}` : data.status === "approved" ? `You're already in ${data.name}.`
     : data.status === "pending" ? `Invite link used. Waiting for the owner of ${data.name} to approve you.` : `${data.name} didn't accept you.`;
   return true;
@@ -1405,6 +1404,7 @@ async function joinWithCode() {
   if (!code) return;
   const { data, error: e } = await sb.rpc("join_group", { code });
   joinMsg = e ? e.message : data.status === "approved" ? `You're already in ${data.name}.` : data.status === "pending" ? `Sent. Waiting for the owner of ${data.name} to approve you.` : `${data.name} didn't accept you.`;
+  if (!e && data.status === "pending") lobbyForm = false;   // the lobby shows the waiting card now
   await loadGroups();
   if (screen === "app" && settingsOpen) openGroupsPanel(); else render();
 }
@@ -2582,6 +2582,18 @@ function renderGroups() {
 
 // After signing in, with no group yet: two clear choices, join with a code or start a group.
 let lobbyMode = "join";
+let lobbyForm = false;   // true after "Use a different code": show the join form even though a request is waiting
+// The groups you've asked to join and are still waiting for.
+const waitingIn = () => myMemberships.filter(m => m.status === "pending");
+// Shown in place of the join form while you wait, so sending a code never looks like nothing happened.
+function waitingHtml() {
+  const names = waitingIn().map(m => { const g = groups.find(x => x.id === m.group_id); return g ? `<b>${esc(g.name)}</b>` : "your group"; });
+  return `<div class="waitbox" role="status">
+      <h2>${ic("clock", 20)}<span>Waiting for approval in ${listText(names)}</span></h2>
+      <p>Only the group's owner can let you in. Message them in Discord. This page opens by itself when you're approved.</p>
+      <button class="btn plain small" id="lobby-form">Use a different code</button>
+    </div>`;
+}
 function joinCodeHtml() {
   return `<div class="joinbox">
       <label for="joincode">Join code</label>
@@ -2604,8 +2616,9 @@ function createHtml() {
     </div>`;
 }
 // Where your join requests and group requests stand.
-function lobbyStatus() {
-  const waiting = myMemberships.filter(m => m.status !== "approved").map(m => {
+function lobbyStatus(cardShown?: boolean) {
+  // cardShown: the waiting card above already names the groups you're waiting for, so only the rest is listed here.
+  const waiting = myMemberships.filter(m => m.status !== "approved" && !(cardShown && m.status === "pending")).map(m => {
     const g = groups.find(x => x.id === m.group_id);
     return `<p class="lobby-line">${m.status === "pending" ? ic("clock", 15) + `Waiting for approval in <b>${esc(g ? g.name : m.group_id)}</b>`
       : ic("alert", 15) + `Not accepted in <b>${esc(g ? g.name : m.group_id)}</b>`}</p>`;
@@ -2661,12 +2674,13 @@ function renderGate() {
     <button class="btn plain small" id="signout">Sign out</button></div>`;
   if (screen === "offline") return `<div class="gate card"><h1>You're offline</h1><p>Connect to the internet once to load your group. After that, LockedIn opens even without internet.</p>
     <button class="btn primary" onclick="location.reload()">Try again</button></div>`;
+  const waitCard = screen === "lobby" && lobbyMode === "join" && !lobbyForm && waitingIn().length > 0;
   if (screen === "lobby") return `<div class="gate lobby">${avatar ? `<img class="avatar" src="${esc(avatar)}" alt="">` : ""}
-    <h1>Welcome${name ? ", " + esc(name) : ""}</h1><p>Join your group with a code, or start your own.</p>
+    <h1>Welcome${name ? ", " + esc(name) : ""}</h1><p>${waitCard ? "Your request is with the group's owner." : "Join your group with a code, or start your own."}</p>
     <div class="segset two lobby-switch" role="group" aria-label="Join or start a group">
       <button data-lobby="join" aria-pressed="${lobbyMode === "join"}">${ic("users", 16)}Join with a code</button>
       <button data-lobby="create" aria-pressed="${lobbyMode === "create"}">${ic("target", 16)}Start a group</button></div>
-    <div class="card lobby-card" style="text-align:left">${lobbyMode === "create" ? createHtml() : joinCodeHtml()}${lobbyStatus()}</div>
+    <div class="card lobby-card" style="text-align:left">${lobbyMode === "create" ? createHtml() : waitCard ? waitingHtml() : joinCodeHtml()}${lobbyStatus(waitCard)}</div>
     ${myServers.length ? `<button class="btn plain" data-open-server="${myServers[0].id}" style="margin-top:18px">Open ${esc(myServers[0].name)}</button>` : ""}
     <button class="btn plain" id="signout" style="margin-top:18px">Sign out</button></div>`;
   return `<div class="card"><p class="msg">Loading…</p></div>`;
@@ -3215,16 +3229,14 @@ function pageEnter() {
   });
 }
 // The opening screen goes away (with the growing circle) once the first page is ready.
-const splashStart: number = (window as any).__liStart ?? performance.now();   // set by the first script in layout.tsx
+// No minimum time: it leaves the moment there is something to show.
 function hideSplash() {
   const sp = document.getElementById("splash");
   if (!sp || sp.dataset.going) return;
   sp.dataset.going = "1";
-  setTimeout(() => {
-    sp.classList.add("opening");
-    setTimeout(() => sp.remove(), 950);
-    requestAnimationFrame(pageEnter);
-  }, Math.max(0, 750 - (performance.now() - splashStart)));
+  sp.classList.add("opening");
+  setTimeout(() => sp.remove(), 950);
+  requestAnimationFrame(pageEnter);
 }
 setTimeout(hideSplash, 3500);   // never longer than this, whatever happens
 function setTab(t) {
@@ -3277,6 +3289,7 @@ document.addEventListener("click", async e => {
     // Your last required box today: the green circle in "Done for today" pops once (not on later redraws).
     const mineToday = key === myKey() && selected === today, wasDone = mineToday && statusOf(selected, key) === "COMPLETE";
     editTick(selected, key, row => { row[r] = !row[r]; });
+    if (mineToday) maybeStartTour();   // only on today: the tour talks about today's cutoff and time left
     if (mineToday && !wasDone && statusOf(selected, key) === "COMPLETE" && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
       const c = document.querySelector(".quick .qdot");
       if (c && c.animate) c.animate([{ transform: "scale(0.7)" }, { transform: "scale(1.15)" }, { transform: "scale(1)" }], { duration: 420, easing: "cubic-bezier(.2,.8,.2,1)" });
@@ -3482,6 +3495,7 @@ document.addEventListener("click", async e => {
     case "start-tour": closePanel(); return startTour();
     case "open-groups": joinMsg = ""; return openGroupsPanel();
     case "join": return joinWithCode();
+    case "lobby-form": { lobbyForm = true; joinMsg = ""; render(); const f = document.getElementById("joincode"); if (f) f.focus(); return; }
     case "send-request": return sendGroupRequest();
     case "leave-group": {
       if (!(await askConfirm(`Leave ${(group() || {}).name || "this group"}?`, "You can only come back if the owner approves you again.", "Leave group"))) return;
@@ -3744,7 +3758,8 @@ async function refreshNow() {
 })();
 
 // ---------------------------------------------------------------- tutorial
-// A short tour that points at the real buttons. Starts by itself the first time; "Skip tutorial" ends it for good.
+// A three-step tour that points at the real buttons. It starts by itself after you tick your first box, so the first
+// thing a new member does is the real thing. "Skip tutorial" ends it for good.
 // Replay it from Help. Remembered in your settings, so it doesn't come back on another device.
 let tour = null;   // { i, steps }
 function listText(a) { return a.length > 1 ? a.slice(0, -1).join(", ") + " and " + a[a.length - 1] : a[0] || ""; }
@@ -3755,43 +3770,31 @@ function tourSteps() {
   const tabEl = t => wide ? null : q(`.tabbar [data-tab="${t}"]`);
   const myRow = () => { const b = document.querySelector(`.member [data-tick^="${me}:"]`) || document.querySelector(`[data-edit="${me}"]`); return b && b.closest(".member"); };
   const steps = [
-    { title: `Welcome to ${g ? g.name : "LockedIn"}`, text: "Here's a quick tour of everything: about a minute. Skip it with the close button in the corner, and replay it any time from Help." },
-    mine && { el: wide ? myRow : q(".quick .qgrid"), title: "Tick your homework",
-      text: `Tap a box when it's done. Required: ${esc(listText(req))}. All required ticked = Complete (green circle).`
+    { el: q("#app .daysum"), title: "Finish before the cutoff",
+      text: `Required: ${esc(listText(req))}. Tick ${req.length > 1 ? "them all" : "it"} and your circle turns green.`
         + (bonus.length ? ` ${esc(listText(bonus))} ${bonus.length > 1 ? "are bonus boxes" : "is a bonus box"}: extra points.` : "")
-        + ` You can tick until ${hh(CUTOFF_HOUR)} ${esc(tzCity(TZ))} time on the next trading day.` },
-    mine && { el: wide ? q(`[data-edit="${me}"]`) : q(".quick .qnote"), title: "Note & pictures",
-      text: "Write your note, add chart screenshots" + (wide ? " (you can paste them with ⌘V / Ctrl+V)" : "") + ", tag rule breaks, mark the day as a win, loss, no trade or gamble, and on Fridays write your weekly reflection. Everything saves by itself." },
-    { el: () => { return document.querySelector("#app .daysum"); }, title: "Time left today",
-      text: "How many of you are done, who still has homework open, and how much time is left. In the last hour the timer turns red." },
-    { el: () => { const m = [...document.querySelectorAll("#app .member")].find(x => !x.querySelector(`[data-edit="${me}"]`)); return m; }, title: "Everyone's day",
-      text: "The circle shows each person's status: green complete, yellow partial, red missing. Tap a name for their profile and badges, tap a picture to see it full screen." },
-    { el: q(".topbar .datepick"), title: "Change the day",
-      text: "Tap the date to jump to any day." + (wide ? " Or use the arrows next to it." : " Or use the arrows next to it, or swipe left and right on the page.") },
-    { el: q("#open-groups"), title: "Your groups", text: "Tap the group name to switch groups, join another one with a code, or start your own group." },
-    { el: wide ? q('#rail [data-nav="week"]') : tabEl("week"), title: "Week",
-      text: "The whole week at a glance. Tap any square to open that day. Everyone's weekly reflections are there too." },
-    { el: wide ? q('#rail [data-nav="board"]') : tabEl("board"), title: "Ranking",
-      text: `Points: Complete ${POINTS.COMPLETE}, Partial ${POINTS.PARTIAL}${bonus.length ? `, +${POINTS.bonus} for each bonus box` : ""}. Your streak is Complete days in a row. Earn badges for streaks, notes, pictures and more.` },
-    { el: wide ? q("#toggleme") : tabEl("me"), title: "Profile",
-      text: (wide ? "Your profile and badges. Journal has your notes, pictures, rule breaks and reflections. " : "Your profile and badges, and your Journal: notes, pictures, rule breaks and reflections. ")
-        + "Settings has light or dark mode and your own rule-break tags. Help has the questions, this tutorial and the app icon for your phone. "
-        + (wide ? "Groups, Settings and Help are at the bottom of the sidebar." : "Groups, Settings and Help are the three buttons at the top of Profile.") + " Sign out is at the bottom of Profile." },
-    isAdmin && { el: wide ? q("#toggleadmin") : tabEl("admin"), title: "Admin",
-      text: `You help run ${esc(g ? g.name : "this group")}: share the join code, approve people, excuse days${isGroupOwner() ? ", and change the group's settings (boxes, points, time, color, logo)" : ""}.` },
-    { title: "You're all set", text: (wide ? "" : "Tip: pull down at the top of the page to refresh. ") + "Good luck today, and stay locked in." },
+        + ` You can tick until ${hh(CUTOFF_HOUR)} ${esc(tzCity(TZ))} time on the next trading day. This card shows the time left and who is done.` },
+    mine && { el: wide ? q(`[data-edit="${me}"]`) : q(".quick .qnote"), title: "Note and pictures",
+      text: "Write a note and add your chart screenshots" + (wide ? " (you can paste them with ⌘V / Ctrl+V)" : "") + ". It saves by itself, and your group can see it." },
+    { el: () => { const m = [...document.querySelectorAll("#app .member")].find(x => !x.querySelector(`[data-edit="${me}"]`)); return m; }, title: "Your group",
+      text: "Each circle is one person's day: green complete, yellow partial, red missing. Week and Ranking are in the " + (wide ? "sidebar" : "bar at the bottom") + ". You can replay this from Help." },
   ];
   return steps.filter(Boolean);
 }
+// Called after you tick one of your own boxes. A short pause first, so you see the tick land before the tour covers the page.
+let tourTimer = null;
 function maybeStartTour() {
-  if (tour || !settingsLoaded || settings.tutorialDone || screen !== "app" || !loaded || !(myKey() || isAdmin)) return;
-  if (editing || settingsOpen) return;
-  startTour();
+  if (tour || tourTimer || !settingsLoaded || settings.tutorialDone || screen !== "app" || !loaded) return;
+  tourTimer = setTimeout(() => {
+    tourTimer = null;
+    if (tour || settings.tutorialDone || screen !== "app" || tab !== "day" || selected !== today || profileKey || editing || settingsOpen) return;   // you moved on: next tick
+    startTour(true);
+  }, 700);
 }
-function startTour() {
+// stay = you're already on the day you just ticked, so don't jump to today (from Help it always opens Today).
+function startTour(stay?: boolean) {
   if (screen !== "app") return;
-  tab = "day"; profileKey = null; selected = today; weekStart = mondayOf(today);
-  render();
+  if (!stay) { tab = "day"; profileKey = null; selected = today; weekStart = mondayOf(today); render(); }
   tour = { i: 0, steps: tourSteps() };
   document.getElementById("tour").hidden = false;
   document.body.style.overflow = "hidden";
@@ -3812,7 +3815,7 @@ function showTourStep() {
   document.getElementById("tour-text").innerHTML = st.text;
   document.getElementById("tour-dots").innerHTML = tour.steps.map((_, j) => `<i class="${j === tour.i ? "on" : ""}"></i>`).join("");
   document.getElementById("tour-back").hidden = tour.i === 0;
-  document.getElementById("tour-next").textContent = tour.i === 0 ? "Start tour" : last ? "Finish" : "Next";
+  document.getElementById("tour-next").textContent = last ? "Finish" : "Next";
   const el = st.el && st.el();
   if (el && !el.closest(".topbar, .tabbar")) {
     const r = el.getBoundingClientRect();
