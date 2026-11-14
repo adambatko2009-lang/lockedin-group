@@ -291,6 +291,7 @@ async function loadTicks(id, snap) {
 // Load one group's names, ticks and reflections, and switch the app to it.
 async function openGroup(id) {
   const changed = id !== gid || !loaded;
+  if (id !== gid) ydayKeep = null;   // the kept "yesterday" row belongs to the group it was shown in
   gid = id;
   try { localStorage.setItem("group", id); } catch (e) {}
   const g = group();
@@ -1986,6 +1987,12 @@ function renderDay() {
 
   // Phones: big buttons for your own homework at the top (today only).
   const me = myKey(), quickOn = !isWide() && k === today && me && list.some(m => m.key === me) && canEdit(k, me);
+  // While your homework is open and you have a streak of 2 or more: say what finishing keeps.
+  const closeDay = nextTrading(k), nearby = closeDay === today || closeDay === addDays(today, 1);
+  const at = `<span class="num">${hh(CUTOFF_HOUR)}</span> ${esc(tzCity(TZ))}`;
+  const cutoff = nearby ? at : `${fmtDay(closeDay, { day: undefined, month: undefined })} ${at}`;
+  const myRun = k === today && me && mine && mine !== "COMPLETE" && mine !== "EXCUSED" && canEdit(k, me) ? stats(me).run : 0;
+  const stake = myRun >= 2 ? `Finish before ${cutoff} to keep your <span style="white-space:nowrap"><span class="num">${myRun}</span>-day streak</span>.` : "";
   let quick = "";
   if (quickOn) {
     const rec = tickOf(k, me) || {};
@@ -1998,7 +2005,7 @@ function renderDay() {
     }
     // The status line is always in the card (empty until you're done), so screen readers announce it when the text
     // appears. The text only changes when your points or streak change, so a redraw doesn't read it out again.
-    quick = `<div class="card quick"><div class="cardhead"><h2>${done ? "Done for today" : "Your homework"}</h2>${done ? `<span class="dot COMPLETE qdot" aria-hidden="true">${ICON.COMPLETE}</span>` : ""}</div><p class="qdone" role="status">${doneLine}</p><div class="qgrid">${RULES.map(([r, label, kind]) =>
+    quick = `<div class="card quick"><div class="cardhead"><h2>${done ? "Done for today" : "Your homework"}</h2>${done ? `<span class="dot COMPLETE qdot" aria-hidden="true">${ICON.COMPLETE}</span>` : ""}</div><p class="qdone" role="status">${doneLine || stake}</p><div class="qgrid">${RULES.map(([r, label, kind]) =>
       `<button class="q ${kind}" data-tick="${me}:${r}" aria-pressed="${!!rec[r]}"><span class="qc">${!rec[r] ? "" : kind === "bonus" ? PLUS_SVG : ic("check", 18).replace('<circle cx="12" cy="12" r="9"/>', "")}</span>
         <span><b>${esc(label)}</b><small>${kind === "bonus" ? (rec[r] ? "Bonus, +" + POINTS.bonus : "Bonus") : "Required"}</small></span></button>`).join("")}</div>
       <button class="qnote" data-edit="${me}" aria-expanded="${inlineHere(me, k)}">${SVG.note.replace("<svg ", '<svg width="18" height="18" ')}${inlineHere(me, k) ? "Close note & pictures" : rec.note || (rec.images || []).length ? "Edit note & pictures" : "Add note & pictures"}</button>
@@ -2044,9 +2051,6 @@ function renderDay() {
   // One block that answers "how long is left, and who still has to do it".
   const due = list.length - (counts.EXCUSED || 0), doneN = counts.COMPLETE || 0;
   // The weekday is only needed when the cutoff isn't today or tomorrow (a Friday closes on Monday).
-  const closeDay = nextTrading(k), nearby = closeDay === today || closeDay === addDays(today, 1);
-  const at = `<span class="num">${hh(CUTOFF_HOUR)}</span> ${esc(tzCity(TZ))}`;
-  const cutoff = nearby ? at : `${fmtDay(closeDay, { day: undefined, month: undefined })} ${at}`;
   const openPeople = ordered.filter(m => !["COMPLETE", "EXCUSED"].includes(statusOf(k, m.key)));
   const openNames = openPeople.map(m => (m.key === myKey() ? "You" : esc(m.name)) + (statusOf(k, m.key) === "PARTIAL" ? " (partly)" : ""));
   const shown = openNames.length > 6 ? openNames.slice(0, 5).join(", ") + ` and ${openNames.length - 5} more` : openNames.join(", ");
@@ -2066,9 +2070,40 @@ function renderDay() {
     </div>
     ${bar}
     ${openLine}
+    ${stake && !quickOn ? `<p class="open-line">${stake}</p>` : ""}
     ${banner}${nudge}
   </div>`;
-  return { summary: summary + quick, list: `<div class="card"><div class="cardhead"><h2>${esc((group() || {}).name || "Your group")} ${k === today ? "today" : "on " + fmtDay(k, { weekday: "short" })}</h2></div>${rows || `<p class="empty">No members yet.</p>`}</div>` };
+  return { summary: yesterdayRow(k, list) + summary + quick, list: `<div class="card"><div class="cardhead"><h2>${esc((group() || {}).name || "Your group")} ${k === today ? "today" : "on " + fmtDay(k, { weekday: "short" })}</h2></div>${rows || `<p class="empty">No members yet.</p>`}</div>` };
+}
+
+// The day that just closed, in one row at the top of Today: how the group did and what you got for it.
+// It is there until you tick your first box today, so the first open after the cutoff wraps up the day before.
+// Tapping it opens that day. After your first tick it stays until you leave Today: taking it away at once would
+// move the boxes up under your finger, and the next tap would hit the wrong one.
+let ydayKeep = null;   // the day the row was last shown on
+function yesterdayRow(k, list) {
+  const me = myKey();
+  if (k !== today || !me || !list.some(m => m.key === me)) return "";
+  const now = tickOf(today, me) || {};
+  if (now.excused) return "";
+  if (RULES.some(r => now[r[0]])) { if (ydayKeep !== today) return ""; }
+  else ydayKeep = today;
+  const y = prevTrading(today);
+  if (!dayHasAny(y)) return "";   // nobody logged anything that day: nothing to wrap up
+  const sts = list.map(m => statusOf(y, m.key)), due = sts.filter(s => s !== "EXCUSED").length, doneN = sts.filter(s => s === "COMPLETE").length;
+  if (!due) return "";
+  const name = y === addDays(today, -1) ? "Yesterday" : fmtDay(y, { weekday: "long", day: undefined, month: undefined });
+  const groupLine = doneN === due ? "everyone finished" : `<span class="num">${doneN}</span> of <span class="num">${due}</span> finished`;
+  // Your part only if you had started by then (someone who joined today didn't miss yesterday).
+  const s = stats(me), st = statusOf(y, me), rec = tickOf(y, me) || {};
+  const pts = dayPoints(st, RULES.filter(r => r[2] === "bonus" && rec[r[0]]).length);
+  const ptsText = `<span class="num">+${pts}</span> ${pts === 1 ? "point" : "points"}`;
+  const mineLine = !s.since || s.since > y ? ""
+    : st === "COMPLETE" ? `You: ${ptsText}${s.run ? ` · <span class="num">${s.run}</span>-day streak` : ""}`
+    : st === "PARTIAL" ? `You: partly done, ${ptsText}. A new streak starts today.`
+    : st === "EXCUSED" ? "You were excused."
+    : "You missed it. A new streak starts today.";
+  return `<button class="card yday" data-day="${y}"><span class="yday-text"><b>${name}: ${groupLine}</b>${mineLine ? `<small>${mineLine}</small>` : ""}</span><span class="chev" aria-hidden="true">${ic("chevron-right", 18)}</span></button>`;
 }
 
 function renderWeek() {
@@ -2299,20 +2334,47 @@ function scoringText() {
   return `Complete (${esc(req.join(", "))}) ${POINTS.COMPLETE} pts · Partial ${POINTS.PARTIAL}${bonus.length ? ` · ${esc(bonus.join(", "))} +${POINTS.bonus}` : ""}. `
     + `Streak = Complete days in a row. Excused (E) days don't count. You can tick your own boxes until ${hh(CUTOFF_HOUR)} ${esc(tzCity(TZ))} time on the next trading day.`;
 }
+// The ranking counts this week by default, so every Monday is a new race. Not remembered: it opens on This week.
+let boardRange = "week";
+const BOARD_RANGES = [["week", "This week"], ["month", "This month"], ["all", "All time"]];
+// Points and finished days from one day onward. Counted the same way as all-time points in computeStats.
+function rangeStats(key, from) {
+  let points = 0, closed = 0, complete = 0;
+  for (const k of tickDays || []) {
+    if (k < from) continue;
+    const st = statusOf(k, key);
+    if (st === "EXCUSED") continue;
+    const rec = tickOf(k, key) || {};
+    points += dayPoints(st, RULES.filter(r => r[2] === "bonus" && rec[r[0]]).length);
+    if (isFinal(k)) { closed++; if (st === "COMPLETE") complete++; }
+  }
+  return { points, closed, complete };
+}
 function renderBoard() {
-  const rows = activeMembers().map(m => ({ name: m.name, key: m.key, m, ...stats(m.key) }))
-    .sort((a, b) => b.points - a.points || b.run - a.run || a.name.localeCompare(b.name));
+  const from = boardRange === "week" ? mondayOf(today) : boardRange === "month" ? today.slice(0, 8) + "01" : null;
+  const rows = activeMembers().map(m => {
+    const s = stats(m.key), part = from ? rangeStats(m.key, from) : null;   // stats() first: it lists the days with ticks
+    return { name: m.name, key: m.key, m, ...s, ...(part ? { points: part.points } : {}), part };
+  }).sort((a, b) => b.points - a.points || b.run - a.run || a.name.localeCompare(b.name));
   let rank = 0, prev = null;
   const items = rows.map((r, i) => {
     if (!prev || r.points !== prev.points || r.run !== prev.run) rank = i + 1;
     prev = r;
-    const detail = [r.run ? `${r.run}-day streak` : null, r.rate === null ? null : `${r.rate}% of days done`].filter(Boolean).join(" · ") || "–";
+    const share = r.part ? (r.part.closed ? `${r.part.complete} of ${r.part.closed} ${r.part.closed === 1 ? "day" : "days"} done` : null) : r.rate === null ? null : `${r.rate}% of days done`;
+    const detail = [r.run ? `${r.run}-day streak` : null, share].filter(Boolean).join(" · ") || "–";
     return `<li class="${rank === 1 && r.points ? "top" : ""}"><span class="rk">${rank}</span>${avatarHtml(r.m, 32)}
       <div class="who2"><b><button class="namebtn" data-profile="${r.key}">${esc(r.name)}</button>${(b => b ? `<span class="mini-badge tier-${b.tier}" title="${esc(b.title)}">${ic(b.icon, 13)}</span>` : "")(topStreakBadge(r))}${r.key === myKey() ? `<span class="you">You</span>` : ""}</b><span>${detail}</span></div>
       <span class="pts" aria-label="${r.points} points">${r.points}</span></li>`;
   }).join("");
+  const hint = boardRange === "week" ? "Points for finished homework this week, highest first. Everyone starts from 0 on Monday."
+    : boardRange === "month" ? "Points for finished homework this month, highest first. Everyone starts from 0 on the 1st."
+    : "Points for finished homework since the group started, highest first.";
+  const none = from && rows.length && !rows.some(r => r.points)
+    ? `<p class="empty" style="margin:0 0 12px">No points yet this ${boardRange}. The first finished homework takes the lead.</p>` : "";
   return `<div class="card"><div class="cardhead"><h2>Points</h2></div>
-    <p class="page-hint">Points for finished homework, highest first. Open <b>Scoring</b> at the bottom to see how points work.</p>
+    <div class="segset boardseg" role="group" aria-label="Ranking period">${BOARD_RANGES.map(([v, l]) => `<button data-board-range="${v}" aria-pressed="${boardRange === v}">${l}</button>`).join("")}</div>
+    <p class="page-hint">${hint} Open <b>Scoring</b> at the bottom to see how points work.</p>
+    ${none}
     <ol class="lb">${items}</ol>
     <details>
       <summary>Scoring</summary>
@@ -3378,7 +3440,7 @@ function hideSplash() {
 }
 setTimeout(hideSplash, 3500);   // never longer than this, whatever happens
 function setTab(t) {
-  adminDirty = false;
+  adminDirty = false; ydayKeep = null;
   if (t === tab && !profileKey) { selected = today; weekStart = mondayOf(today); }
   tab = t; requestAnimationFrame(pageEnter); profileKey = null; flash = ""; try { localStorage.setItem("tab", t); } catch (e) {} render(); window.scrollTo(0, 0); }
 
@@ -3549,6 +3611,7 @@ document.addEventListener("click", async e => {
   if (d.reconsider) return adminDo(memberQ({ status: "pending" }, d.reconsider), "");
   if (d.makeadmin) return adminDo(memberQ({ role: "admin" }, d.makeadmin), "They're a group admin now: they can approve people, add names and excuse days.");
   if (d.unadmin) return adminDo(memberQ({ role: "member" }, d.unadmin), "Admin removed.");
+  if (d.boardRange) { boardRange = d.boardRange; return render(); }
   if (d.adminView) { adminView = d.adminView; gsPart = null; flash = ""; error = ""; return render(); }
   if (d.gs !== undefined) { gsPart = d.gs || null; adminDirty = false; flash = ""; error = ""; render(); requestAnimationFrame(pageEnter); if (!isWide()) window.scrollTo(0, 0); return; }
   if (d.approveReq) return adminDo(sb.rpc("approve_group_request", { request_id: +d.approveReq }), "Group created. Its owner can open it now and share the join code.");

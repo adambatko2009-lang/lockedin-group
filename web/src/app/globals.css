@@ -1374,6 +1374,18 @@
 .open-line { margin: 12px 0 0; font-size: 15px; line-height: 1.45; color: var(--text-2); text-wrap: pretty; }
 .open-line b { font-weight: 600; color: var(--text); margin-right: 4px; }
 .open-line.all { color: var(--text); font-weight: 600; }
+.open-line .num { font-family: var(--font-data); }
+
+/* Today: the day that just closed, one row above the summary. Ranking: the period switch. */
+.yday { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 12px 12px 12px 16px; text-align: left; font: inherit; color: var(--text-2); cursor: pointer; }
+.yday-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.yday b { font-size: 15px; font-weight: 600; color: var(--text); line-height: 1.35; }
+.yday small { font-size: 14px; line-height: 1.4; color: var(--text-2); }
+.yday .num { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+.yday .chev { display: grid; color: var(--muted); }
+.yday:active { background: var(--surface-2); }
+.boardseg { margin: 0 0 14px; }
+.boardseg button { min-height: 44px; }
 @media (min-width: 960px) { .sum-time, .sum-big { font-size: 36px; } }
 
 /* Phones: once the summary card has scrolled away, the time left takes the group name's place in the top bar (same height, so nothing jumps) */
