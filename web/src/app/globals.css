@@ -512,13 +512,18 @@
      Win green, loss red, break even yellow, no trade and gamble grey. The picked one is filled. */
   .result-set { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
   .result-set + .sub-hint { margin-top: 8px; }
-  .r-win { --rb: var(--good); --ro: var(--on-good); }
-  .r-loss { --rb: var(--crit); --ro: var(--on-crit); }
-  .r-breakeven { --rb: var(--warn); --ro: var(--on-warn); }
-  .r-notrade, .r-gamble { --rb: var(--muted); --ro: var(--bg); }
-  .result-set button { min-height: 48px; padding: 0 6px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--rb) 45%, var(--line-strong));
-    background: color-mix(in srgb, var(--rb) 14%, var(--surface-2)); color: var(--text); font: 600 14px var(--font-ui); white-space: nowrap; cursor: pointer; }
-  .result-set button[aria-pressed="true"] { background: var(--rb); border-color: var(--rb); color: var(--ro); }
+  /* Unpicked buttons stay neutral with a small colored dot, so five tints never fight each other.
+     The picked one gets a light tint of its color, a colored border and colored text, not a loud full fill. */
+  .r-win { --rb: var(--good); --rt: var(--good-text); }
+  .r-loss { --rb: var(--crit); --rt: var(--crit-text); }
+  .r-breakeven { --rb: var(--warn); --rt: color-mix(in srgb, var(--warn) 50%, var(--text)); }
+  .r-notrade, .r-gamble { --rb: var(--muted); --rt: var(--text); }
+  .result-set button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 6px; border-radius: 12px;
+    border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--text-2); font: 600 14px var(--font-ui); white-space: nowrap; cursor: pointer; }
+  .result-set button i { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--rb); }
+  .result-set button[aria-pressed="true"] { background: color-mix(in srgb, var(--rb) 12%, var(--surface)); border-color: var(--rb); color: var(--rt); }
+  .result-set button:active { transform: scale(0.97); }
+  @media (prefers-reduced-motion: reduce) { .result-set button:active { transform: none; } }
   .rtag i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
   .rtag.r-win { color: var(--good-text); } .rtag.r-loss { color: var(--crit-text); } .rtag.r-gamble { color: var(--text-2); } .rtag.r-breakeven { color: color-mix(in srgb, var(--warn) 50%, var(--text)); }   /* plain yellow is unreadable on white */
   .ntag { display: inline-flex; align-items: center; gap: 4px; flex: none; font-size: 12px; font-weight: 600; color: var(--text-2); background: var(--surface-2); border-radius: 6px; padding: 1px 6px; }
@@ -555,7 +560,7 @@
   .tagpick button:active { transform: scale(0.96); }
   .panel .sub-hint { font-size: 13px; color: var(--muted); margin: -4px 0 10px; }
   .panel #result-hint { margin: 10px 0 0; }
-  .panel .numrow { margin-top: 14px; }
+  .panel .numrow { margin-top: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }   /* fill the row: no dead space on wide screens */
   .panel #num-hint { margin: 10px 0 4px; }
   .segset { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; background: var(--surface-2); border-radius: 11px; padding: 3px; }
   .segset.four { grid-template-columns: repeat(4, 1fr); margin-top: 8px; }

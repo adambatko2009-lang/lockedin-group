@@ -573,7 +573,7 @@ const shortLabel = l => { const w = String(l).trim().split(/\s+/)[0] || l; retur
 // A day's result: one of these, or nothing picked yet. "No trade" uses the no_trade column.
 const RESULTS = [["win", "Win"], ["loss", "Loss"], ["breakeven", "Break even"], ["notrade", "No trade"], ["gamble", "Gamble"]];
 const resultOf = rec => rec && rec.no_trade ? "notrade" : (rec && rec.result) || null;
-const resultBtnsHtml = rec => RESULTS.map(([v, l]) => `<button data-result="${v}" class="r-${v}" aria-pressed="${resultOf(rec) === v}">${l}</button>`).join("");
+const resultBtnsHtml = rec => RESULTS.map(([v, l]) => `<button data-result="${v}" class="r-${v}" aria-pressed="${resultOf(rec) === v}"><i aria-hidden="true"></i>${l}</button>`).join("");
 const resultHint = rec => ({
   win: "Marked as a win. Tap again to clear.",
   loss: "Marked as a loss. Losses are part of it, the homework still counts.",
