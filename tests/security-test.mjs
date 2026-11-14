@@ -1126,5 +1126,109 @@ ok(!!r.error || r.count === 0, "a signed-out visitor can't either");
 await db.exec(u25);
 ok((await one(`select result from public.ticks where member_key='sid' and day=$1`, [t14])).result === "breakeven", "running update 25 a second time keeps saved results");
 
+// ================================================================ update 26: server tags
+const u26 = readFileSync(dir + "update-26-server-tags.sql", "utf8");
+// ta is a mentor, tb asks for groups, tc joins one. Two servers are made the old way first, without a tag.
+Object.assign(U, { ta: "00000000-0000-0000-0000-000000002601", tb: "00000000-0000-0000-0000-000000002602", tc: "00000000-0000-0000-0000-000000002603" });
+for (const k of ["ta", "tb", "tc"]) await db.query(`insert into auth.users (id, raw_user_meta_data) values ($1, $2)`, [U[k], meta(k)]);
+const SB = (await rpc("batko", "create_server", ["BNQ", U.ta])).rows[0].v;
+const SL = (await rpc("batko", "create_server", ["A long server name", U.ta])).rows[0].v;
+const code3old = (await one(`select join_code from public.groups where id=$1`, [G3])).join_code;
+const srvTag = async s => (await one(`select tag from public.servers where id=$1`, [s])).tag;
+const joinCode = async g => (await one(`select join_code from public.groups where id=$1`, [g])).join_code;
+const TAGGED = /^BNQ-[A-Z0-9]{4}-[A-Z0-9]{4}$/, PLAIN = /^[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+await db.exec(u26);
+console.log("\nloaded: update-26-server-tags.sql");
+section("server tags (update 26)");
+ok((await srvTag(SB)) === "BNQ", "a server with a short name gets its name as its tag");
+ok((await srvTag(SL)) === null, "a server with a long name has no tag until the app owner gives it one");
+ok((await joinCode(G3)) === code3old, "groups that already exist keep their join code");
+r = await rpc("ta", "my_servers", []);
+ok(!r.error && r.rows[0].v.find(x => String(x.id) === String(SB)).tag === "BNQ", "a mentor sees the tag of their server");
+
+ok(!!(await rpc("ta", "create_server", ["Mine", U.ta, "MINE"])).error, "a mentor can't create a server with a tag");
+ok(!!(await rpc("anon", "create_server", ["Mine", U.ta, "MINE"])).error, "signed-out visitors can't either");
+ok(!!(await rpc("batko", "create_server", ["Short", U.ta, "B"])).error, "a tag of one letter is refused");
+ok(!!(await rpc("batko", "create_server", ["Long", U.ta, "TOOLONG"])).error, "a tag of more than 5 letters is refused");
+ok(!!(await rpc("batko", "create_server", ["Odd", U.ta, "B-Q"])).error, "a tag with other signs is refused");
+r = await rpc("batko", "create_server", ["Copy", U.ta, "bnq"]);
+ok(!!r.error && /already has the tag/.test(r.error), "two servers can't share a tag");
+r = await rpc("batko", "create_server", ["Third server", U.tc, " xy1 "]);
+const SX = r.rows && r.rows[0].v;
+ok(!r.error && (await srvTag(SX)) === "XY1", "the app owner creates a server with a tag");
+
+ok(!!(await rpc("ta", "set_server_tag", [SL, "LONG"])).error, "a mentor can't change the tag of their own server");
+ok(!!(await rpc("tb", "set_server_tag", [SL, "LONG"])).error, "a member can't change a tag");
+ok(!!(await rpc("anon", "set_server_tag", [SL, "LONG"])).error, "signed-out visitors can't change a tag");
+ok(!!(await rpc("batko", "set_server_tag", [SL, "BNQ"])).error, "the app owner can't give a tag that another server has");
+ok(!(await rpc("batko", "set_server_tag", [SL, "long"])).error && (await srvTag(SL)) === "LONG", "the app owner gives a server its tag");
+ok(!!(await as("ta", `update public.servers set tag='HACK'`)).error, "nobody changes a tag by writing to the table");
+
+ok(!!(await rpc("anon", "request_group", ["Ghosts", "", "BNQ"])).error, "signed-out visitors can't ask for a group");
+r = await rpc("tb", "request_group", ["Tag Crew", "note", "NOPE"]);
+ok(!!r.error && /No server has that tag/.test(r.error), "a tag that doesn't exist is refused");
+ok(!!(await rpc("tb", "request_group", ["  ", "", ""])).error, "a request needs a group name");
+r = await rpc("tb", "request_group", ["Tag Crew", "note", " bnq "]);
+ok(!r.error && r.rows[0].v === "BNQ", "someone asks for a group with a server tag and gets the server's name back");
+const reqT = await one(`select id, server_id, user_id::text u, status from public.group_requests where name='Tag Crew'`);
+ok(String(reqT.server_id) === String(SB) && reqT.u === U.tb && reqT.status === "pending", "the request remembers the server and waits for the app owner");
+ok(!!(await as("tb", `insert into public.group_requests (name, server_id) values ('Sneaky', $1)`, [SL])).error, "a request written straight into the table can't name a server");
+ok(!(await as("tb", `insert into public.group_requests (name) values ('Old Way')`)).error, "a request without a server still works the old way");
+r = await rpc("tb", "request_group", ["No Tag", "", ""]);
+ok(!r.error && r.rows[0].v === null && (await one(`select server_id from public.group_requests where name='No Tag'`)).server_id === null, "a request without a tag names no server");
+r = await rpc("tb", "request_group", ["Fourth", "", "BNQ"]);
+ok(!!r.error && /3 requests/.test(r.error), "3 waiting requests is still the most");
+ok(!((await as("tb", `update public.group_requests set server_id=$1 where name='No Tag'`, [SB])).count > 0)
+  && (await one(`select server_id from public.group_requests where name='No Tag'`)).server_id === null, "the person who asked can't add a server to a request afterwards");
+ok((await as("ta", `select * from public.group_requests`)).rows.length === 0, "the mentor can't read requests that name their server");
+ok(!!(await rpc("ta", "approve_group_request", [reqT.id])).error, "the mentor can't approve a group for their server");
+ok(!!(await rpc("tb", "approve_group_request", [reqT.id])).error, "the person who asked can't approve it themselves");
+ok((await rpc("ta", "server_overview", [SB])).rows[0].v.groups.length === 0, "before approval the mentor sees nothing of that group");
+
+r = await rpc("batko", "approve_group_request", [reqT.id]);
+const GT = r.rows && r.rows[0].v;
+let codeT = GT && await joinCode(GT);
+ok(!r.error && TAGGED.test(codeT), "after approval the group's join code starts with the server tag");
+ok(String((await one(`select server_id from public.server_groups where group_id=$1`, [GT])).server_id) === String(SB), "and the group is on that server");
+r = await rpc("ta", "server_overview", [SB]);
+ok(!r.error && r.rows[0].v.tag === "BNQ" && r.rows[0].v.groups.length === 1 && r.rows[0].v.groups[0].id === GT, "the mentor now sees the group");
+ok(!!(await rpc("tc", "server_overview", [SB])).error, "another mentor can't open that server");
+ok((await rpc("tb", "group_server", [GT])).rows[0].v.name === "BNQ", "the new owner sees which server the group is on");
+r = await rpc("batko", "approve_group_request", [(await one(`select id from public.group_requests where name='No Tag'`)).id]);
+const GP = r.rows && r.rows[0].v;
+ok(!r.error && PLAIN.test(await joinCode(GP)) && (await one(`select count(*)::int n from public.server_groups where group_id=$1`, [GP])).n === 0, "a group without a tag gets a plain code and is on no server");
+
+r = await rpc("tc", "join_group", [codeT.replace(/-/g, "").toLowerCase()]);
+ok(!r.error && r.rows[0].v.id === GT && r.rows[0].v.status === "pending", "someone joins with the tagged code, typed without dashes, and waits for the owner");
+r = await rpc("tc", "join_group", [codeT]);
+ok(!r.error && r.rows[0].v.id === GT, "the tagged code also works typed with its dashes");
+ok(!!(await rpc("tc", "join_group", ["XY1-" + codeT.slice(4)])).error, "the same ending with another tag is refused");
+ok(!!(await rpc("tc", "join_group", [codeT.slice(4)])).error, "the ending without the tag is refused");
+ok(!!(await rpc("tc", "join_group", ["BNQ"])).error, "the tag alone is refused");
+r = await rpc("tc", "join_group", [code3old.replace("-", "")]);
+ok(!r.error && r.rows[0].v.id === G3, "a code without a tag still works");
+ok(!!(await rpc("anon", "join_group", [codeT])).error, "signed-out visitors can't join with a tagged code");
+
+ok(!!(await rpc("tc", "new_join_code", [GT])).error, "someone on the waiting list can't change the join code");
+ok(!!(await rpc("ta", "new_join_code", [GT])).error, "the mentor can't change a group's join code");
+r = await rpc("tb", "new_join_code", [GT]);
+ok(!r.error && TAGGED.test(r.rows[0].v) && r.rows[0].v !== codeT, "a new join code for a group on the server keeps the tag");
+ok(!!(await rpc("tc", "join_group", [codeT])).error, "and the old tagged code stops working");
+codeT = r.rows[0].v;
+r = await rpc("tb", "new_join_code", [GP]);
+ok(!r.error && PLAIN.test(r.rows[0].v), "a new join code for a group on no server stays plain");
+ok(!!(await as("tb", `update public.groups set join_code='bad code' where id=$1`, [GT])).error || (await joinCode(GT)) === codeT, "a join code in another shape is refused");
+
+await rpc("tb", "request_group", ["Late Crew", "", "BNQ"]);
+ok(!(await rpc("batko", "delete_server", [SB])).error && (await one(`select server_id from public.group_requests where name='Late Crew'`)).server_id === null, "deleting a server takes it off waiting requests");
+r = await rpc("batko", "approve_group_request", [(await one(`select id from public.group_requests where name='Late Crew'`)).id]);
+ok(!r.error && PLAIN.test(await joinCode(r.rows[0].v)), "a request whose server is gone becomes a plain group");
+ok((await joinCode(GT)) === codeT && (await one(`select count(*)::int n from public.server_groups where group_id=$1`, [GT])).n === 0, "a group whose server is deleted keeps its code and is on no server");
+
+await db.exec(u26);
+ok((await srvTag(SL)) === "LONG" && (await srvTag(SX)) === "XY1" && (await joinCode(GT)) === codeT, "running update 26 a second time keeps tags and join codes");
+ok(!!(await as("tb", `insert into public.group_requests (name, server_id) values ('Sneaky', $1)`, [SL])).error
+  && !!(await rpc("ta", "set_server_tag", [SL, "ZZZ"])).error, "and the rules still hold after the second run");
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

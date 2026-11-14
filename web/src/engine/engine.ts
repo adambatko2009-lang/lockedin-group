@@ -72,6 +72,7 @@ const ICON_PATHS = {
   "chevron-right": '<path d="m9.5 6 6 6-6 6"/>',
   "chevron-down": '<path d="m6 9.5 6 6 6-6"/>',
   search: '<circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/>',
+  server: `<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/>`,
   link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
 };
 const ic = (name, px = 16) => `<svg class="ic" viewBox="0 0 24 24" width="${px}" height="${px}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name] || ""}</svg>`;
@@ -1396,7 +1397,9 @@ const INVITE_KEY = "lockedin.invite";
     const u = new URL(location.href);
     if (!u.searchParams.has("join")) return;
     const c = (u.searchParams.get("join") || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    // 8 signs, or 10 to 13 when a server tag is in front (update 26). The database sorts out the dashes.
     if (/^[A-Z0-9]{8}$/.test(c)) localStorage.setItem(INVITE_KEY, c.slice(0, 4) + "-" + c.slice(4));
+    else if (/^[A-Z0-9]{10,13}$/.test(c)) localStorage.setItem(INVITE_KEY, c);
     u.searchParams.delete("join");
     history.replaceState(history.state, "", u.pathname + u.search + u.hash);
   } catch (err) { /* private mode: the link still opens the site */ }
@@ -1428,8 +1431,10 @@ async function sendGroupRequest() {
   const name = (document.getElementById("req-name").value || "").replace(/[<>]/g, "").trim(), note = (document.getElementById("req-note").value || "").trim();
   if (!name) { joinMsg = "Give your group a name first."; requestOpen = true; }
   else {
-    const { error: e } = await sb.from("group_requests").insert({ name, note });
-    joinMsg = e ? (/row-level security/i.test(e.message) ? "You already have 3 requests waiting." : e.message) : `Request sent for ${name}. You'll get it as soon as it's approved.`;
+    const tagEl = document.getElementById("req-tag"), server_tag = tagEl ? tagEl.value.trim() : "";
+    // request_group (update 26) checks the server tag in the database and answers with that server's name.
+    const { data: srv, error: e } = await sb.rpc("request_group", { group_name: name, note, server_tag });
+    joinMsg = e ? e.message : `Request sent for ${name}${srv ? ` on the server ${srv}` : ""}. You'll get it as soon as it's approved.`;
     requestOpen = !!e;
     await loadGroups();
   }
@@ -1492,8 +1497,8 @@ async function uploadLogo(file) {
 // screen can change a group, and the database never sends notes, pictures or results to it.
 type ServerMember = { name: string; avatar_url: string | null; marks: string };   // marks: one letter per trading day
 type ServerGroup = { id: string; name: string; color: string; logo_path: string | null; status: string; today: string; days: string[]; members: ServerMember[] };
-type ServerView = { id: number; name: string; code: string; groups: ServerGroup[] };
-type ServerRow = { id: number; name: string; code: string; mine: boolean; owner: string; groups: number };
+type ServerView = { id: number; name: string; code: string; tag?: string | null; groups: ServerGroup[] };
+type ServerRow = { id: number; name: string; code: string; tag?: string | null; mine: boolean; owner: string; groups: number };
 let myServers: ServerRow[] = [];                                  // servers you own (the app owner gets all of them)
 let groupServer: { id: number; name: string } | null = null;      // the server the open group is linked to
 let serverView: ServerView | null = null;                         // the server open on the mentor screen
@@ -1605,18 +1610,21 @@ function renderServer() {
         <button class="btn danger small" data-srv-unlink="${esc(g.id)}">Remove from server</button></div>
       ${open ? `<div class="srv-list">${list}</div>` : ""}</div>`;
   }).join("");
-  const none = `<div class="card"><p class="empty">No group is linked yet. Send the server code to the owners of your groups. They type it in Admin, Group settings, Mentor server.</p></div>`;
+  const none = `<div class="card"><p class="empty">No group is linked yet. ${v.tag ? `New groups: the person who starts the group types the tag ${esc(v.tag)}. Groups that already exist` : "Groups"}: send the server code to their owners. They type it in Admin, Group settings, Mentor server.</p></div>`;
   return `<div class="srv-head"><div><h1>${esc(v.name)}</h1>
       <p>${v.groups.length ? `<span class="num">${v.groups.length}</span> ${v.groups.length === 1 ? "group" : "groups"} · <span class="num">${doneAll}</span> of <span class="num">${people}</span> members done today` : "Your mentor view"}</p></div>
       <button class="btn plain small" id="srv-refresh">Refresh</button></div>
     ${serverMsg ? `<div class="card"><p class="msg">${esc(serverMsg)}</p></div>` : ""}
     ${cards || none}
     ${serverDiscordCardHtml()}
+    ${v.tag ? `<div class="card"><div class="cardhead"><h2>Server tag</h2></div>
+      <div class="codebox"><code>${esc(v.tag)}</code></div>
+      <p class="empty" style="margin-top:10px">For new groups. Someone who starts a group types this tag where it asks "Are you part of a server?". Once the app owner approves the group it shows up here, and its join code starts with ${esc(v.tag)}.</p></div>` : ""}
     <div class="card"><div class="cardhead"><h2>Server code</h2></div>
       <div class="codebox"><code>${esc(v.code)}</code>
         <button class="btn plain small" id="srv-copy">Copy</button>
         <button class="btn danger small" id="srv-new-code">New code</button></div>
-      <p class="empty" style="margin-top:10px">A group owner types this code in Admin, Group settings, Mentor server. After that you see the group here: who finished their boxes each day, and their streaks. You can't see notes, pictures or results, and you can't change anything in a group.</p></div>
+      <p class="empty" style="margin-top:10px">For groups that already exist. A group owner types this code in Admin, Group settings, Mentor server. After that you see the group here: who finished their boxes each day, and their streaks. You can't see notes, pictures or results, and you can't change anything in a group.</p></div>
     <div class="srv-foot"><button class="btn plain small" id="srv-back">${loaded ? "Back to your group" : "Join or start a group"}</button>
       <button class="btn plain small" id="signout">Sign out</button></div>`;
 }
@@ -1651,16 +1659,20 @@ function pickBox(id: string, what: string, opts: PickOpt[]): string {
 // App owner: every server, and making one for a mentor who has signed in.
 function serversCardHtml() {
   const rows = myServers.map(s => `<div class="grow"><div class="ghead"><div><b>${esc(s.name)}</b>
-      <span class="sub">Owner: ${esc(s.owner || "Unknown")} · ${s.groups} linked · code ${esc(s.code)}</span></div></div>
+      <span class="sub">Owner: ${esc(s.owner || "Unknown")} · ${s.groups} linked · ${s.tag ? `tag ${esc(s.tag)}` : "no tag yet"} · code ${esc(s.code)}</span></div></div>
     <div class="actions" style="margin-left:0"><button class="btn plain small" data-open-server="${s.id}">Open</button>
+      <input class="field code" id="srv-tag-${s.id}" value="${esc(s.tag || "")}" maxlength="5" placeholder="Tag" aria-label="Tag for ${esc(s.name)}" autocomplete="off" autocapitalize="characters" spellcheck="false" style="width:92px">
+      <button class="btn plain small" data-save-tag="${s.id}">Save tag</button>
       <button class="btn danger small" data-delete-server="${s.id}">Delete</button></div></div>`).join("") || `<p class="empty">No servers yet.</p>`;
   const opts = [...allProfiles].sort((a, b) => String(a.discord_name).localeCompare(String(b.discord_name)))
     .map(p => ({ v: p.user_id, label: String(p.discord_name || ""), find: [p.discord_name] }));
   return `<div class="card"><div class="cardhead"><h2>Mentor servers · ${myServers.length}</h2></div>${rows}
     <div class="addrow srv-new"><input class="field" id="new-server" placeholder="Server name" maxlength="40" aria-label="Server name">
+      <input class="field code" id="new-server-tag" placeholder="Tag" maxlength="5" aria-label="Server tag, 2 to 5 letters or digits" autocomplete="off" autocapitalize="characters" spellcheck="false" style="width:92px">
       ${pickBox("new-server-owner", "Server owner", opts)}
       <button class="btn primary small" id="create-server">Create</button></div>
-    <p class="empty" style="margin-top:10px">The mentor signs in with Discord once, then you pick them here. They get a server code for their group owners.
+    <p class="empty" style="margin-top:10px">The mentor signs in with Discord once, then you pick them here. The tag is 2 to 5 letters or digits, like BNQ.
+      Someone who starts a new group types it, and after you approve the group it is on the server and its join code starts with the tag.
       A mentor only sees boxes and streaks. Deleting a server doesn't touch its groups.</p></div>`;
 }
 
@@ -1853,6 +1865,7 @@ function renderRail() {
   const badge = n => n ? `<span class="count" aria-label="${n} waiting">${n}</span>` : "";
   const reqs = isAppOwner ? requests.filter(r => r.status === "pending").length : 0;
   const g = group();
+  const mine = myServers.find(x => x.mine);   // the server you own yourself: one click from the left bar
   morph(rail, `<span class="rail-ind" aria-hidden="true"></span>
     <div class="rail-brand"><img class="rail-logo" src="icons/icon-192.png" alt="">LockedIn</div>
     <p class="rail-h">${esc(g ? g.name : "Group")}</p>
@@ -1866,6 +1879,8 @@ function renderRail() {
     ${item("admin", "people", SVG.admin, "People", badge(pendingCount()), "toggleadmin")}
     ${isGroupOwner() ? item("admin", "group", SVG.gear, "Group settings") : ""}
     ${isAppOwner ? item("admin", "all", ic("layers", 19), "All groups", badge(reqs)) : ""}` : ""}
+    ${mine ? `<p class="rail-h">Mentor</p>
+    <button data-open-server="${mine.id}">${ic("server", 19)}<span>My server</span></button>` : ""}
     <span class="rail-sep"></span>
     ${item("groups", "", ic("users", 19), "Groups")}
     ${item("settings", "", ic("sliders", 19), "Settings")}
@@ -2617,11 +2632,16 @@ async function saveDiscord() {
   return res;
 }
 
+// App owner: the server a request named. Approving puts the new group on it.
+function reqServer(r: { server_id?: number | null }): string {
+  const s = r.server_id == null ? null : myServers.find(x => String(x.id) === String(r.server_id));
+  return s ? ` · Server: ${esc(s.name)}` : "";
+}
 // App owner: every group, requests to start one, and the big switches.
 function ownerDashboardHtml() {
   const open = requests.filter(r => r.status === "pending");
   const reqHtml = open.length ? open.map(r => `<div class="person"><span class="ph"></span><b>${esc(r.name)}</b>
-      <span class="sub">From ${esc(profileName(r.user_id))} · ${new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}${r.note ? ` · “${esc(r.note)}”` : ""}</span>
+      <span class="sub">From ${esc(profileName(r.user_id))} · ${new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}${r.note ? ` · “${esc(r.note)}”` : ""}${reqServer(r)}</span>
       <div class="actions"><button class="btn primary small" data-approve-req="${r.id}">Approve</button>
         <button class="btn danger small" data-reject-req="${r.id}">Reject</button></div></div>`).join("")
     : `<p class="empty">No requests.</p>`;
@@ -2692,8 +2712,8 @@ function waitingHtml() {
 function joinCodeHtml() {
   return `<div class="joinbox">
       <label for="joincode">Join code</label>
-      <p class="sub-hint" style="margin:0 0 10px">Ask your group's owner for it. It looks like ABCD-1234.</p>
-      <div class="addrow"><input class="field code" id="joincode" placeholder="ABCD-1234" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <p class="sub-hint" style="margin:0 0 10px">Ask your group's owner for it. It looks like ABCD-1234. A group on a server has the server's tag in front.</p>
+      <div class="addrow"><input class="field code" id="joincode" placeholder="ABCD-1234" maxlength="16" autocomplete="off" autocapitalize="characters" spellcheck="false">
         <button class="btn primary small" id="join">Join</button></div>
       <p class="sub-hint" id="join-msg" role="status" style="margin:10px 0 0">${esc(joinMsg)}</p>
       <p class="sub-hint" style="margin:10px 0 0">The owner approves you, and you're in with your Discord name.</p>
@@ -2705,6 +2725,9 @@ function createHtml() {
       <input class="field" id="req-name" maxlength="40" placeholder="Group name" style="width:100%">
       <label class="flabel" for="req-note">Who is it for? <span style="text-transform:none;letter-spacing:0">(optional)</span></label>
       <textarea class="field" id="req-note" maxlength="300" placeholder="For example: our NQ group on Discord" style="width:100%;min-height:70px;padding:8px 10px"></textarea>
+      <label class="flabel" for="req-tag">Are you part of a server? <span style="text-transform:none;letter-spacing:0">(optional)</span></label>
+      <input class="field code" id="req-tag" maxlength="5" placeholder="Server tag" autocomplete="off" autocapitalize="characters" spellcheck="false" style="width:100%">
+      <p class="sub-hint" style="margin:8px 0 0">If your group belongs to a mentor's server, type the server's tag. The server owner then sees your members' names, which days they finished their boxes, and their streaks. Never notes, pictures or results. Not part of a server? Leave it empty.</p>
       <button class="btn primary small" id="send-request" style="margin-top:12px">Send request</button>
       <p class="sub-hint" role="status" style="margin:10px 0 0">${esc(joinMsg)}</p>
       <p class="sub-hint" style="margin:10px 0 0">The app owner checks every new group. Once it's approved you're its owner: you get your own join code, boxes, points, time zone, color and logo, and you decide who gets in.</p>
@@ -2736,7 +2759,7 @@ function joinHtml() {
       : ic("alert", 15) + `Your request for <b>${esc(r.name)}</b> wasn't accepted`}</p>`).join("");
   return `<div class="joinbox">
       <label for="joincode">Join code</label>
-      <div class="addrow" style="margin-top:6px"><input class="field code" id="joincode" placeholder="ABCD-1234" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <div class="addrow" style="margin-top:6px"><input class="field code" id="joincode" placeholder="ABCD-1234" maxlength="16" autocomplete="off" autocapitalize="characters" spellcheck="false">
         <button class="btn primary small" id="join">Join</button></div>
       <p class="sub-hint" id="join-msg" style="margin:8px 0 0">${esc(joinMsg)}</p>
       ${waiting}${reqs}
@@ -2745,6 +2768,8 @@ function joinHtml() {
       <p class="sub-hint" style="margin:8px 0 10px">Ask for a group of your own. Once it's approved you're its owner: you get a join code to share and your own settings.</p>
       <input class="field" id="req-name" maxlength="40" placeholder="Group name" aria-label="Group name" style="width:100%">
       <textarea class="field" id="req-note" maxlength="300" placeholder="Who is it for? (optional)" aria-label="Note" style="width:100%;margin-top:8px;min-height:70px;padding:8px 10px"></textarea>
+      <input class="field code" id="req-tag" maxlength="5" placeholder="Server tag (optional)" aria-label="Are you part of a server? Type its tag" autocomplete="off" autocapitalize="characters" spellcheck="false" style="width:100%;margin-top:8px">
+      <p class="sub-hint" style="margin:8px 0 0">If your group belongs to a mentor's server, type the server's tag. The server owner then sees your members' names, which days they finished their boxes, and their streaks. Never notes, pictures or results. Not part of a server? Leave it empty.</p>
       <button class="btn plain small" id="send-request" style="margin-top:8px">Send request</button>
     </details>`;
 }
@@ -3679,6 +3704,10 @@ document.addEventListener("click", async e => {
     const { error: e2 } = await sb.rpc("unlink_server", { g: d.srvUnlink });
     return serverView ? openServer(serverView.id, e2 ? e2.message : "Group removed from the server.") : null;
   }
+  if (d.saveTag) {
+    const el = document.getElementById("srv-tag-" + d.saveTag), server_tag = el ? el.value.trim() : "";
+    return adminDo(sb.rpc("set_server_tag", { s: +d.saveTag, server_tag }), "Tag saved. Join codes that already exist keep their old start.");
+  }
   if (d.deleteServer) {
     if (t.dataset.confirm !== "1") { t.dataset.confirm = "1"; t.textContent = "Sure? Tap again"; return; }
     return adminDo(sb.rpc("delete_server", { s: +d.deleteServer }), "Server deleted. Its groups are untouched.");
@@ -3796,9 +3825,10 @@ document.addEventListener("click", async e => {
     }
     case "create-server": {
       const name = document.getElementById("new-server").value.trim(), owner = document.getElementById("new-server-owner").value;
-      if (!name || !owner) { error = "Type a server name, then search for its owner and tap their name."; flash = ""; return render(); }
+      const server_tag = document.getElementById("new-server-tag").value.trim();
+      if (!name || !owner || !server_tag) { error = "Type a server name and a tag, then search for its owner and tap their name."; flash = ""; return render(); }
       pickClear("new-server-owner");
-      return adminDo(sb.rpc("create_server", { server_name: name, owner }), `Created ${name}. Its owner finds it under Groups.`);
+      return adminDo(sb.rpc("create_server", { server_name: name, owner, server_tag }), `Created ${name}. Its owner finds it under Groups, and as My server in the left bar on a computer.`);
     }
     case "create-group": {
       const el = document.getElementById("new-group"), name = el.value.trim();
