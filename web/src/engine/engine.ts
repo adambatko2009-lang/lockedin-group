@@ -2773,10 +2773,8 @@ function renderLanding() {
       <div class="mock-legend"><span>Today's homework</span><span>Chart · Journal · HTF</span></div>
       ${person("Alex", "#2563eb", [1, 1, 1])}${person("Sam", "#0e7490", [1, 1, 1])}${person("Riley", "#0f766e", [1, 1, 1])}${person("Morgan", "#c2410c", [1, 1, 1])}${person("Jordan", "#be185d", [1, 0, 1], true)}`;
   // The real app (a demo group) in a tilted 3D phone.
-  const phone = `<div class="stage3d">
-      <div class="phone3d rv in d2"><div class="phone"><div class="phone-screen">
-        <img src="assets/app-day.jpg" width="781" height="1690" alt="The LockedIn app with a demo group: today's homework, ticked boxes, notes and chart pictures">
-      </div></div></div>
+  const phone = `<div class="stage3d" role="img" aria-label="The LockedIn app with a demo group: everyone's homework for today, your ticked boxes, a note and chart pictures">
+      <div class="phone3d rv in d2"><div class="s-phone how-phone" aria-hidden="true" inert><div class="s-screen"><div class="s-scale">${howPhoneHtml()}</div></div></div></div>
     </div>`;
   const own = `<div class="lp-own rv">
       <div><h2>Start your own group</h2>
@@ -3043,6 +3041,63 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && document.d
 // Everything inside the phone is drawn with the app's own styles (cards, boxes, bars), so it looks like the real app.
 // Nothing scrolls inside the phone: like the real app, another page opens with a tap on the bottom bar.
 // Made-up names only. The phone turns slowly as you scroll and does nothing else: it does not follow the mouse.
+// Pieces both drawn phones share (the scroll story here, and the still phone on "How it works").
+const MOCK_CHECK = ic("check", 18).replace('<circle cx="12" cy="12" r="9"/>', "");   // the same check as in "Your homework"
+const MOCK_LINE = '<svg viewBox="0 0 64 64" preserveAspectRatio="none" aria-hidden="true"><path d="M4 46 L18 40 L28 28 L40 36 L60 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const MOCK_BOX = [["Chart with execution", "req"], ["Journal", "req"], ["HTF", "req"], ["Social", "bonus"]];
+const MOCK_NOTE = "Waited for the 9:45 retest and took 1R. Stopped after two trades.";
+const MOCK_TABS = [["day", "Today"], ["week", "Week"], ["board", "Ranking"], ["me", "Profile"]];
+// The phone shows the last Friday (today, if it is one), so the week page always has five days in it.
+function mockDay() {
+  const day = addDays(mondayOf(currentTradingDay()), 4);
+  return day > currentTradingDay() ? addDays(day, -7) : day;
+}
+const mockAv = (name, px) => `<span class="av" style="width:${px}px;height:${px}px;font-size:${Math.round(px * 0.44)}px">${name[0]}</span>`;
+const mockGname = () => `<span class="gname"><span class="glogo acc-blue" style="width:16px;height:16px;font-size:8px">N</span><span>NQ Morning</span></span>`;
+const mockArrow = (dir, off = false) => `<span class="round"${off ? ' style="opacity:0.3"' : ""}>${ic("chevron-" + dir, 20)}</span>`;
+const mockDayTop = day => mockArrow("left") + `<div class="mid">${mockGname()}<span class="datepick"><b>${esc(fmtDay(day))}</b></span></div>` + mockArrow("right", true);
+// The bottom bar, with the highlight on Today until the story moves it.
+const mockTabbar = () => `<div class="tabbar glass"><div class="pill" id="ma-pill" style="width:calc((100% - 10px) / ${MOCK_TABS.length})"></div>${MOCK_TABS.map(([k, l], i) =>
+  `<button type="button" tabindex="-1"${i ? "" : ' aria-current="page"'}>${k === "me" ? `<span class="meav">${SVG.me}</span>` : SVG[k]}<span>${l}</span></button>`).join("")}</div>`;
+// "How it works": one still screen of the app, drawn with the app's own styles like the phone in the story.
+// It shows Today after you finished: the summary, your ticked boxes, and your row with a note and two pictures.
+function howPhoneHtml() {
+  const points = dayPoints("COMPLETE", 1);
+  const row = (name, rest) => `<div class="member"><div class="mrow"><span class="name">${mockAv(name, 26)}<span class="namebtn">${name}</span>${rest}</div>`;
+  return `<div class="topbar glass">${mockDayTop(mockDay())}</div>
+    <div class="s-page on">
+      <div class="card daysum">
+        <div class="sum-head">
+          <div class="sum-done"><p class="sum-big"><span class="num">5</span><small> of <span class="num">6</span></small></p><p class="sum-until">members done</p></div>
+          <div class="sum-when"><p class="sum-time"><span class="num">2</span>h <span class="num">30</span>m left</p><p class="sum-until">until <span class="num">09:00</span> New York</p></div>
+        </div>
+        <div class="donebar"><i style="width:83%"></i></div>
+        <p class="open-line"><b>Still open</b> Jordan</p>
+      </div>
+      <div class="card quick">
+        <div class="cardhead"><h2>Done for today</h2><span class="dot COMPLETE qdot">${ICON.COMPLETE}</span></div>
+        <p class="qdone"><b><span class="num">+${points}</span> ${points === 1 ? "point" : "points"}</b> · <span class="num">20</span>-day streak</p>
+        <div class="qgrid">${MOCK_BOX.map(([l, kind]) => `<div class="q ${kind}" aria-pressed="true"><span class="qc">${kind === "bonus" ? PLUS_SVG : MOCK_CHECK}</span><span><b>${l}</b><small>${kind === "bonus" ? "Bonus, +" + POINTS.bonus : "Required"}</small></span></div>`).join("")}</div>
+        <div class="qnote">${SVG.note.replace("<svg ", '<svg width="18" height="18" ')}<span>Edit note &amp; pictures</span></div>
+      </div>
+      <div class="card"><div class="cardhead"><h2>NQ Morning today</h2></div>
+        ${row("Taylor", `<span class="you">You</span></span><span class="icon has">${SVG.note}</span><span class="dot COMPLETE">${ICON.COMPLETE}</span></div>
+          <div class="note"><p>${MOCK_NOTE}</p></div>
+          <div class="shots"><span class="shot s-shot on">${MOCK_LINE}</span><span class="shot s-shot on">${MOCK_LINE}</span></div>`)}
+        ${row("Jordan", `</span><span class="nb-space"></span><span class="dot WAITING">${ICON.WAITING}</span></div><p class="mini">Nothing ticked yet</p>`)}
+      </div>
+    </div>
+    ${mockTabbar()}`;
+}
+// Fits a still phone's 375px-wide screen into its frame (the story's phone does this for itself).
+function fitPhones() {
+  document.querySelectorAll(".how-phone .s-screen").forEach((sc: HTMLElement) => {
+    const box = sc.firstElementChild as HTMLElement, k = sc.clientWidth / 375;
+    if (!box || !k) return;
+    box.style.transform = `scale(${k})`; box.style.height = (sc.clientHeight / k).toFixed(1) + "px";
+  });
+}
+addEventListener("resize", fitPhones);
 let story = null;
 function initStory() {
   const root = document.getElementById("story");
@@ -3056,29 +3111,19 @@ function initStory() {
     { t: ["Beat the", "cutoff"], b: "Everyone sees who's done before the day closes. Nobody wants to be the red circle.", bg: [2, 20, 14] },
     { t: ["Climb the", "ranking"], b: `Points, streaks for days in a row, and ${BADGE_COUNT} badges to earn. Every day counts.`, bg: [10, 10, 16] },
   ];
-  const CHECK = ic("check", 18).replace('<circle cx="12" cy="12" r="9"/>', "");   // the same check as in "Your homework"
-  const LINE = '<svg viewBox="0 0 64 64" preserveAspectRatio="none" aria-hidden="true"><path d="M4 46 L18 40 L28 28 L40 36 L60 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  // The phone shows the last Friday (today, if it is one), so the week page always has five days in it.
-  let day = addDays(mondayOf(currentTradingDay()), 4);
-  if (day > currentTradingDay()) day = addDays(day, -7);
+  const day = mockDay();
   const week = [0, 1, 2, 3, 4].map(i => addDays(mondayOf(day), i));
   // name, Monday to Thursday (c complete, p partial, m missing, e excused), status on Friday before anyone finishes late
   const MEM: any[] = [["Taylor", "cccc", "WAITING"], ["Alex", "cccc", "COMPLETE"], ["Sam", "cpcc", "COMPLETE"], ["Morgan", "pccm", "COMPLETE"],
     ["Riley", "mcpc", "PARTIAL"], ["Jordan", "cecc", "WAITING"]];
   const PAST = { c: "COMPLETE", p: "PARTIAL", m: "MISSING", e: "EXCUSED" };
-  const BOX = [["Chart with execution", "req"], ["Journal", "req"], ["HTF", "req"], ["Social", "bonus"]];
   const RANK: any[] = [["Alex", 118, "47-day streak · 96% of days done", "diamond"], ["Taylor", 103, "20-day streak · 91% of days done", "gold", true], ["Sam", 81, "9-day streak · 84% of days done", "bronze"],
     ["Morgan", 60, "78% of days done", ""], ["Jordan", 38, "66% of days done", ""], ["Riley", 32, "58% of days done", ""]];
-  const NOTE = "Waited for the 9:45 retest and took 1R. Stopped after two trades.";
-  const av = (name, px) => `<span class="av" style="width:${px}px;height:${px}px;font-size:${Math.round(px * 0.44)}px">${name[0]}</span>`;
-  const gname = `<span class="gname"><span class="glogo acc-blue" style="width:16px;height:16px;font-size:8px">N</span><span>NQ Morning</span></span>`;
-  const arrow = (dir, off = false) => `<span class="round"${off ? ' style="opacity:0.3"' : ""}>${ic("chevron-" + dir, 20)}</span>`;
   const TOPS = [
-    arrow("left") + `<div class="mid">${gname}<span class="datepick"><b>${esc(fmtDay(day))}</b></span></div>` + arrow("right", true),
-    arrow("left") + `<div class="mid">${gname}<b>${esc(fmtDay(week[0], { weekday: undefined }))} – ${esc(fmtDay(week[4], { weekday: undefined }))}</b></div>` + arrow("right", true),
-    `<span></span><div class="mid">${gname}<b>Ranking</b></div><span></span>`,
+    mockDayTop(day),
+    mockArrow("left") + `<div class="mid">${mockGname()}<b>${esc(fmtDay(week[0], { weekday: undefined }))} – ${esc(fmtDay(week[4], { weekday: undefined }))}</b></div>` + mockArrow("right", true),
+    `<span></span><div class="mid">${mockGname()}<b>Ranking</b></div><span></span>`,
   ];
-  const TABS = [["day", "Today"], ["week", "Week"], ["board", "Ranking"], ["me", "Profile"]];
   q("#s-scale").innerHTML = `
     <div class="topbar glass" id="s-top"></div>
     <div class="s-page on">
@@ -3093,11 +3138,11 @@ function initStory() {
       <div class="card quick">
         <div class="cardhead"><h2 id="ma-qh">Your homework</h2><span class="dot COMPLETE qdot" id="ma-qdot" hidden>${ICON.COMPLETE}</span></div>
         <p class="qdone" id="ma-qdone"></p>
-        <div class="qgrid">${BOX.map(([l, kind]) => `<div class="q ${kind}" aria-pressed="false"><span class="qc"></span><span><b>${l}</b><small>${kind === "bonus" ? "Bonus" : "Required"}</small></span></div>`).join("")}</div>
+        <div class="qgrid">${MOCK_BOX.map(([l, kind]) => `<div class="q ${kind}" aria-pressed="false"><span class="qc"></span><span><b>${l}</b><small>${kind === "bonus" ? "Bonus" : "Required"}</small></span></div>`).join("")}</div>
         <div class="qnote" id="ma-qnote">${SVG.note.replace("<svg ", '<svg width="18" height="18" ')}<span>Add note &amp; pictures</span></div>
         <div class="s-note" id="s-note"><div>
           <div class="s-notebox"><span id="ma-note"></span></div>
-          <div class="shots"><span class="shot s-shot">${LINE}</span><span class="shot s-shot">${LINE}</span></div>
+          <div class="shots"><span class="shot s-shot">${MOCK_LINE}</span><span class="shot s-shot">${MOCK_LINE}</span></div>
         </div></div>
       </div>
     </div>
@@ -3112,14 +3157,13 @@ function initStory() {
     <div class="s-page">
       <div class="card"><div class="cardhead"><h2>Points</h2></div>
         <p class="page-hint">Points for finished homework, highest first. Open <b>Scoring</b> at the bottom to see how points work.</p>
-        <ol class="lb">${RANK.map(([n, pts, d, tier, you], i) => `<li class="${i ? "" : "top"}"><span class="rk">${i + 1}</span>${av(n, 32)}
+        <ol class="lb">${RANK.map(([n, pts, d, tier, you], i) => `<li class="${i ? "" : "top"}"><span class="rk">${i + 1}</span>${mockAv(n, 32)}
           <div class="who2"><b>${n}${tier ? `<span class="mini-badge tier-${tier}">${ic("flame", 13)}</span>` : ""}${you ? `<span class="you">You</span>` : ""}</b><span>${d}</span></div>
           <span class="pts" data-pts="${pts}">${pts - 6}</span></li>`).join("")}</ol>
       </div>
     </div>
     <div class="toast glass" id="ma-toast"><div class="medal tier-gold"><span>${ic("flame", 26)}</span></div><div><b>Badge earned</b><span>20 day streak</span></div></div>
-    <div class="tabbar glass"><div class="pill" id="ma-pill" style="width:calc((100% - 10px) / ${TABS.length})"></div>${TABS.map(([k, l]) =>
-      `<button type="button" tabindex="-1">${k === "me" ? `<span class="meav">${SVG.me}</span>` : SVG[k]}<span>${l}</span></button>`).join("")}</div>
+    ${mockTabbar()}
     <i class="s-tap" id="s-tap"></i>`;
   const scaleBox = q("#s-scale"), screenEl = q("#s-screen"), phoneEl = q("#s-phone");
   const boxes = qa(".q"), todayCells = qa(".s-today"), note = q("#ma-note"), shots = qa(".s-shot"), pts = qa(".pts"), pages = qa(".s-page"), tabs = qa(".tabbar button");
@@ -3175,8 +3219,8 @@ function initStory() {
     // step 1: the boxes get ticked one by one
     const ticks = ci > 0 ? 4 : Math.floor(clamp((local - 0.1) / 0.6) * 4.999);
     if (ticks !== S.ticks) {
-      boxes.forEach((bx, j) => { bx.setAttribute("aria-pressed", String(j < ticks)); bx.querySelector(".qc").innerHTML = j >= ticks ? "" : BOX[j][1] === "bonus" ? PLUS_SVG : CHECK;
-        if (BOX[j][1] === "bonus") bx.querySelector("small").textContent = j < ticks ? "Bonus, +" + POINTS.bonus : "Bonus"; });
+      boxes.forEach((bx, j) => { bx.setAttribute("aria-pressed", String(j < ticks)); bx.querySelector(".qc").innerHTML = j >= ticks ? "" : MOCK_BOX[j][1] === "bonus" ? PLUS_SVG : MOCK_CHECK;
+        if (MOCK_BOX[j][1] === "bonus") bx.querySelector("small").textContent = j < ticks ? "Bonus, +" + POINTS.bonus : "Bonus"; });
       if (ticks > S.ticks) tap(boxes[ticks - 1]);
       S.ticks = ticks;
       const done = ticks >= 3, points = dayPoints("COMPLETE", ticks > 3 ? 1 : 0);
@@ -3192,8 +3236,8 @@ function initStory() {
       q("#ma-qnote span").textContent = noteOpen ? "Close note & pictures" : "Add note & pictures";
       if (noteOpen && ci === 1) tap(q("#ma-qnote"));
     }
-    const chars = ci > 1 ? NOTE.length : ci === 1 ? Math.floor(clamp((local - 0.14) / 0.46) * NOTE.length) : 0;
-    note.innerHTML = NOTE.slice(0, chars) + (ci === 1 && noteOpen && chars < NOTE.length ? '<span class="caret"></span>' : "");
+    const chars = ci > 1 ? MOCK_NOTE.length : ci === 1 ? Math.floor(clamp((local - 0.14) / 0.46) * MOCK_NOTE.length) : 0;
+    note.innerHTML = MOCK_NOTE.slice(0, chars) + (ci === 1 && noteOpen && chars < MOCK_NOTE.length ? '<span class="caret"></span>' : "");
     shots.forEach((s2, j) => s2.classList.toggle("on", ci > 1 || (ci === 1 && local > 0.66 + j * 0.08)));
     // step 3: the last two finish before the cutoff (Riley, then Jordan)
     const youDone = ticks >= 3, fixed = ci > 2 ? 2 : ci === 2 ? Math.floor(clamp((local - 0.2) / 0.5) * 2.999) : 0;
@@ -3232,6 +3276,7 @@ addEventListener("resize", () => { if (story && story.root.isConnected) story.me
 function revealLanding() {
   landMenu(false);
   initStory();
+  fitPhones();
   const els = document.querySelectorAll(".lp .rv:not(.in), .lp .stage:not(.in)");
   if (!("IntersectionObserver" in window) || matchMedia("(prefers-reduced-motion: reduce)").matches) { els.forEach(el => el.classList.add("in")); return; }
   const io = new IntersectionObserver(list => list.forEach(x => { if (x.isIntersecting) { x.target.classList.add("in"); io.unobserve(x.target); } }), { threshold: 0.18 });

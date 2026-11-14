@@ -34,7 +34,6 @@ and tick **only their own** homework boxes. Batko is the app owner; each group h
 | `supabase/update-23-mentor-servers.sql` | Mentor servers: a mentor sees the boxes and streaks of every group linked to their server, and can't change anything (run once, after update 22, before pushing) |
 | `supabase/update-24-monthly-and-mentor-recaps.sql` | A monthly ranking in a group's Discord, and a summary of all linked groups in a mentor's Discord (run once, after update 23, before pushing) |
 | `supabase/sign-out-everyone-except-owner.sql` | Signs everyone but you out; no data is removed (run when needed) |
-| `web/public/assets/app-day.jpg` | Screenshot of the app with a made-up demo group, shown in the phone on the front page |
 | `web/public/vendor/` | Fonts and their licenses, hosted on our own site (see `web/public/vendor/THIRD-PARTY-NOTICES.md`) |
 | `supabase/functions/send-reminders/index.ts` | Runs every 5 minutes in Supabase (Edge Functions) and deletes pictures older than 60 days. Its reminder part finds nobody since update 22 |
 | `web/public/sw.js` | Background helper: the app opens without internet |

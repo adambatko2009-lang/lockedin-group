@@ -1131,15 +1131,6 @@
     text-decoration: underline; text-decoration-color: rgba(245, 245, 247, 0.35); text-underline-offset: 4px; transition: color .15s, text-decoration-color .15s; }
   .hero-own:hover { color: #fff; text-decoration-color: #fff; }
   #start-own { scroll-margin-top: 96px; }
-  .phone { justify-self: center; width: min(320px, 84vw); aspect-ratio: 9 / 19; padding: 11px; border-radius: 48px;
-    background: linear-gradient(145deg, #4a4b52, #121216 38%, #2b2c31 62%, #0b0b0e);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 50px 120px -40px rgba(255, 255, 255, 0.12), 0 40px 80px -30px rgba(0, 0, 0, 0.9); }
-  .phone-screen { position: relative; height: 100%; border-radius: 38px; background: #050506; padding: 44px 16px 18px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
-  .phone-screen::before { content: ""; position: absolute; top: 12px; left: 50%; width: 92px; height: 24px; margin-left: -46px; border-radius: 14px; background: #000; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06); }
-  .phone .mock { width: 100%; padding: 0; gap: 7px; background: none; border: 0; box-shadow: none; transform: none; }
-  .phone .mock-top b { font-size: 24px; }
-  .phone .mock-row { padding-top: 7px; } .phone .mock-row .av { width: 24px; height: 24px; font-size: 11px; } .phone .mock-row > b { font-size: 13px; }
-  .phone .mock-row .chips i { width: 16px; height: 16px; border-radius: 4px; } .phone .mock-row .st { width: 20px; height: 20px; }
   /* text sections */
   .bigsteps { display: grid; gap: 0; border-top: 1px solid rgba(255, 255, 255, 0.14); }
   .bigsteps > div { padding: 22px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.14); }
@@ -1172,21 +1163,11 @@
   .vcol.us li b { background: #2563eb; color: #fff; }
   .stage3d { position: relative; display: grid; place-items: center; width: 100%; min-height: 560px; }
   .phone3d { position: relative; z-index: 1; }
-  /* perspective is part of the transform (not the parent) and the phone is one layer: iPhone Safari drew only part of the picture otherwise */
-  .stage3d .phone { --rx: 0deg; --ry: 0deg; will-change: transform; -webkit-backface-visibility: hidden; backface-visibility: hidden;
-    transform: perspective(1600px) rotateY(calc(-24deg + var(--ry))) rotateX(calc(10deg + var(--rx))) rotateZ(3deg);
-    transition: transform .5s cubic-bezier(.2, .8, .2, 1);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16),
-      1px 1px 0 #3c3d43, 2px 2px 0 #34353a, 3px 3px 0 #2d2e33, 4px 4px 0 #27282c, 5px 5px 0 #222326, 6px 6px 0 #1d1e21, 7px 7px 0 #18191b, 8px 8px 0 #141416,
-      40px 60px 100px -30px rgba(0, 0, 0, 0.9); }
-  .stage3d .phone::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-    background: linear-gradient(115deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 32%, rgba(255, 255, 255, 0) 70%, rgba(255, 255, 255, 0.06) 100%); }
-  .stage3d .phone-screen { padding: 0; }
-  .stage3d .phone-screen img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: top; border-radius: inherit; transform: translateZ(0); }
-  .stage3d .phone-screen { -webkit-mask-image: -webkit-radial-gradient(white, black); isolation: isolate; }
-  .stage3d .phone-screen::before { z-index: 2; }
-  @media (prefers-reduced-motion: reduce) { .stage3d .phone { transition: none; } }
-  @media (max-width: 899px) { .stage3d { min-height: 0; padding: 30px 0 10px; } .stage3d .phone { width: min(270px, 70vw); } }
+  @media (max-width: 899px) { .stage3d { min-height: 0; padding: 30px 0 10px; } }
+  /* "How it works": the same drawn phone as in the story, standing still at an angle */
+  .s-phone.how-phone { width: min(320px, 84vw); transform: perspective(1600px) rotateY(-24deg) rotateX(10deg) rotateZ(3deg); }
+  @media (max-width: 899px) { .s-phone.how-phone { width: min(270px, 70vw); } }
+  .how-phone .tabbar.glass { background: var(--surface-2); }   /* the page runs on under the bar, as in the app; without blur the bar has to be solid */
 
 
   /* ================================================================ front page: the scroll story (the phone stays put while the app inside it plays out) */
