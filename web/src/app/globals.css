@@ -330,7 +330,7 @@
   .help-legal a { color: var(--accent-text); font-weight: 600; }
   .datarow a.btn { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
   .panel .support-mail { margin-top: 8px; font: 500 13px var(--font-data); color: var(--text-2); user-select: all; -webkit-user-select: all; overflow-wrap: anywhere; }
-  .numrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin-top: 10px; }
+  .numrow { display: grid; grid-template-columns: repeat(2, minmax(0, 150px)); gap: 8px; margin-top: 10px; }
   .numfield { min-width: 0; display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border-radius: 12px; background: var(--surface-2); cursor: text; }
   .numfield span { font-size: 13px; font-weight: 600; color: var(--muted); }
   .numfield b { font: 600 15px var(--font-data); color: var(--text-2); }
@@ -512,11 +512,15 @@
   .result-set button { font-size: 14px; white-space: nowrap; padding: 0 4px; }
   @media (max-width: 360px) { .result-set button { font-size: 13px; } }
   .result-set + .sub-hint { margin-top: 8px; }
-  .result-set .r-win[aria-pressed="true"] { color: var(--good-text); }
-  .result-set .r-loss[aria-pressed="true"] { color: var(--crit-text); }
-  .result-set .r-gamble[aria-pressed="true"] { color: color-mix(in srgb, var(--warn) 50%, var(--text)); }   /* plain yellow is unreadable on white */
+  /* each result has its own color: win green, loss red, no trade grey, gamble orange (yellow is kept free for break even) */
+  .r-win { --rc: var(--good-text); --rb: var(--good); }
+  .r-loss { --rc: var(--crit-text); --rb: var(--crit); }
+  .r-notrade { --rc: var(--text-2); --rb: var(--muted); }
+  .r-gamble { --rb: color-mix(in srgb, var(--warn), var(--crit)); --rc: color-mix(in srgb, var(--rb) 60%, var(--text)); }   /* plain orange is unreadable on white */
+  .result-set button { color: var(--rc); }
+  .result-set button[aria-pressed="true"] { color: var(--rc); background: color-mix(in srgb, var(--rb) 18%, var(--surface)); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--rb) 60%, transparent); }
   .rtag i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-  .rtag.r-win { color: var(--good-text); } .rtag.r-loss { color: var(--crit-text); } .rtag.r-gamble { color: color-mix(in srgb, var(--warn) 50%, var(--text)); }
+  .rtag.r-win { color: var(--good-text); } .rtag.r-loss { color: var(--crit-text); } .rtag.r-gamble { color: var(--rc); }
   .ntag { display: inline-flex; align-items: center; gap: 4px; flex: none; font-size: 12px; font-weight: 600; color: var(--text-2); background: var(--surface-2); border-radius: 6px; padding: 1px 6px; }
   @media (max-width: 420px) { .ntag-text { display: none; } .rtag .ntag-text { display: inline; } }
   .time.urgent { color: var(--crit-text); }
@@ -1448,7 +1452,7 @@ a.btn { text-decoration: none; }
 .s-page { position: absolute; top: 148px; left: 16px; right: 16px; display: flex; flex-direction: column; gap: 12px;
   opacity: 0; visibility: hidden; transition: opacity .3s ease, visibility 0s .3s; }
 .s-page.on { opacity: 1; visibility: visible; transition: opacity .3s ease; }
-.s-scale .tabbar { position: absolute; left: 16px; right: 16px; bottom: 14px; width: auto; transform: none; }
+.s-scale .tabbar { display: grid; position: absolute; left: 16px; right: 16px; bottom: 14px; width: auto; transform: none; }
 .s-scale .tabbar .pill { transition: transform .45s var(--ex); }
 .s-scale .glass { -webkit-backdrop-filter: none; backdrop-filter: none; }   /* nothing moves under the bars here, and blur inside a turned phone is slow on iPhones */
 .s-scale .toast { position: absolute; top: 70px; white-space: nowrap; background: var(--surface-2); animation: none;
