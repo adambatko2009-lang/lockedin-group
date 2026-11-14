@@ -1404,7 +1404,7 @@ async function joinWithCode() {
   const el = document.getElementById("joincode"), code = el ? el.value.trim() : "";
   if (!code) return;
   const { data, error: e } = await sb.rpc("join_group", { code });
-  joinMsg = e ? e.message : data.status === "approved" ? `You're already in ${data.name}.` : data.status === "pending" ? `Sent! Waiting for the owner of ${data.name} to approve you.` : `${data.name} didn't accept you.`;
+  joinMsg = e ? e.message : data.status === "approved" ? `You're already in ${data.name}.` : data.status === "pending" ? `Sent. Waiting for the owner of ${data.name} to approve you.` : `${data.name} didn't accept you.`;
   await loadGroups();
   if (screen === "app" && settingsOpen) openGroupsPanel(); else render();
 }
@@ -1818,15 +1818,14 @@ function renderRail() {
   const here = (t, v) => !profileKey && tab === t && (!v || adminView === v);
   const item = (t, v, icon, label, extra = "", id = "") => `<button ${id ? `id="${id}" ` : ""}data-nav="${t}${v ? ":" + v : ""}"${here(t, v) ? ' aria-current="page"' : ""}>${icon}<span>${label}</span>${extra}</button>`;
   const badge = n => n ? `<span class="count" aria-label="${n} waiting">${n}</span>` : "";
-  const key = n => `<kbd class="rail-key num" title="Press ${n} on your keyboard">${n}</kbd>`;   // the shortcut, see the "keyboard shortcuts" listener
   const reqs = isAppOwner ? requests.filter(r => r.status === "pending").length : 0;
   const g = group();
   morph(rail, `<span class="rail-ind" aria-hidden="true"></span>
     <div class="rail-brand"><img class="rail-logo" src="icons/icon-192.png" alt="">LockedIn</div>
     <p class="rail-h">${esc(g ? g.name : "Group")}</p>
-    ${item("day", "", SVG.day, "Today", key(1))}
-    ${item("week", "", SVG.week, "Week", key(2))}
-    ${item("board", "", SVG.board, "Ranking", key(3))}
+    ${item("day", "", SVG.day, "Today")}
+    ${item("week", "", SVG.week, "Week")}
+    ${item("board", "", SVG.board, "Ranking")}
     <p class="rail-h">You</p>
     ${item("me", "", meIcon(), "Profile", "", "toggleme")}
     ${item("journal", "", ic("book", 19), "Journal")}
@@ -1987,7 +1986,7 @@ function renderDay() {
     // appears. The text only changes when your points or streak change, so a redraw doesn't read it out again.
     quick = `<div class="card quick"><div class="cardhead"><h2>${done ? "Done for today" : "Your homework"}</h2>${done ? `<span class="dot COMPLETE qdot" aria-hidden="true">${ICON.COMPLETE}</span>` : ""}</div><p class="qdone" role="status">${doneLine}</p><div class="qgrid">${RULES.map(([r, label, kind]) =>
       `<button class="q ${kind}" data-tick="${me}:${r}" aria-pressed="${!!rec[r]}"><span class="qc">${!rec[r] ? "" : kind === "bonus" ? PLUS_SVG : ic("check", 18).replace('<circle cx="12" cy="12" r="9"/>', "")}</span>
-        <span><b>${label}</b><small>${kind === "bonus" ? (rec[r] ? "Bonus, +" + POINTS.bonus : "Bonus") : "Required"}</small></span></button>`).join("")}</div>
+        <span><b>${esc(label)}</b><small>${kind === "bonus" ? (rec[r] ? "Bonus, +" + POINTS.bonus : "Bonus") : "Required"}</small></span></button>`).join("")}</div>
       <button class="qnote" data-edit="${me}" aria-expanded="${inlineHere(me, k)}">${SVG.note.replace("<svg ", '<svg width="18" height="18" ')}${inlineHere(me, k) ? "Close note & pictures" : rec.note || (rec.images || []).length ? "Edit note & pictures" : "Add note & pictures"}</button>
       ${inlineHere(me, k) ? `<div id="inline-slot" data-persist></div>` : ""}</div>`;
   }
@@ -2002,7 +2001,7 @@ function renderDay() {
     const st = statusOf(k, m.key), rec = tickOf(k, m.key) || {}, editable = canEdit(k, m.key);
     const toggles = RULES.map(([r, label, kind]) =>
       `<button class="t ${kind}${editable && m.key !== myKey() ? " guard" : ""}" data-tick="${m.key}:${r}" aria-pressed="${!!rec[r]}" ${editable ? "" : "disabled"}
-        aria-label="${esc(m.name)}: ${label}${kind === "bonus" ? " (bonus)" : ""}"><span class="lbl-full">${label}</span><span class="lbl-short" aria-hidden="true">${shortLabel(label)}</span></button>`).join("");
+        aria-label="${esc(m.name)}: ${esc(label)}${kind === "bonus" ? " (bonus)" : ""}"><span class="lbl-full">${esc(label)}</span><span class="lbl-short" aria-hidden="true">${esc(shortLabel(label))}</span></button>`).join("");
     const note = rec.note ? `<p>${linkify(rec.note)}</p>` : "";
     const images = rec.images || [];
     allShots.push(...images);
@@ -2066,8 +2065,11 @@ function renderWeek() {
     const st = statusOf(k, m.key), tip = `${m.name}, ${fmtDay(k)}: ${LABEL[st]}`;
     return `<td><button class="cell ${st} ${k === today ? "today" : ""}" data-day="${k}" title="${esc(tip)}" aria-label="${esc(tip)}">${ICON[st]}</button></td>`;
   }).join("")}</tr>`).join("");
+  // "This week" only for the week we are in. Other weeks are named by their Monday.
+  const weekTitle = weekStart === mondayOf(today) ? "This week" : "Week of " + esc(fmtDay(weekStart, { weekday: undefined }));
   const key = ["COMPLETE", "PARTIAL", "MISSING", "WAITING", "UNLOGGED", "EXCUSED"].map(st => `<li><span class="cell ${st}" aria-hidden="true">${ICON[st]}</span>${st === "WAITING" ? "Today, not done yet" : LABEL[st]}</li>`).join("");
-  return `<div class="card"><div class="cardhead"><h2>This week</h2></div>
+  if (!body) return `<div class="card"><div class="cardhead"><h2>${weekTitle}</h2></div><p class="empty">No members yet.</p></div>`;
+  return `<div class="card"><div class="cardhead"><h2>${weekTitle}</h2></div>
     <p class="page-hint">Each square is one person's homework for one day. Tap a square to open that day, or a name to see their profile.</p>
     <div class="grid-wrap"><table class="grid"><thead><tr><th class="who"><span class="sr-only">Member</span></th>${head}</tr></thead><tbody>${body}</tbody></table></div>
     <ul class="legend" aria-label="What the squares mean">${key}</ul></div>`;
@@ -3656,18 +3658,13 @@ document.addEventListener("keydown", e => {
   if (editing || settingsOpen) return closePanel();
   if (profileKey) { profileKey = null; render(); return window.scrollTo(0, 0); }
   if (tab === "admin" || tab === "me" || tab === "journal") setTab("day");
-  if ((e.key as string) === "Enter" && e.target.id === "newmember") document.getElementById("addmember").click();
-  if ((e.key as string) === "Enter" && e.target.id === "joincode") { e.preventDefault(); joinWithCode(); }
-  if ((e.key as string) === "Enter" && e.target.id === "newbreak") { e.preventDefault(); addCustomBreak(); }
 });
-// Computers: 1, 2 and 3 open Today, Week and Ranking. Never while you are typing, and never with a window open on top.
+// Enter in a one-line field does the same as the button beside it.
 document.addEventListener("keydown", e => {
-  if (screen !== "app" || legalOpen() || e.metaKey || e.ctrlKey || e.altKey || e.repeat || tour || editing || settingsOpen) return;
-  const el = e.target as HTMLElement;
-  if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
-  if (document.querySelector("dialog[open]")) return;
-  const to = { "1": "day", "2": "week", "3": "board" }[e.key];
-  if (to) { e.preventDefault(); setTab(to); }
+  if (e.key !== "Enter" || e.isComposing) return;
+  if (e.target.id === "newmember") { const b = document.getElementById("addmember"); if (b) b.click(); }
+  if (e.target.id === "joincode") { e.preventDefault(); joinWithCode(); }
+  if (e.target.id === "newbreak") { e.preventDefault(); addCustomBreak(); }
 });
 document.getElementById("scrim").addEventListener("click", closePanel);
 wideQuery.addEventListener("change", () => render());

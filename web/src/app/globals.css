@@ -73,7 +73,7 @@
   [hidden] { display: none !important; }
   .sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent; }
-  button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+  button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible, a:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
 
   /* ---------- glass: navigation layer only ---------- */
   .glass {
@@ -1139,8 +1139,6 @@
     .rail .meav { width: 22px; height: 22px; box-shadow: 0 0 0 2px var(--lg-edge); }
     .rail .rail-sep { flex: 1; min-height: 14px; }
     .rail .count { margin-left: auto; min-width: 19px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--crit); color: var(--on-crit); font-size: 11px; font-weight: 700; display: grid; place-items: center; }
-    .rail .rail-key { margin-left: auto; min-width: 18px; font-family: var(--font-data); padding: 1px 0; border: 1px solid var(--line-strong); border-radius: 5px; font-size: 11px; line-height: 14px; text-align: center; color: var(--muted); }
-    .rail button[aria-current="page"] .rail-key { border-color: currentColor; color: inherit; opacity: 0.75; }
     .rail button:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
     /* people who ask for less transparency or more contrast get a solid bar */
     @media (prefers-reduced-transparency: reduce) { .rail { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; } .rail::before, .rail::after { display: none; } }
