@@ -2826,7 +2826,7 @@ function createHtml() {
       <input class="field code" id="req-tag" maxlength="5" placeholder="Server tag" autocomplete="off" autocapitalize="characters" spellcheck="false" style="width:100%">
       <p class="sub-hint hinfo" style="margin:8px 0 0">The server owner sees names, finished boxes and streaks.${infoBtn("lobby-tag", "server tags")}</p>
       ${infoText("lobby-tag", "If your group belongs to a mentor's server, type the server's tag. The server owner can then look at the group, but can't change anything. Never notes, pictures or results. Not part of a server? Leave it empty.")}
-      <button class="btn primary small" id="send-request" style="margin-top:12px">Send request</button>
+      <button class="btn primary small" id="send-request" style="display:flex;width:fit-content;margin:12px auto 0">Send request</button>
       <p class="sub-hint" role="status" style="margin:10px 0 0">${esc(joinMsg)}</p>
     </div>`;
 }
